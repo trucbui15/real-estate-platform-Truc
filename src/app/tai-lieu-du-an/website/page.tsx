@@ -10,29 +10,34 @@ export const metadata: Metadata = {
 };
 
 export default async function WebsiteDuAnPage() {
-  const projects = await prisma.project.findMany({
-    where: {
-      isActive: true,
-      resources: {
-        some: {
-          type: "WEBSITE",
-          isActive: true,
-          isPublic: true,
+  let projects: any[] = [];
+  try {
+    projects = await prisma.project.findMany({
+      where: {
+        isActive: true,
+        resources: {
+          some: {
+            type: "WEBSITE",
+            isActive: true,
+            isPublic: true,
+          },
         },
       },
-    },
-    include: {
-      resources: {
-        where: {
-          type: "WEBSITE",
-          isActive: true,
-          isPublic: true,
+      include: {
+        resources: {
+          where: {
+            type: "WEBSITE",
+            isActive: true,
+            isPublic: true,
+          },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         },
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       },
-    },
-    orderBy: [{ featured: "desc" }, { name: "asc" }],
-  });
+      orderBy: [{ featured: "desc" }, { name: "asc" }],
+    });
+  } catch (err) {
+    console.error("Database query error in website page:", err);
+  }
 
   return (
     <div className="container-page py-12 space-y-8">
@@ -78,7 +83,7 @@ export default async function WebsiteDuAnPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {project.resources.map((res) => (
+                {(project.resources || []).map((res: any) => (
                   <div
                     key={res.id}
                     className="flex flex-col justify-between rounded-2xl border border-gray-100 bg-surface p-5 hover:bg-white transition space-y-4"

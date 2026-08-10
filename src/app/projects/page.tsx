@@ -4,19 +4,24 @@ import ProjectsClient from "./ProjectsClient";
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
-  const rawProjects = await prisma.project.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-    include: {
-      inventories: {
-        where: { unitStatus: "DANG_BAN" },
-        select: { id: true },
+  let rawProjects: any[] = [];
+  try {
+    rawProjects = await prisma.project.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      include: {
+        inventories: {
+          where: { unitStatus: "DANG_BAN" },
+          select: { id: true },
+        },
+        listings: {
+          select: { id: true, transactionType: true, unitStatus: true },
+        },
       },
-      listings: {
-        select: { id: true, transactionType: true, unitStatus: true },
-      },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("Database query error in projects page:", err);
+  }
 
   const projects = rawProjects.map((p) => {
     // Parse cover image from thumbnail or images JSON
@@ -28,12 +33,12 @@ export default async function ProjectsPage() {
       } catch (e) {}
     }
 
-    const inventoryCount = p.inventories.length;
-    const saleCount = p.listings.filter(
-      (l) => l.transactionType === "SALE" && (l.unitStatus === "DANG_BAN" || l.unitStatus === "CHO_DUYET")
+    const inventoryCount = p.inventories?.length || 0;
+    const saleCount = (p.listings || []).filter(
+      (l: any) => l.transactionType === "SALE" && (l.unitStatus === "DANG_BAN" || l.unitStatus === "CHO_DUYET")
     ).length;
-    const rentCount = p.listings.filter(
-      (l) => l.transactionType === "RENT" && (l.unitStatus === "DANG_BAN" || l.unitStatus === "DANG_CHO_THUE" || l.unitStatus === "CHO_DUYET")
+    const rentCount = (p.listings || []).filter(
+      (l: any) => l.transactionType === "RENT" && (l.unitStatus === "DANG_BAN" || l.unitStatus === "DANG_CHO_THUE" || l.unitStatus === "CHO_DUYET")
     ).length;
 
     return {

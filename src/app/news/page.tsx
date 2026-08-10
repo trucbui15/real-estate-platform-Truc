@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {
-  const news = await prisma.news.findMany({ where: { published: true }, orderBy: { createdAt: "desc" } });
+  let news: any[] = [];
+  try {
+    news = await prisma.news.findMany({ where: { published: true }, orderBy: { createdAt: "desc" } });
+  } catch (err) {
+    console.error("Database query error in news page:", err);
+  }
 
   return (
     <div className="container-page py-10">

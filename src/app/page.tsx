@@ -7,23 +7,34 @@ import HomeSearchFilters from "@/components/HomeSearchFilters";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featured, totalCount, popularProjects] = await Promise.all([
-    prisma.listing.findMany({
-      where: { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } },
-      orderBy: { updatedAt: "desc" },
-      take: 12,
-      include: { project: true, province: true, district: true },
-    }),
-    prisma.listing.count({
-      where: { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } },
-    }),
-    prisma.project.findMany({
-      where: { isActive: true },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-      take: 8,
-      include: { _count: { select: { listings: true } } },
-    }),
-  ]);
+  let featured: any[] = [];
+  let totalCount = 0;
+  let popularProjects: any[] = [];
+
+  try {
+    const [f, t, p] = await Promise.all([
+      prisma.listing.findMany({
+        where: { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } },
+        orderBy: { updatedAt: "desc" },
+        take: 12,
+        include: { project: true, province: true, district: true },
+      }),
+      prisma.listing.count({
+        where: { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } },
+      }),
+      prisma.project.findMany({
+        where: { isActive: true },
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+        take: 8,
+        include: { _count: { select: { listings: true } } },
+      }),
+    ]);
+    featured = f;
+    totalCount = t;
+    popularProjects = p;
+  } catch (err) {
+    console.error("Database connection error on homepage:", err);
+  }
 
   return (
     <div className="space-y-8 pb-16">

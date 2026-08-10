@@ -10,11 +10,22 @@ export const metadata: Metadata = {
 };
 
 export default async function TaiLieuDuAnPage() {
-  const [websiteCount, infoCount, tour360Count] = await Promise.all([
-    prisma.projectResource.count({ where: { type: "WEBSITE", isActive: true, isPublic: true } }),
-    prisma.project.count({ where: { isActive: true } }),
-    prisma.projectResource.count({ where: { type: "TOUR_360", isActive: true, isPublic: true } }),
-  ]);
+  let websiteCount = 0;
+  let infoCount = 0;
+  let tour360Count = 0;
+
+  try {
+    const [w, i, t] = await Promise.all([
+      prisma.projectResource.count({ where: { type: "WEBSITE", isActive: true, isPublic: true } }),
+      prisma.project.count({ where: { isActive: true } }),
+      prisma.projectResource.count({ where: { type: "TOUR_360", isActive: true, isPublic: true } }),
+    ]);
+    websiteCount = w;
+    infoCount = i;
+    tour360Count = t;
+  } catch (err) {
+    console.error("Database query error in tai-lieu-du-an page:", err);
+  }
 
   const sections = [
     {

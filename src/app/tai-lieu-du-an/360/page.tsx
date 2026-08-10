@@ -11,40 +11,45 @@ export const metadata: Metadata = {
 };
 
 export default async function Tour360Page() {
-  // Query 1: Resource toàn cảnh thành phố (projectId === null)
-  const cityResource = await prisma.projectResource.findFirst({
-    where: {
-      type: "TOUR_360",
-      projectId: null,
-      isActive: true,
-      isPublic: true,
-    },
-  });
+  let cityResource: any = null;
+  let projects: any[] = [];
 
-  // Query 2: Tất cả các dự án có chứa resource TOUR_360 active & public
-  const projects = await prisma.project.findMany({
-    where: {
-      isActive: true,
-      resources: {
-        some: {
-          type: "TOUR_360",
-          isActive: true,
-          isPublic: true,
+  try {
+    cityResource = await prisma.projectResource.findFirst({
+      where: {
+        type: "TOUR_360",
+        projectId: null,
+        isActive: true,
+        isPublic: true,
+      },
+    });
+
+    projects = await prisma.project.findMany({
+      where: {
+        isActive: true,
+        resources: {
+          some: {
+            type: "TOUR_360",
+            isActive: true,
+            isPublic: true,
+          },
         },
       },
-    },
-    include: {
-      resources: {
-        where: {
-          type: "TOUR_360",
-          isActive: true,
-          isPublic: true,
+      include: {
+        resources: {
+          where: {
+            type: "TOUR_360",
+            isActive: true,
+            isPublic: true,
+          },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         },
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       },
-    },
-    orderBy: [{ featured: "desc" }, { name: "asc" }],
-  });
+      orderBy: [{ featured: "desc" }, { name: "asc" }],
+    });
+  } catch (err) {
+    console.error("Database query error in 360 page:", err);
+  }
 
   return (
     <div className="container-page py-10">

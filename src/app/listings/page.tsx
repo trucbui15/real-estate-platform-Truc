@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import ListingsClient from "./ListingsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ListingsPage({
   searchParams,
 }: {
@@ -59,25 +61,43 @@ export default async function ListingsPage({
     orderBy = { [priceField]: "desc" };
   }
 
-  const [items, total, provinces, projects, activeProject] = await Promise.all([
-    prisma.listing.findMany({
-      where,
-      include: { project: true, province: true, district: true },
-      orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.listing.count({ where }),
-    prisma.province.findMany(),
-    prisma.project.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, slug: true },
-      orderBy: { name: "asc" },
-    }),
-    projectSlug
-      ? prisma.project.findUnique({ where: { slug: projectSlug } })
-      : null,
-  ]);
+  let items: any[] = [];
+  let total = 0;
+  let provinces: any[] = [];
+  let projects: any[] = [];
+  let activeProject: any = null;
+
+  try {
+    const [itms, ttl, prvs, prjs, actvPrj] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        include: { project: true, province: true, district: true },
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.listing.count({ where }),
+      prisma.province.findMany(),
+      prisma.project.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      }),
+      projectSlug
+        ? prisma.project.findUnique({
+            where: { slug: projectSlug },
+            select: { id: true, name: true, slug: true },
+          })
+        : null,
+    ]);
+    items = itms;
+    total = ttl;
+    provinces = prvs;
+    projects = prjs;
+    activeProject = actvPrj;
+  } catch (err) {
+    console.error("Database error in listings page:", err);
+  }
 
   const totalPages = Math.ceil(total / pageSize) || 1;
 
