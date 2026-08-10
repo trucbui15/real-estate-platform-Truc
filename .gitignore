@@ -1,0 +1,11 @@
+node_modules
+.next
+dev.db
+dev.db-journal
+.env
+.env.local
+next-env.d.ts
+
+# uploaded images (local storage) — giữ thư mục nhưng bỏ qua file upload
+public/uploads/*
+!public/uploads/.gitkeep

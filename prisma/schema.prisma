@@ -1,0 +1,460 @@
+// ============================================================
+// FindyHome-clone — Prisma Schema
+// DB: PostgreSQL (chạy qua Docker Compose, xem docker-compose.yml).
+// Chỉ cần đổi DATABASE_URL trong .env nếu trỏ tới Postgres khác (Supabase/Neon/Railway...)
+// ============================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------- ENUMS -------------------
+
+enum Role {
+  ADMIN     // Quản trị hệ thống - toàn quyền
+  MANAGER   // Quản lý - toàn quyền vận hành (trừ quản lý Admin khác)
+  STAFF     // Nhân viên - đăng/sửa bài, chăm sóc khách được giao
+  CUSTOMER  // Người dùng đã đăng ký (khách mua/thuê/ký gửi)
+}
+
+enum TransactionType {
+  SALE // Bán / Chuyển nhượng
+  RENT // Cho thuê
+}
+
+enum PropertyType {
+  CAN_HO         // Căn hộ chung cư
+  OFFICETEL
+  CONDOTEL
+  PENTHOUSE
+  DUPLEX
+  SHOPHOUSE_KHOI_DE
+  NHA_LIEN_KE
+  DAT_NEN
+  SHOPHOUSE_LIEN_KE
+  BIET_THU_SONG_LAP
+  BIET_THU_DON_LAP
+  NHA_PHO
+  DAT_NEN_DU_AN
+  DAT_THO_CU
+}
+
+enum Direction {
+  DONG
+  TAY
+  NAM
+  BAC
+  DONG_NAM
+  TAY_NAM
+  TAY_BAC
+  DONG_BAC
+}
+
+enum FurnitureStatus {
+  FULL_NOI_THAT     // Full nội thất
+  CO_BAN            // Nội thất cơ bản
+  BAN_GIAO_THO       // Bàn giao thô
+  CAN_TRONG          // Căn trống
+}
+
+enum LegalStatus {
+  SO_DO_HONG         // Sổ đỏ / Sổ hồng
+  HOP_DONG_MUA_BAN    // Hợp đồng mua bán
+  DANG_CHO_SO         // Đang chờ sổ
+  VI_BANG             // Vi bằng
+}
+
+enum UnitStatus {
+  DANG_BAN            // Đang bán
+  DANG_CHO_THUE        // Đang cho thuê
+  DA_BAN               // Đã bán
+  DA_CHO_THUE           // Đã cho thuê
+  TAM_NGUNG             // Tạm ngưng giao dịch
+  CHO_DUYET             // Chờ duyệt (staff vừa đăng, chưa publish)
+}
+
+enum LeadSource {
+  WEBSITE
+  HOTLINE
+  ZALO
+  FACEBOOK
+  GIOI_THIEU
+  KY_GUI
+  KHAC
+  LISTING
+  PROJECT
+  FOOTER
+  CONTACT
+  CONSIGNMENT
+  DIRECT
+  CTV
+}
+
+enum DemandType {
+  MUA
+  THUE
+  KY_GUI_BAN
+  KY_GUI_CHO_THUE
+  TU_VAN
+}
+
+enum LeadStatus {
+  MOI                 // Mới
+  DANG_LIEN_HE         // Đang liên hệ
+  DA_HEN_GAP            // Đã hẹn gặp
+  DA_CHOT                // Đã chốt (thành giao dịch)
+  KHONG_TIEM_NANG         // Không tiềm năng
+  DONG                     // Đóng / dừng chăm sóc
+}
+
+enum CollaboratorStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum ProjectResourceType {
+  WEBSITE
+  TOUR_360
+  GENERAL_INFO
+  DRIVER_TT
+  PRICE_LIST
+  SALES_POLICY
+  FLOOR_PLAN
+  BROCHURE
+  LEGAL
+  PROGRESS
+  VIDEO
+  DESIGN_FILE
+  IMAGE
+  GOOGLE_DRIVE
+  OTHER
+}
+
+// ------------------- MODELS -------------------
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  passwordHash  String
+  role          Role     @default(CUSTOMER)
+  avatarUrl     String?
+  referralCode  String?  @unique // Mã giới thiệu nội bộ (MD_T01, MD_D04...)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  listings              Listing[]            @relation("ListingAuthor")
+  assignedCustomers     Customer[]           @relation("AssignedStaff")
+  customerActivities    CustomerActivity[]   @relation("ActivityAuthor")
+  favorites             Favorite[]
+  news                  News[]               @relation("NewsAuthor")
+  projects              Project[]            @relation("ProjectAuthor")
+  referredCollaborators Collaborator[]       @relation("ReferredByStaff")
+  collaboratorProfile   Collaborator?        @relation("CollaboratorUser")
+}
+
+model Province {
+  id       String  @id @default(cuid())
+  name     String  @unique // Tỉnh/Thành phố, vd: "Bình Định", "TP.HCM"
+  slug     String  @unique
+  districts District[]
+  listings Listing[]
+  projects Project[]
+  customers Customer[]
+}
+
+model District {
+  id         String   @id @default(cuid())
+  name       String   // Quận/Huyện, vd: "TP. Quy Nhơn"
+  slug       String
+  provinceId String
+  province   Province @relation(fields: [provinceId], references: [id])
+  listings   Listing[]
+  projects   Project[]
+  customers  Customer[]
+
+  @@unique([provinceId, slug])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  developer   String?             // Chủ đầu tư
+  description String?
+  address     String?
+  provinceId  String?
+  province    Province? @relation(fields: [provinceId], references: [id])
+  districtId  String?
+  district    District? @relation(fields: [districtId], references: [id])
+  thumbnail   String?
+  images      String?             // JSON array string
+  isActive    Boolean  @default(true)
+  featured    Boolean  @default(false)
+  authorId    String?
+  author      User?    @relation("ProjectAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings          Listing[]
+  customers         Customer[]
+  customerInquiries CustomerInquiry[]
+  resources         ProjectResource[]
+  inventories       ProjectInventory[]
+}
+
+model ProjectResource {
+  id          String              @id @default(cuid())
+  projectId   String?
+  project     Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type        ProjectResourceType @default(OTHER)
+  title       String
+  url         String
+  description String?
+  isActive    Boolean             @default(true)
+  isPublic    Boolean             @default(true)
+  sortOrder   Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([projectId])
+  @@index([type])
+  @@index([isActive, isPublic])
+}
+
+model Listing {
+  id                String   @id @default(cuid())
+
+  // --- Định danh ---
+  unitCode          String   @unique          // Mã căn (vd: SP-2XIKPP)
+  title             String
+  slug              String   @unique
+
+  // --- Vị trí ---
+  projectId         String?
+  project           Project? @relation(fields: [projectId], references: [id])
+  block             String?                    // Tòa
+  floor             String?                    // Tầng
+  address           String?
+  provinceId        String?
+  province          Province? @relation(fields: [provinceId], references: [id])
+  districtId        String?
+  district          District? @relation(fields: [districtId], references: [id])
+
+  // --- Giao dịch & giá ---
+  transactionType   TransactionType             // Loại giao dịch: Bán / Thuê
+  salePrice         Float?                       // Giá bán (VNĐ)
+  rentPrice         Float?                       // Giá thuê (VNĐ/tháng)
+
+  // --- Đặc điểm căn ---
+  propertyType      PropertyType
+  area              Float                        // Diện tích (m2)
+  bedrooms          Int?                         // Số phòng ngủ
+  bathrooms         Int?                         // Số nhà vệ sinh
+  doorDirection      Direction?                  // Hướng cửa
+  balconyDirection    Direction?                 // Hướng ban công
+  view              String?                       // View (sông, biển, nội khu...)
+  furnitureStatus   FurnitureStatus?
+  legalStatus       LegalStatus?
+  unitStatus        UnitStatus @default(CHO_DUYET) // Trạng thái căn
+
+  // --- Nội dung ---
+  description       String?
+  images            String?                       // JSON array string các URL ảnh
+  verified          Boolean  @default(false)       // "Đã xác minh"
+  viewCount          Int      @default(0)
+
+  // --- Người đăng / thời gian ---
+  authorId          String
+  author            User     @relation("ListingAuthor", fields: [authorId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt            // Ngày cập nhật
+
+  favorites         Favorite[]
+  customerActivities Customer[] @relation("InterestedListing")
+  customerInquiries  CustomerInquiry[] @relation("InterestedListingInquiries")
+
+  @@index([transactionType, propertyType, unitStatus])
+  @@index([provinceId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  thumbnail   String?
+  content     String
+  authorId    String
+  author      User     @relation("NewsAuthor", fields: [authorId], references: [id])
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --------- CTV: Cộng tác viên ---------
+
+model Collaborator {
+  id                  String             @id @default(cuid())
+  fullName            String
+  phone               String             @unique
+  email               String?
+  publicReferralToken String             @unique // Ví dụ: CTV8K2P
+  status              CollaboratorStatus @default(ACTIVE)
+
+  userId              String?            @unique
+  user                User?              @relation("CollaboratorUser", fields: [userId], references: [id])
+
+  referredByUserId    String
+  referredByUser      User               @relation("ReferredByStaff", fields: [referredByUserId], references: [id])
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  inquiries           CustomerInquiry[]  @relation("InquiryCollaborator")
+
+  @@index([referredByUserId])
+  @@index([publicReferralToken])
+}
+
+// --------- CRM: Quản lý thông tin khách hàng & Nhu cầu ---------
+
+model Customer {
+  id                String   @id @default(cuid())
+
+  fullName          String
+  phone             String   @unique             // định danh chính, dùng để chống trùng lead
+  email             String?
+
+  source            LeadSource  @default(WEBSITE)   // Nguồn khách hàng ban đầu
+  demandType        DemandType  @default(TU_VAN)    // Loại nhu cầu ban đầu
+
+  propertyTypeInterest PropertyType?              // Loại BĐS quan tâm
+  areaInterest       String?                       // Khu vực quan tâm
+  budgetFrom         Float?
+  budgetTo           Float?
+
+  projectId          String?
+  project            Project? @relation(fields: [projectId], references: [id])
+  provinceId         String?
+  province           Province? @relation(fields: [provinceId], references: [id])
+  districtId         String?
+  district           District? @relation(fields: [districtId], references: [id])
+
+  interestedListingId String?
+  interestedListing   Listing? @relation("InterestedListing", fields: [interestedListingId], references: [id])
+
+  status             LeadStatus @default(MOI)        // Trạng thái chăm sóc
+  assignedToId        String?
+  assignedTo           User?    @relation("AssignedStaff", fields: [assignedToId], references: [id])
+
+  nextFollowUpAt        DateTime?                     // Ngày hẹn tiếp theo
+  note                   String?
+
+  createdAt              DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  activities               CustomerActivity[]
+  inquiries                CustomerInquiry[]
+
+  @@index([status])
+  @@index([assignedToId])
+}
+
+// Chi tiết từng lần phát sinh nhu cầu tư vấn (Lead Inquiry Request)
+model CustomerInquiry {
+  id                  String        @id @default(cuid())
+
+  customerId          String
+  customer            Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  source              LeadSource    @default(WEBSITE)
+  demandType          DemandType    @default(TU_VAN)
+  note                String?
+
+  projectId           String?
+  project             Project?      @relation(fields: [projectId], references: [id])
+  listingId           String?
+  listing             Listing?      @relation("InterestedListingInquiries", fields: [listingId], references: [id])
+
+  collaboratorId      String?
+  collaborator        Collaborator? @relation("InquiryCollaborator", fields: [collaboratorId], references: [id])
+
+  pageUrl             String?
+  referrerUrl         String?
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+
+  createdAt           DateTime      @default(now())
+
+  @@index([customerId])
+  @@index([collaboratorId])
+  @@index([createdAt])
+}
+
+// Lịch sử chăm sóc khách hàng (mỗi cuộc gọi / gặp / ghi chú)
+model CustomerActivity {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  authorId    String
+  author      User     @relation("ActivityAuthor", fields: [authorId], references: [id])
+  type        String   // "CALL" | "MEETING" | "NOTE" | "STATUS_CHANGE"
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+// --------- Bảng hàng Dự án (Project Inventory) ---------
+model ProjectInventory {
+  id               String           @id @default(cuid())
+
+  projectId        String
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  unitCode         String
+  block            String?          // THE SEA, THE HARBOUR...
+  floor            String?
+
+  salePrice        Float?           // Giá bán (VNĐ)
+
+  bedrooms         Int?
+  bathrooms        Int?
+  area             Float            // Diện tích (m2)
+
+  doorDirection    Direction?
+  balconyDirection Direction?
+
+  furnitureStatus  FurnitureStatus?
+  unitStatus       UnitStatus       @default(DANG_BAN)
+
+  description      String?
+  images           String?          // JSON array string các URL ảnh mặt bằng / căn hộ
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([projectId, unitCode])
+  @@index([projectId])
+  @@index([projectId, block])
+  @@index([projectId, unitStatus])
+}
+

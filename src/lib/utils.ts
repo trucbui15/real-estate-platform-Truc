@@ -1,0 +1,139 @@
+export function formatVND(value?: number | null) {
+  if (value === null || value === undefined) return "Thoả thuận";
+  if (value >= 1_000_000_000) {
+    const ty = value / 1_000_000_000;
+    return `${ty % 1 === 0 ? ty : ty.toFixed(2)} tỷ`;
+  }
+  if (value >= 1_000_000) {
+    const trieu = value / 1_000_000;
+    return `${trieu % 1 === 0 ? trieu : trieu.toFixed(1)} triệu`;
+  }
+  return value.toLocaleString("vi-VN") + " đ";
+}
+
+export function slugify(str: string) {
+  const map: Record<string, string> = {
+    à: "a", á: "a", ạ: "a", ả: "a", ã: "a", â: "a", ầ: "a", ấ: "a", ậ: "a", ẩ: "a", ẫ: "a",
+    ă: "a", ằ: "a", ắ: "a", ặ: "a", ẳ: "a", ẵ: "a",
+    è: "e", é: "e", ẹ: "e", ẻ: "e", ẽ: "e", ê: "e", ề: "e", ế: "e", ệ: "e", ể: "e", ễ: "e",
+    ì: "i", í: "i", ị: "i", ỉ: "i", ĩ: "i",
+    ò: "o", ó: "o", ọ: "o", ỏ: "o", õ: "o", ô: "o", ồ: "o", ố: "o", ộ: "o", ổ: "o", ỗ: "o",
+    ơ: "o", ờ: "o", ớ: "o", ợ: "o", ở: "o", ỡ: "o",
+    ù: "u", ú: "u", ụ: "u", ủ: "u", ũ: "u", ư: "u", ừ: "u", ứ: "u", ự: "u", ử: "u", ữ: "u",
+    ỳ: "y", ý: "y", ỵ: "y", ỷ: "y", ỹ: "y",
+    đ: "d",
+  };
+  return str
+    .toLowerCase()
+    .split("")
+    .map((c) => map[c] ?? c)
+    .join("")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export function parseImages(images?: string | null): string[] {
+  if (!images) return [];
+  if (typeof images === "string" && (images.startsWith("http://") || images.startsWith("https://") || images.startsWith("/"))) {
+    try {
+      const arr = JSON.parse(images);
+      return Array.isArray(arr) ? arr : [images];
+    } catch {
+      return [images];
+    }
+  }
+  try {
+    const arr = JSON.parse(images);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+export const LABELS = {
+  propertyType: {
+    CAN_HO: "Căn hộ",
+    OFFICETEL: "Officetel",
+    CONDOTEL: "Condotel",
+    PENTHOUSE: "Penthouse",
+    DUPLEX: "Duplex",
+    SHOPHOUSE_KHOI_DE: "Shophouse khối đế",
+    NHA_LIEN_KE: "Nhà liền kề",
+    DAT_NEN: "Đất nền",
+    SHOPHOUSE_LIEN_KE: "Shophouse liên kế",
+    BIET_THU_SONG_LAP: "Biệt thự song lập",
+    BIET_THU_DON_LAP: "Biệt thự đơn lập",
+    NHA_PHO: "Nhà phố",
+    DAT_NEN_DU_AN: "Đất nền dự án",
+    DAT_THO_CU: "Đất thổ cư",
+  },
+  direction: {
+    DONG: "Đông", TAY: "Tây", NAM: "Nam", BAC: "Bắc",
+    DONG_NAM: "Đông Nam", TAY_NAM: "Tây Nam", TAY_BAC: "Tây Bắc", DONG_BAC: "Đông Bắc",
+  },
+  furnitureStatus: {
+    FULL_NOI_THAT: "Full nội thất",
+    CO_BAN: "Nội thất cơ bản",
+    BAN_GIAO_THO: "Bàn giao thô",
+    CAN_TRONG: "Căn trống",
+  },
+  legalStatus: {
+    SO_DO_HONG: "Sổ đỏ/hồng",
+    HOP_DONG_MUA_BAN: "Hợp đồng mua bán",
+    DANG_CHO_SO: "Đang chờ sổ",
+    VI_BANG: "Vi bằng",
+  },
+  unitStatus: {
+    DANG_BAN: "Đang bán",
+    DANG_CHO_THUE: "Đang cho thuê",
+    DA_BAN: "Đã bán",
+    DA_CHO_THUE: "Đã cho thuê",
+    TAM_NGUNG: "Tạm ngưng",
+    CHO_DUYET: "Chờ duyệt",
+  },
+  transactionType: { SALE: "Bán", RENT: "Cho thuê" },
+  leadStatus: {
+    MOI: "Mới", DANG_LIEN_HE: "Đang liên hệ", DA_HEN_GAP: "Đã hẹn gặp",
+    DA_CHOT: "Đã chốt", KHONG_TIEM_NANG: "Không tiềm năng", DONG: "Đóng",
+  },
+  demandType: {
+    MUA: "Mua", THUE: "Thuê", KY_GUI_BAN: "Ký gửi bán",
+    KY_GUI_CHO_THUE: "Ký gửi cho thuê", TU_VAN: "Tư vấn",
+  },
+  leadSource: {
+    LISTING: "Tin đăng BĐS",
+    PROJECT: "Trang Dự án",
+    FOOTER: "Chân trang (Footer)",
+    CONTACT: "Trang Liên hệ",
+    CONSIGNMENT: "Ký gửi BĐS",
+    DIRECT: "Trực tiếp",
+    CTV: "Cộng tác viên (CTV)",
+    WEBSITE: "Website",
+    HOTLINE: "Hotline",
+    ZALO: "Zalo OA",
+    FACEBOOK: "Facebook",
+    GIOI_THIEU: "Giới thiệu",
+    KY_GUI: "Ký gửi BĐS",
+    KHAC: "Nguồn khác",
+  },
+  projectResourceType: {
+    WEBSITE: "Website",
+    TOUR_360: "Link 360°",
+    GENERAL_INFO: "Tổng thông tin",
+    DRIVER_TT: "Driver TT",
+    PRICE_LIST: "Bảng giá",
+    SALES_POLICY: "Chính sách bán hàng",
+    FLOOR_PLAN: "Mặt bằng",
+    BROCHURE: "Brochure",
+    LEGAL: "Pháp lý",
+    PROGRESS: "Tiến độ",
+    VIDEO: "Video",
+    DESIGN_FILE: "File thiết kế",
+    IMAGE: "Hình ảnh",
+    GOOGLE_DRIVE: "Google Drive",
+    OTHER: "Khác",
+  },
+} as const;
+

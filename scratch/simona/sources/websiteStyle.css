@@ -1,0 +1,203 @@
+.enter-password-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: #EBEBF1;
+    font-family: Roboto;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #0E233C;
+    z-index: 1;
+}
+
+.enter-password-box {
+    display: flex;
+    width: 400px;
+    max-width: 90%;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    margin: auto;
+    top: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: fit-content;
+    gap: 24px;
+}
+
+.enter-password-box input {
+    width: 100%;
+    height: 40px;
+    border-radius: 4px;
+    padding: 10px 12px;
+}
+
+.enter-password-box input[data-error="true"] {
+    border: 1px solid #F44336;
+}
+
+.enter-password-box input[data-error="true"]+label {
+    color: #F44336;
+    font-size: 12px;
+}
+
+.enter-password-box button {
+    width: 100%;
+    height: 40px;
+    background: #1C00C2;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 16px;
+}
+
+.enter-password-copyright {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    width: max-content;
+    margin: auto;
+    z-index: -1;
+}
+
+.ladi-wraper .ladi-headline .ladi-element,
+.ladi-wraper .ladi-paragraph .ladi-element {
+    position: relative;
+}
+
+.ladi-wraper .ladi-headline td,
+.ladi-wraper .ladi-paragraph td {
+    border: 1px solid;
+}
+
+.ladi-wraper .ladi-headline h1,
+.ladi-wraper .ladi-paragraph h1 {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline h2,
+.ladi-wraper .ladi-paragraph h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline h3,
+.ladi-wraper .ladi-paragraph h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline h4,
+.ladi-wraper .ladi-paragraph h4 {
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline h5,
+.ladi-wraper .ladi-paragraph h5 {
+    font-size: 0.83em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline h6,
+.ladi-wraper .ladi-paragraph h6 {
+    font-size: 0.67em;
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline blockquote,
+.ladi-wraper .ladi-paragraph blockquote {
+    border-left: 2px solid #ccc;
+    margin-left: 1.5rem;
+    padding-left: 1rem;
+}
+
+.ladi-wraper .ladi-headline strong,
+.ladi-wraper .ladi-paragraph strong {
+    font-weight: bold;
+}
+
+.ladi-wraper .ladi-headline em,
+.ladi-wraper .ladi-paragraph em {
+    font-style: italic;
+    line-height: 1.6em;
+}
+
+.ladi-wraper .ladi-headline a,
+.ladi-wraper .ladi-paragraph a {
+    text-decoration: underline;
+    color: inherit;
+}
+
+.ladi-wraper .ladi-headline img,
+.ladi-wraper .ladi-paragraph img {
+    max-width: 100%;
+    height: auto;
+    /*padding: 16px 0;*/
+    display: block;
+    margin: 0px auto;
+}
+
+.ladi-wraper .ladi-headline p,
+.ladi-wraper .ladi-paragraph p {
+    /*line-height: 1.6em;*/
+    /*margin-bottom: 20px;*/
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    unicode-bidi: isolate;
+}
+
+/*.ladi-wraper .ladi-headline p::after, .ladi-wraper .ladi-paragraph p::after {*/
+/*    content: "\A";*/
+/*    white-space: pre;*/
+/*}*/
+
+.ladi-wraper .ladi-headline ul,
+.ladi-wraper .ladi-paragraph ul {
+    display: block;
+    list-style-type: disc;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+}
+
+.ladi-wraper .ladi-headline ol,
+.ladi-wraper .ladi-paragraph ol {
+    display: block;
+    list-style-type: decimal;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+}
+
+.ladi-wraper .ladi-headline li,
+.ladi-wraper .ladi-paragraph li {
+    display: list-item;
+    text-align: -webkit-match-parent;
+    padding: 4px;
+    line-height: 1.6em;
+}
+
+@media only screen and (max-width: 768px) {
+
+    .ladi-wraper .ladi-headline iframe,
+    .ladi-wraper .ladi-paragraph iframe {
+        max-width: 100%;
+    }
+}
+
+figure.image {
+    text-align: center;
+}

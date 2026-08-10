@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: real_estate
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d real_estate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://app:app@db:5432/real_estate?schema=public"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-doi-chuoi-nay-thanh-random-string-that-manh}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
+      # Đặt true lần đầu chạy để có sẵn tài khoản demo + dữ liệu mẫu.
+      # Sau đó nên đổi lại false (hoặc bỏ) để tránh chạy seed lại mỗi lần restart.
+      RUN_SEED: "${RUN_SEED:-true}"
+    ports:
+      - "3000:3000"
+    volumes:
+      # Ảnh upload được lưu ở đây -> không mất khi container restart/deploy lại
+      - uploads_data:/app/public/uploads
+
+volumes:
+  db_data:
+  uploads_data:
