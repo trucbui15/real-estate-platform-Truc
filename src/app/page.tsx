@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import ListingCard from "@/components/ListingCard";
 import HomeSearchFilters from "@/components/HomeSearchFilters";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [featured, totalCount, popularProjects] = await Promise.all([
     prisma.listing.findMany({

@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Website các Dự án | Minh Dũng Land",
   description: "Tổng hợp các trang website chính thức thông tin các dự án bất động sản.",

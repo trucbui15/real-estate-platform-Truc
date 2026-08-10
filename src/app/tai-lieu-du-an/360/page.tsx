@@ -3,6 +3,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import Tour360Client from "./Tour360Client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Link 360° các Dự án | Minh Dũng Land",
   description: "Trải nghiệm thực tế ảo 360 degree căn hộ mẫu, toàn cảnh thành phố Quy Nhơn và sa bàn các dự án bất động sản.",

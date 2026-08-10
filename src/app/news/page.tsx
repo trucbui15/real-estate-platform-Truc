@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewsPage() {
   const news = await prisma.news.findMany({ where: { published: true }, orderBy: { createdAt: "desc" } });
 
