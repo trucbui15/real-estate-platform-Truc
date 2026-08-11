@@ -28,24 +28,28 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8 grid gap-6 py-8 md:grid-cols-[220px_1fr]">
-      <aside className="md:sticky md:top-20 md:h-fit">
-
-        <div className="card p-4">
-          <div className="text-xs text-brand-300">Đăng nhập với vai trò</div>
-          <div className="font-display text-base font-semibold text-brand-900">{roleLabel}</div>
+    <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8 py-6 md:py-8 grid gap-6 md:grid-cols-[220px_1fr]">
+      <aside className="md:sticky md:top-20 md:h-fit space-y-3">
+        <div className="card p-3.5 flex items-center justify-between md:block">
+          <div className="text-xs font-medium text-slate-500">Vai trò của bạn:</div>
+          <div className="font-bold text-sm md:text-base text-slate-900">{roleLabel}</div>
         </div>
-        <nav className="card mt-3 p-2">
+
+        <nav className="card p-2 flex md:flex-col overflow-x-auto custom-scrollbar gap-1 shrink-0">
           {links
             .filter((l) => l.show)
             .map((l) => (
-              <Link key={l.href} href={l.href} className="block rounded-md px-3 py-2 text-sm font-medium text-brand-700 hover:bg-sand-100">
+              <Link
+                key={l.href}
+                href={l.href}
+                className="shrink-0 rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#2563EB] transition whitespace-nowrap"
+              >
                 {l.label}
               </Link>
             ))}
         </nav>
       </aside>
-      <div>{children}</div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

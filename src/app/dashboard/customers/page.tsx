@@ -79,23 +79,23 @@ export default function CustomersPage() {
           : "Toàn bộ khách hàng trên hệ thống. Bạn có thể chọn phân công trực tiếp tại cột Phụ trách."}
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2.5">
         <input
-          className="input max-w-xs"
+          className="input w-full sm:max-w-xs text-sm"
           placeholder="Tìm theo tên hoặc SĐT..."
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && load()}
         />
-        <select className="input max-w-[200px]" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="input w-full sm:max-w-[200px] text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tất cả trạng thái</option>
           {Object.entries(LABELS.leadStatus).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <button onClick={load} className="btn-secondary">Lọc</button>
+        <button onClick={load} className="btn-secondary w-full sm:w-auto text-sm">Lọc</button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
-        <table className="w-full text-left text-sm">
+      <div className="mt-4 overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
+        <table className="w-full min-w-[750px] text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-600 border-b border-slate-200">
             <tr>
               <th className="px-4 py-3.5">Khách hàng</th>

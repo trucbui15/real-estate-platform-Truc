@@ -673,8 +673,8 @@ export default function DashboardProjectsPage() {
           </div>
 
           {/* Table hiển thị danh sách Tài liệu */}
-          <div className="overflow-x-auto rounded-lg border border-sand-100 bg-white">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200 bg-white shadow-2xs">
+            <table className="w-full min-w-[850px] text-left text-sm">
               <thead className="bg-sand-100 text-xs uppercase text-brand-700">
                 <tr>
                   <th className="px-4 py-3">Loại</th>

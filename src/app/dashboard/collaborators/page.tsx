@@ -92,8 +92,8 @@ export default function CollaboratorsDashboardPage() {
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
+        <table className="w-full min-w-[850px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
               <th className="px-4 py-3.5">Họ tên & Liên hệ</th>

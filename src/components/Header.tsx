@@ -179,132 +179,141 @@ export default function Header() {
 
       {/* MOBILE DRAWER */}
       {mobileOpen && (
-        <div className="fixed inset-x-0 top-[68px] z-50 bg-white border-b border-slate-200 p-4 lg:hidden shadow-lg space-y-3 max-h-[calc(100vh-70px)] overflow-y-auto">
-          <nav className="flex flex-col space-y-1 text-[14px]">
-            {/* ACCORDION 1: MUA BÁN / CHO THUÊ */}
-            <div className="rounded-xl border border-slate-100 overflow-hidden">
-              <button
-                onClick={() => setMobileAccordion(mobileAccordion === "listings" ? null : "listings")}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
-                  isListingsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>Mua bán / Cho thuê</span>
-                <span className="text-xs">{mobileAccordion === "listings" ? "▲" : "▼"}</span>
-              </button>
+        <>
+          {/* BACKDROP OVERLAY */}
+          <div
+            className="fixed inset-0 top-[68px] z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
 
-              {mobileAccordion === "listings" && (
-                <div className="bg-slate-50 p-2 space-y-1 border-t border-slate-100">
-                  <Link
-                    href="/listings?transactionType=SALE"
-                    onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
-                  >
-                    Mua bán
-                  </Link>
-                  <Link
-                    href="/listings?transactionType=RENT"
-                    onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
-                  >
-                    Cho thuê
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* ACCORDION 2: DỰ ÁN */}
-            <div className="rounded-xl border border-slate-100 overflow-hidden">
-              <button
-                onClick={() => setMobileAccordion(mobileAccordion === "projects" ? null : "projects")}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
-                  isProjectsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>Dự án</span>
-                <span className="text-xs">{mobileAccordion === "projects" ? "▲" : "▼"}</span>
-              </button>
-
-              {mobileAccordion === "projects" && (
-                <div className="bg-slate-50 p-2 space-y-1 border-t border-slate-100">
-                  <Link
-                    href="/projects"
-                    onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
-                  >
-                    Bảng hàng các dự án
-                  </Link>
-                  <Link
-                    href="/tai-lieu-du-an"
-                    onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
-                  >
-                    Tài liệu dự án
-                  </Link>
-                  <Link
-                    href="/tai-lieu-du-an/360"
-                    onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
-                  >
-                    Sa bàn / 360° dự án
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* DIRECT LINK: KÝ GỬI */}
-            <Link
-              href="/ky-gui"
-              onClick={() => setMobileOpen(false)}
-              className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
-                isKyGuiActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Ký gửi BĐS
-            </Link>
-
-            {/* DIRECT LINK: TIN TỨC */}
-            <Link
-              href="/news"
-              onClick={() => setMobileOpen(false)}
-              className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
-                isNewsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Tin tức
-            </Link>
-          </nav>
-
-          <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
-            {session ? (
-              <>
-                {isBackoffice && (
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setMobileOpen(false)}
-                    className="btn-primary w-full text-center text-[14px]"
-                  >
-                    Bảng điều khiển
-                  </Link>
-                )}
+          {/* DRAWER CONTENT */}
+          <div className="fixed inset-x-0 top-[68px] z-50 bg-white border-b border-slate-200 p-4 lg:hidden shadow-2xl space-y-3 max-h-[calc(100vh-70px)] overflow-y-auto w-full">
+            <nav className="flex flex-col space-y-1 text-[14px]">
+              {/* ACCORDION 1: MUA BÁN / CHO THUÊ */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="btn-outline w-full text-center text-[14px]"
+                  onClick={() => setMobileAccordion(mobileAccordion === "listings" ? null : "listings")}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
+                    isListingsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                  }`}
                 >
-                  Đăng xuất ({session.user?.name})
+                  <span>Mua bán / Cho thuê</span>
+                  <span className="text-xs">{mobileAccordion === "listings" ? "▲" : "▼"}</span>
                 </button>
-              </>
-            ) : (
+
+                {mobileAccordion === "listings" && (
+                  <div className="bg-slate-50 p-2 space-y-1 border-t border-slate-100">
+                    <Link
+                      href="/listings?transactionType=SALE"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      Mua bán
+                    </Link>
+                    <Link
+                      href="/listings?transactionType=RENT"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      Cho thuê
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* ACCORDION 2: DỰ ÁN */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <button
+                  onClick={() => setMobileAccordion(mobileAccordion === "projects" ? null : "projects")}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
+                    isProjectsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>Dự án</span>
+                  <span className="text-xs">{mobileAccordion === "projects" ? "▲" : "▼"}</span>
+                </button>
+
+                {mobileAccordion === "projects" && (
+                  <div className="bg-slate-50 p-2 space-y-1 border-t border-slate-100">
+                    <Link
+                      href="/projects"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      Bảng hàng các dự án
+                    </Link>
+                    <Link
+                      href="/tai-lieu-du-an"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      Tài liệu dự án
+                    </Link>
+                    <Link
+                      href="/tai-lieu-du-an/360"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      Sa bàn / 360° dự án
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* DIRECT LINK: KÝ GỬI */}
               <Link
-                href="/login"
+                href="/ky-gui"
                 onClick={() => setMobileOpen(false)}
-                className="btn-primary w-full text-center text-[14px]"
+                className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
+                  isKyGuiActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                }`}
               >
-                Đăng nhập
+                Ký gửi BĐS
               </Link>
-            )}
+
+              {/* DIRECT LINK: TIN TỨC */}
+              <Link
+                href="/news"
+                onClick={() => setMobileOpen(false)}
+                className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
+                  isNewsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                Tin tức
+              </Link>
+            </nav>
+
+            <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
+              {session ? (
+                <>
+                  {isBackoffice && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="btn-primary w-full text-center text-[14px] justify-center py-2.5"
+                    >
+                      Bảng điều khiển
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="btn-outline w-full text-center text-[14px] flex items-center justify-center py-2.5 px-3"
+                  >
+                    <span className="truncate max-w-full">Đăng xuất ({session.user?.name})</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn-primary w-full text-center text-[14px] justify-center py-2.5"
+                >
+                  Đăng nhập
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

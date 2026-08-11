@@ -39,15 +39,15 @@ export default function DashboardListingsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold text-brand-900">Tin đăng bất động sản</h1>
-        <Link href="/dashboard/listings/new" className="btn-primary text-sm">+ Đăng tin mới</Link>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">Tin đăng bất động sản</h1>
+        <Link href="/dashboard/listings/new" className="btn-primary text-xs sm:text-sm self-start sm:self-auto">+ Đăng tin mới</Link>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-sand-100 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-sand-100 text-xs uppercase text-brand-700">
+      <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <table className="w-full min-w-[700px] text-left text-sm">
+          <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
               <th className="px-4 py-3">Mã căn</th>
               <th className="px-4 py-3">Tiêu đề BĐS</th>

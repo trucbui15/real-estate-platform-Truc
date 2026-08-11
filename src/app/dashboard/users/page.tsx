@@ -20,7 +20,7 @@ export default function UsersPage() {
 
   // Create Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "STAFF" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "STAFF", referralCode: "" });
 
   // Reset Password Modal State
   const [resetModalUser, setResetModalUser] = useState<any | null>(null);
@@ -61,7 +61,7 @@ export default function UsersPage() {
     }
     setSuccess("Tạo tài khoản mới thành công!");
     setShowCreateModal(false);
-    setForm({ name: "", email: "", phone: "", password: "", role: "STAFF" });
+    setForm({ name: "", email: "", phone: "", password: "", role: "STAFF", referralCode: "" });
     load();
   }
 
@@ -193,8 +193,8 @@ export default function UsersPage() {
       </div>
 
       {/* FULL WIDTH SPACIOUS USERS TABLE */}
-      <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-        <table className="w-full text-left text-[14px]">
+      <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+        <table className="w-full min-w-[850px] text-left text-[14px]">
           <thead className="bg-[#F8FAFC] text-[13px] font-semibold text-[#64748B] border-b border-[#E2E8F0]">
             <tr>
               <th className="px-5 py-4 whitespace-nowrap">Họ tên</th>
@@ -306,6 +306,10 @@ export default function UsersPage() {
               <div>
                 <label className="label">Mật khẩu khởi tạo *</label>
                 <input className="input" type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Tối thiểu 6 ký tự" />
+              </div>
+              <div>
+                <label className="label">Mã giới thiệu (Ref) — Tùy chỉnh (Tự tạo nếu để trống)</label>
+                <input className="input uppercase" value={form.referralCode} onChange={(e) => setForm({ ...form, referralCode: e.target.value })} placeholder="VD: MD_TRUC, MD_DUNG, MD_01..." />
               </div>
               <div>
                 <label className="label">Vai trò hệ thống *</label>

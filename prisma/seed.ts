@@ -18,6 +18,7 @@ async function main() {
         passwordHash: pass,
         role: "ADMIN",
         phone: "0393118322",
+        referralCode: "MD_T01",
         active: true,
       },
     });
