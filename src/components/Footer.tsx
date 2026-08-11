@@ -88,10 +88,12 @@ export default function Footer() {
           {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU & DOANH NGHIỆP */}
           <div className="space-y-5">
             <div>
-              <div className="font-display text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                <span className="rounded-xl bg-primary-600 px-2.5 py-1 text-white text-sm font-black shadow-md shadow-primary-500/30">
-                  MD
-                </span>
+              <div className="font-display text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
+                <img
+                  src="/logo.png"
+                  alt="Minh Dũng Land Logo"
+                  className="h-9 w-9 object-contain rounded-lg shadow-md"
+                />
                 <span>MINH DŨNG LAND</span>
               </div>
               <div className="mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider">

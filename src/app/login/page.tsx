@@ -53,11 +53,17 @@ function LoginForm() {
 
   return (
     <div className="container-page flex min-h-[70vh] items-center justify-center py-12">
-      <form onSubmit={onSubmit} className="card w-full max-w-md p-8 shadow-sm">
-        <h1 className="font-display text-2xl font-bold text-slate-900">Đăng nhập hệ thống</h1>
-        <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">
-          Đăng nhập dành cho Nhân sự nội bộ (Admin, Quản lý, Nhân viên) & Cộng tác viên (CTV) Minh Dũng Land.
-        </p>
+      <form onSubmit={onSubmit} className="card w-full max-w-md p-8 shadow-sm space-y-4">
+        <div className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="Minh Dũng Land Logo" className="h-10 w-10 object-contain rounded-lg shadow-xs" />
+          <span className="font-extrabold text-xl text-slate-900 tracking-tight">Minh Dũng Land</span>
+        </div>
+        <div>
+          <h1 className="font-display text-2xl font-bold text-slate-900">Đăng nhập hệ thống</h1>
+          <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+            Đăng nhập dành cho Nhân sự nội bộ (Admin, Quản lý, Nhân viên) & Cộng tác viên (CTV) Minh Dũng Land.
+          </p>
+        </div>
 
         {emailParam && (
           <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs font-semibold text-blue-800">

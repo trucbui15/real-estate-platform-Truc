@@ -25,9 +25,11 @@ export default function Header() {
         {/* LEFT: BRAND LOGO */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2.5 font-bold text-lg md:text-xl text-slate-900">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2563EB] text-white font-extrabold text-sm shadow-xs">
-              MD
-            </span>
+            <img
+              src="/logo.png"
+              alt="Minh Dũng Land Logo"
+              className="h-9 w-9 object-contain rounded-lg shadow-xs"
+            />
             <span className="font-bold tracking-tight text-slate-900">Minh Dũng Land</span>
           </Link>
         </div>
