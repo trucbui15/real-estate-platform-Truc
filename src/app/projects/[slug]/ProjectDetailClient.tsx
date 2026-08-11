@@ -94,6 +94,7 @@ export default function ProjectDetailClient({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [directionFilter, setDirectionFilter] = useState<string>("ALL");
   const [searchUnitCode, setSearchUnitCode] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   const [inventoryList, setInventoryList] = useState<any[]>(initialInventory);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -687,49 +688,77 @@ export default function ProjectDetailClient({
               </div>
             </div>
 
-            {/* SECONDARY DROPDOWN FILTERS */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 text-[12px]">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500">Trạng thái:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-800 outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả trạng thái</option>
-                  <option value="DANG_BAN">🟢 Còn hàng</option>
-                  <option value="DA_BAN">🔴 Đã bán</option>
-                  <option value="DANG_CHO_THUE">🔵 Đang cho thuê</option>
-                  <option value="TAM_NGUNG">🟠 Tạm ngưng</option>
-                </select>
+            {/* SECONDARY DROPDOWN FILTERS & VIEW MODE TOGGLE */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-[12px]">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Trạng thái:</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-800 outline-none cursor-pointer"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="DANG_BAN">🟢 Còn hàng</option>
+                    <option value="DA_BAN">🔴 Đã bán</option>
+                    <option value="DANG_CHO_THUE">🔵 Đang cho thuê</option>
+                    <option value="TAM_NGUNG">🟠 Tạm ngưng</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Hướng:</span>
+                  <select
+                    value={directionFilter}
+                    onChange={(e) => setDirectionFilter(e.target.value)}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-800 outline-none cursor-pointer"
+                  >
+                    <option value="ALL">Tất cả hướng</option>
+                    {Object.entries(directionLabel).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {hasActiveFilters && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                  >
+                    ✕ Bỏ lọc
+                  </button>
+                )}
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500">Hướng:</span>
-                <select
-                  value={directionFilter}
-                  onChange={(e) => setDirectionFilter(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-800 outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả hướng</option>
-                  {Object.entries(directionLabel).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </div>
-
-              {hasActiveFilters && (
+              {/* VIEW MODE TOGGLE BUTTONS */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
-                  onClick={resetFilters}
-                  className="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline ml-auto cursor-pointer"
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
+                    viewMode === "table"
+                      ? "bg-white text-[#2563EB] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
                 >
-                  ✕ Bỏ lọc
+                  📋 Dạng bảng hàng (1 hàng 1 căn)
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
+                    viewMode === "grid"
+                      ? "bg-white text-[#2563EB] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  🎴 Dạng thẻ
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* INVENTORY CARDS GRID (STRICT HIERARCHY & COLOR CONTROL) */}
+          {/* INVENTORY DISPLAY */}
           {filteredInventory.length === 0 ? (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 space-y-2">
               <div className="text-2xl">📦</div>
@@ -751,7 +780,136 @@ export default function ProjectDetailClient({
                 </button>
               )}
             </div>
+          ) : viewMode === "table" ? (
+            /* 1 HÀNG 1 CĂN HỘ (PROFESSIONAL DATA TABLE VIEW) */
+            <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <table className="w-full min-w-[900px] text-left text-[13px]">
+                <thead className="bg-slate-50 text-[12px] font-bold uppercase text-slate-600 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3.5">Mã căn</th>
+                    <th className="px-4 py-3.5">Tòa & Tầng</th>
+                    <th className="px-4 py-3.5">Cấu trúc</th>
+                    <th className="px-4 py-3.5">Diện tích</th>
+                    <th className="px-4 py-3.5">Hướng cửa</th>
+                    <th className="px-4 py-3.5">Giá bán niêm yết</th>
+                    <th className="px-4 py-3.5">Trạng thái</th>
+                    <th className="px-4 py-3.5">Sơ đồ / Tài liệu</th>
+                    {canEditProduct && <th className="px-4 py-3.5 text-right">Quản trị</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredInventory.map((unit) => {
+                    const isSold = unit.unitStatus === "DA_BAN" || unit.unitStatus === "DA_CHO_THUE";
+                    const unitImages = parseImagesList(unit.images);
+                    const hasImage = unitImages.length > 0;
+                    const primaryImg = hasImage ? unitImages[0] : null;
+                    const { priceSheetUrl } = extractPriceSheetUrl(unit.description);
+                    const statusMeta = unitStatusLabel[unit.unitStatus] || {
+                      label: unit.unitStatus,
+                      style: "bg-slate-100 text-slate-700",
+                      badgeStyle: "bg-slate-100 text-slate-700 border-slate-200",
+                    };
+
+                    return (
+                      <tr key={unit.id} className={`hover:bg-slate-50/80 transition ${isSold ? "bg-slate-50/40" : ""}`}>
+                        {/* 1. MÃ CĂN */}
+                        <td className="px-4 py-3.5">
+                          <code className="font-black text-[13px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                            {unit.unitCode}
+                          </code>
+                        </td>
+
+                        {/* 2. TÒA & TẦNG */}
+                        <td className="px-4 py-3.5 text-slate-800 font-semibold">
+                          🏢 {unit.block || "The Sea"} {unit.floor ? `· Tầng ${unit.floor}` : ""}
+                        </td>
+
+                        {/* 3. CẤU TRÚC */}
+                        <td className="px-4 py-3.5 text-slate-700">
+                          🛏️ {unit.bedrooms || 0} PN · {unit.bathrooms || 0} WC
+                        </td>
+
+                        {/* 4. DIỆN TÍCH */}
+                        <td className="px-4 py-3.5 text-slate-800 font-bold">
+                          📐 {unit.area} m²
+                        </td>
+
+                        {/* 5. HƯỚNG CỬA */}
+                        <td className="px-4 py-3.5 text-slate-600">
+                          {unit.doorDirection ? `🧭 ${directionLabel[unit.doorDirection] || unit.doorDirection}` : "—"}
+                        </td>
+
+                        {/* 6. GIÁ BÁN NIÊM YẾT */}
+                        <td className="px-4 py-3.5">
+                          <span className="font-black text-[#2563EB] text-[15px]">
+                            {formatPrice(unit)}
+                          </span>
+                        </td>
+
+                        {/* 7. TRẠNG THÁI */}
+                        <td className="px-4 py-3.5">
+                          <span className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border ${statusMeta.badgeStyle}`}>
+                            {statusMeta.label}
+                          </span>
+                        </td>
+
+                        {/* 8. SƠ ĐỒ & BẢNG GIÁ */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2">
+                            {hasImage && primaryImg && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImage(primaryImg)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-2 py-0.5 rounded-md transition cursor-pointer"
+                              >
+                                🖼️ Xem sơ đồ
+                              </button>
+                            )}
+                            {priceSheetUrl && (
+                              <a
+                                href={priceSheetUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-2 py-0.5 rounded-md transition"
+                              >
+                                📄 Bảng giá
+                              </a>
+                            )}
+                            {!hasImage && !priceSheetUrl && <span className="text-slate-400 text-xs">—</span>}
+                          </div>
+                        </td>
+
+                        {/* 9. QUẢN TRỊ (ADMIN/STAFF) */}
+                        {canEditProduct && (
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <select
+                                value={unit.unitStatus}
+                                onChange={(e) => quickUpdateStatus(unit, e.target.value)}
+                                className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
+                              >
+                                <option value="DANG_BAN">🟢 Còn hàng</option>
+                                <option value="DA_BAN">🔴 Đã bán</option>
+                                <option value="DANG_CHO_THUE">🔵 Đang cho thuê</option>
+                                <option value="TAM_NGUNG">🟠 Tạm ngưng</option>
+                              </select>
+                              <button
+                                onClick={() => startEditUnit(unit)}
+                                className="font-bold text-blue-600 hover:text-blue-800 text-[12px] px-1"
+                              >
+                                ✏️ Sửa
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
+            /* DẠNG THẺ (GRID VIEW) - CHỈ HIỂN THỊ KHUNG ẢNH NẾU CÓ ẢNH THẬT */
             <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredInventory.map((unit) => {
                 const isSold = unit.unitStatus === "DA_BAN" || unit.unitStatus === "DA_CHO_THUE";
@@ -769,7 +927,7 @@ export default function ProjectDetailClient({
                 return (
                   <div
                     key={unit.id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 hover:border-blue-200/80 bg-white p-3.5 shadow-xs hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:-translate-y-[1px] transition-all duration-300 ease-out overflow-hidden space-y-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 cursor-default"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 hover:border-blue-200/80 bg-white p-4 shadow-xs hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:-translate-y-[1px] transition-all duration-300 ease-out overflow-hidden space-y-2.5 cursor-default"
                   >
                     {/* STAMP OVERLAY FOR SOLD UNITS */}
                     {isSold && (
@@ -778,40 +936,34 @@ export default function ProjectDetailClient({
                       </div>
                     )}
 
-                    {/* HIERARCHY POINT 1: FLOORPLAN IMAGE */}
-                    <div
-                      onClick={() => primaryImg && setPreviewImage(primaryImg)}
-                      className={`relative w-full h-[130px] rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center p-1.5 transition-colors duration-300 ${
-                        hasImage
-                          ? "cursor-pointer bg-white group-hover:bg-slate-50/40"
-                          : "bg-slate-50 cursor-default"
-                      }`}
-                    >
-                      {hasImage && primaryImg ? (
+                    {/* ONLY SHOW IMAGE CONTAINER IF IMAGE EXISTS */}
+                    {hasImage && primaryImg && (
+                      <div
+                        onClick={() => setPreviewImage(primaryImg)}
+                        className="relative w-full h-[140px] rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center p-1.5 bg-slate-50 cursor-pointer hover:bg-slate-100 transition"
+                      >
                         <img
                           src={primaryImg}
                           alt={`Sơ đồ căn ${unit.unitCode}`}
-                          className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 ease-out group-hover:scale-[1.015]"
+                          className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                         />
-                      ) : (
-                        <div className="text-center text-[11px] text-slate-400 font-medium">
-                          Chưa có ảnh mặt bằng
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    {/* HIERARCHY POINT 2 & 3: GIÁ & MÃ CĂN */}
-                    <div className="flex items-center justify-between gap-2">
+                    {/* GIÁ & MÃ CĂN */}
+                    <div className="flex items-center justify-between gap-2 pt-1">
                       <div className="font-black text-[#2563EB] text-[18px] tracking-tight">
                         {formatPrice(unit)}
                       </div>
 
-                      <div className="font-extrabold text-slate-900 group-hover:text-blue-950 transition-colors duration-300 text-[16px] tracking-tight font-sans">
-                        {unit.unitCode}
+                      <div className="font-extrabold text-slate-900 text-[16px] tracking-tight">
+                        <code className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
+                          {unit.unitCode}
+                        </code>
                       </div>
                     </div>
 
-                    {/* HIERARCHY POINT 4: TÒA · TẦNG */}
+                    {/* TÒA · TẦNG */}
                     <div className="text-[12px] font-semibold text-slate-600 flex items-center gap-1">
                       <span>🏢</span>
                       <span>
@@ -819,16 +971,16 @@ export default function ProjectDetailClient({
                       </span>
                     </div>
 
-                    {/* HIERARCHY POINT 5: MÔ TẢ THÔNG SỐ */}
+                    {/* MÔ TẢ THÔNG SỐ */}
                     <div className="flex flex-wrap gap-1 text-[11px]">
                       {unit.bedrooms && (
                         <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
                           🛏️ {unit.bedrooms} PN
                         </span>
                       )}
-                      {unit.netArea && (
+                      {unit.area && (
                         <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
-                          📐 {unit.netArea} m²
+                          📐 {unit.area} m²
                         </span>
                       )}
                       {unit.doorDirection && (
@@ -838,7 +990,7 @@ export default function ProjectDetailClient({
                       )}
                     </div>
 
-                    {/* HIERARCHY POINT 6: TRẠNG THÁI BADGE & ACTIONS */}
+                    {/* TRẠNG THÁI BADGE & ACTIONS */}
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                       <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${statusMeta.badgeStyle}`}>
                         {statusMeta.label}
