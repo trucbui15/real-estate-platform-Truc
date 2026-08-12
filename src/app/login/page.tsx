@@ -32,8 +32,8 @@ function LoginForm() {
     setLoading(true);
     setError("");
     const res = await signIn("credentials", {
-      email,
-      password,
+      email: email.trim(),
+      password: password.trim(),
       redirect: false,
     });
     setLoading(false);
