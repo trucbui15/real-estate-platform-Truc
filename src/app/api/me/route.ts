@@ -20,3 +20,35 @@ export async function GET() {
 
   return NextResponse.json(user);
 }
+
+export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.id) {
+    return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  }
+
+  try {
+    const { name, phone } = await req.json();
+
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: "Vui lòng nhập họ và tên" }, { status: 400 });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        name: name.trim(),
+        ...(phone !== undefined ? { phone: phone.trim() } : {}),
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true },
+    });
+
+    return NextResponse.json({
+      message: "Cập nhật thông tin cá nhân thành công!",
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    return NextResponse.json({ error: "Có lỗi xảy ra khi cập nhật thông tin" }, { status: 500 });
+  }
+}

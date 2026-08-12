@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import UserProfileManager from "@/components/UserProfileManager";
+
+
+
 
 const DEMAND_LABELS: Record<string, { label: string; style: string }> = {
   MUA: { label: "🏷️ Quan tâm Mua BĐS", style: "bg-emerald-50 text-emerald-800 border-emerald-200" },
@@ -117,6 +121,13 @@ export default async function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* CHỨC NĂNG QUẢN LÝ THÔNG TIN CÁ NHÂN & ĐỔI MẬT KHẨU */}
+      <UserProfileManager
+        initialName={dbUser?.name || ""}
+        initialPhone={dbUser?.phone || ""}
+        initialEmail={dbUser?.email || ""}
+      />
 
       {/* LỊCH SỬ YÊU CẦU ĐÃ GỬI */}
       <section className="space-y-4">
