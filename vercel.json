@@ -4,13 +4,24 @@
       "source": "/:path*",
       "has": [
         {
+          "type": "host",
+          "value": "minhdungland.com.vn"
+        }
+      ],
+      "permanent": true,
+      "destination": "https://www.minhdungland.com.vn/:path*"
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
           "type": "header",
           "key": "x-forwarded-proto",
           "value": "http"
         }
       ],
       "permanent": true,
-      "destination": "https://minhdungland.com.vn/:path*"
+      "destination": "https://www.minhdungland.com.vn/:path*"
     }
   ]
 }

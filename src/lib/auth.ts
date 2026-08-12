@@ -20,20 +20,40 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-        if (!user || !user.active) return null;
+        try {
+          const rawEmail = credentials.email.trim();
+          const rawPassword = credentials.password.trim();
 
-        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!valid) return null;
+          const user = await prisma.user.findFirst({
+            where: {
+              email: {
+                equals: rawEmail,
+                mode: "insensitive",
+              },
+            },
+          });
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        } as any;
+          if (!user || !user.active) {
+            console.warn(`[AUTH] User not found or inactive: ${rawEmail}`);
+            return null;
+          }
+
+          const valid = await bcrypt.compare(rawPassword, user.passwordHash);
+          if (!valid) {
+            console.warn(`[AUTH] Password mismatch for: ${rawEmail}`);
+            return null;
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          } as any;
+        } catch (error) {
+          console.error("[AUTH] Database error during authorize:", error);
+          return null;
+        }
       },
     }),
   ],
