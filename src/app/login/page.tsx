@@ -43,13 +43,8 @@ function LoginForm() {
     }
 
     const callback = params.get("callbackUrl");
-    // Reload page to let useSession useEffect trigger smart role-based redirect
-    router.refresh();
-    if (callback && callback !== "/" && !callback.includes("/dashboard")) {
-      router.push(callback);
-    } else {
-      router.push("/dashboard");
-    }
+    const targetUrl = callback && callback !== "/" ? callback : "/dashboard";
+    window.location.href = targetUrl;
   }
 
   return (

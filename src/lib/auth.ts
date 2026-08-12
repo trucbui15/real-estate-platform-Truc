@@ -3,9 +3,40 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+const useSecure = process.env.NODE_ENV === "production";
+const cookiePrefix = useSecure ? "__Secure-" : "";
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "minhdungland-secret-key-2026",
   session: { strategy: "jwt" },
+  useSecureCookies: useSecure,
+  cookies: {
+    sessionToken: {
+      name: `${cookiePrefix}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecure,
+      },
+    },
+    callbackUrl: {
+      name: `${cookiePrefix}next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: useSecure,
+      },
+    },
+    csrfToken: {
+      name: `${cookiePrefix}next-auth.csrf-token`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: useSecure,
+      },
+    },
+  },
   pages: {
     signIn: "/login",
     error: "/login",
