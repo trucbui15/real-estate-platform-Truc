@@ -82,50 +82,67 @@ export default function Footer() {
   }
 
   return (
-    <footer className="mt-20 border-t border-gray-100 bg-slate-950 text-slate-300">
-      <div className="container-page py-14">
-        <div className="grid gap-12 lg:grid-cols-3">
-          {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU & DOANH NGHIỆP */}
-          <div className="space-y-5">
+    <footer className="mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-50 via-slate-100/60 to-slate-100 text-slate-700 relative overflow-hidden">
+      {/* Decorative top accent line */}
+      <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-blue-600 to-amber-500" />
+
+      <div className="container-page py-16">
+        <div className="grid gap-12 lg:grid-cols-12 items-start">
+          {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU & DOANH NGHIỆP (4 cols) */}
+          <div className="lg:col-span-4 space-y-6">
             <div>
-              <div className="font-display text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
+              <Link href="/" className="inline-flex items-center gap-3 group">
                 <img
                   src="/logo.png"
                   alt="Minh Dũng Land Logo"
-                  className="h-9 w-9 object-contain rounded-lg shadow-md"
+                  className="h-12 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
                 />
-                <span>MINH DŨNG LAND</span>
-              </div>
-              <div className="mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div>
+                  <div className="font-display text-xl font-extrabold tracking-tight text-slate-900">
+                    MINH DŨNG LAND
+                  </div>
+                  <div className="text-[11px] font-bold text-amber-600 tracking-wider uppercase">
+                    Bất Động Sản Quy Nhơn
+                  </div>
+                </div>
+              </Link>
+              <div className="mt-3 text-xs font-semibold text-slate-500">
                 {CONTACT_CONFIG.companyName}
               </div>
             </div>
 
-            <ul className="space-y-3 text-xs text-slate-400 leading-relaxed">
-              <li>
-                <strong className="text-slate-200">Mã số thuế:</strong> {CONTACT_CONFIG.taxId}
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Nền tảng mua bán, cho thuê căn hộ và nhà đất xác thực tại Quy Nhơn. Đồng hành cùng khách hàng và cộng tác viên minh bạch, hiệu quả.
+            </p>
+
+            <ul className="space-y-2.5 text-xs text-slate-600">
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">📍 Địa chỉ:</span>
+                <span>{CONTACT_CONFIG.address}</span>
               </li>
-              <li>
-                <strong className="text-slate-200">Địa chỉ:</strong> {CONTACT_CONFIG.address}
+              <li className="flex items-center gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">📋 Mã số thuế:</span>
+                <span>{CONTACT_CONFIG.taxId}</span>
               </li>
-              <li>
-                <strong className="text-slate-200">Zalo OA:</strong>{" "}
+              <li className="flex items-center gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">💬 Zalo OA:</span>
                 <a
                   href={CONTACT_CONFIG.zaloOAUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-bold text-blue-400 hover:text-white hover:underline transition"
+                  className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 hover:underline transition"
                 >
-                  {CONTACT_CONFIG.zaloOAName} ↗
+                  {CONTACT_CONFIG.zaloOAName}
+                  <span className="text-[10px]">↗</span>
                 </a>
               </li>
-              <li>
-                <strong className="text-slate-200">Website:</strong>{" "}
+              <li className="flex items-center gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">🌐 Website:</span>
                 <a
                   href={CONTACT_CONFIG.websiteUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-slate-300 hover:text-white hover:underline transition"
+                  className="text-slate-700 hover:text-blue-600 hover:underline transition font-medium"
                 >
                   {CONTACT_CONFIG.website}
                 </a>
@@ -133,143 +150,170 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* CỘT 2: DỊCH VỤ CHÍNH */}
-          <div className="space-y-4">
-            <div className="text-xs font-extrabold uppercase tracking-widest text-slate-200 border-b border-slate-800 pb-3">
-              Dịch vụ chính
-            </div>
-            <ul className="space-y-2.5 text-xs text-slate-400">
+          {/* CỘT 2: DỊCH VỤ CHÍNH (4 cols) */}
+          <div className="lg:col-span-3 space-y-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-900 border-b border-slate-200 pb-3">
+              Dịch vụ nổi bật
+            </h3>
+            <ul className="space-y-3 text-xs text-slate-600">
               <li>
-                <Link href="/listings?transactionType=SALE" className="hover:text-white hover:underline transition">
-                  ✓ Mua bán căn hộ Quy Nhơn
+                <Link
+                  href="/listings?transactionType=SALE"
+                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
+                  <span>Mua bán căn hộ Quy Nhơn</span>
                 </Link>
               </li>
               <li>
-                <Link href="/ky-gui" className="hover:text-white hover:underline transition">
-                  ✓ Ký gửi bất động sản
+                <Link
+                  href="/ky-gui"
+                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
+                  <span>Ký gửi bất động sản chính chủ</span>
                 </Link>
               </li>
               <li>
-                <Link href="/listings?transactionType=RENT" className="hover:text-white hover:underline transition">
-                  ✓ Cho thuê căn hộ Quy Nhơn
+                <Link
+                  href="/listings?transactionType=RENT"
+                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
+                  <span>Cho thuê căn hộ du lịch & dài hạn</span>
                 </Link>
               </li>
               <li>
-                <Link href="/projects" className="hover:text-white hover:underline transition">
-                  ✓ Tư vấn dự án Altara, The Sailing, Simona Heights, TMS, FLC Sea Tower
+                <Link
+                  href="/projects"
+                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
+                  <span>Dự án Simona Heights, Altara, TMS...</span>
                 </Link>
               </li>
               <li>
-                <Link href="/listings" className="hover:text-white hover:underline transition">
-                  ✓ Cập nhật giỏ hàng căn hộ theo ngân sách
+                <Link
+                  href="/listings"
+                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
+                  <span>Tra cứu giỏ hàng theo ngân sách</span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* CỘT 3: NHẬN TƯ VẤN */}
-          <div className="space-y-4">
-            <div className="text-xs font-extrabold uppercase tracking-widest text-slate-200 border-b border-slate-800 pb-3">
-              Nhận tư vấn trực tiếp
-            </div>
-            <div className="space-y-1.5 text-xs text-slate-400">
-              <p>
-                Kênh Zalo OA chính thức:{" "}
-                <a
-                  href={CONTACT_CONFIG.zaloOAUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-xs text-blue-400 hover:text-white hover:underline"
-                >
-                  {CONTACT_CONFIG.zaloOAName} ↗
-                </a>
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {message && (
-                <div
-                  className={`rounded-xl p-3 text-xs font-medium ${
-                    message.type === "success"
-                      ? "bg-emerald-950/80 text-emerald-300 border border-emerald-800"
-                      : "bg-rose-950/80 text-rose-300 border border-rose-800"
-                  }`}
-                >
-                  {message.text}
+          {/* CỘT 3: THẺ FORM TƯ VẤN SANG TRỌNG (5 cols) */}
+          <div className="lg:col-span-5">
+            <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/60 rounded-2xl p-6 relative">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Nhận tư vấn & Báo giá trực tiếp
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Để lại thông tin, chuyên viên sẽ liên hệ trong 5 phút.
+                  </p>
                 </div>
-              )}
-
-              <div>
-                <label htmlFor="footer-fullName" className="sr-only">Họ và Tên</label>
-                <input
-                  id="footer-fullName"
-                  type="text"
-                  placeholder="Họ và Tên *"
-                  required
-                  value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-primary-500 focus:outline-none transition"
-                />
+                <span className="px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                  Miễn phí
+                </span>
               </div>
 
-              <div>
-                <label htmlFor="footer-email" className="sr-only">Email</label>
-                <input
-                  id="footer-email"
-                  type="email"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-primary-500 focus:outline-none transition"
-                />
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {message && (
+                  <div
+                    className={`rounded-xl p-3 text-xs font-medium ${
+                      message.type === "success"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                        : "bg-rose-50 text-rose-800 border border-rose-200"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                )}
 
-              <div>
-                <label htmlFor="footer-phone" className="sr-only">Số điện thoại</label>
-                <input
-                  id="footer-phone"
-                  type="tel"
-                  placeholder="Số điện thoại *"
-                  required
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-primary-500 focus:outline-none transition"
-                />
-              </div>
+                <div>
+                  <label htmlFor="footer-fullName" className="sr-only">
+                    Họ và Tên
+                  </label>
+                  <input
+                    id="footer-fullName"
+                    type="text"
+                    placeholder="Họ và Tên *"
+                    required
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full btn-primary !rounded-xl !py-3 text-xs shadow-lg shadow-primary-600/30"
-              >
-                {loading ? "Đang gửi thông tin..." : "Nhận Tư Vấn Ngay ➔"}
-              </button>
-            </form>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="footer-phone" className="sr-only">
+                      Số điện thoại
+                    </label>
+                    <input
+                      id="footer-phone"
+                      type="tel"
+                      placeholder="Số điện thoại *"
+                      required
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="footer-email" className="sr-only">
+                      Email
+                    </label>
+                    <input
+                      id="footer-email"
+                      type="email"
+                      placeholder="Email (không bắt buộc)"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-1 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl py-3 text-xs shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.99] transition-all"
+                >
+                  {loading ? "Đang gửi thông tin..." : "Nhận Tư Vấn Ngay ➔"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
         {/* PHẦN DƯỚI FOOTER: DIVIDER + LINKS + COPYRIGHT */}
-        <div className="mt-14 border-t border-slate-900 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex flex-wrap gap-4 font-semibold">
-            <Link href="/gioi-thieu" className="hover:text-slate-200 transition">
+        <div className="mt-14 border-t border-slate-200/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-4 font-semibold text-slate-600">
+            <Link href="/gioi-thieu" className="hover:text-blue-600 transition">
               Giới thiệu
             </Link>
-            <span>·</span>
-            <Link href="/lien-he" className="hover:text-slate-200 transition">
+            <span className="text-slate-300">·</span>
+            <Link href="/lien-he" className="hover:text-blue-600 transition">
               Liên hệ
             </Link>
-            <span>·</span>
-            <Link href="/dieu-khoan" className="hover:text-slate-200 transition">
+            <span className="text-slate-300">·</span>
+            <Link href="/dieu-khoan" className="hover:text-blue-600 transition">
               Điều khoản sử dụng
             </Link>
-            <span>·</span>
-            <Link href="/chinh-sach" className="hover:text-slate-200 transition">
+            <span className="text-slate-300">·</span>
+            <Link href="/chinh-sach" className="hover:text-blue-600 transition">
               Chính sách bảo mật
             </Link>
           </div>
 
-          <div className="font-medium">
-            © 2026 Minh Dũng Land. All rights reserved.
+          <div className="font-medium text-slate-500">
+            © 2026 Minh Dũng Land. Tất cả quyền được bảo lưu.
           </div>
         </div>
       </div>
