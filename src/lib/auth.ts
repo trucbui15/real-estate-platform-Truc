@@ -3,40 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-const useSecure = process.env.NODE_ENV === "production";
-const cookiePrefix = useSecure ? "__Secure-" : "";
-
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "minhdungland-secret-key-2026",
   session: { strategy: "jwt" },
-  useSecureCookies: useSecure,
-  cookies: {
-    sessionToken: {
-      name: `${cookiePrefix}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecure,
-      },
-    },
-    callbackUrl: {
-      name: `${cookiePrefix}next-auth.callback-url`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: useSecure,
-      },
-    },
-    csrfToken: {
-      name: `${cookiePrefix}next-auth.csrf-token`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: useSecure,
-      },
-    },
-  },
   pages: {
     signIn: "/login",
     error: "/login",
@@ -80,6 +49,8 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             email: user.email,
             role: user.role,
+            phone: user.phone || "",
+            referralCode: user.referralCode || "",
           } as any;
         } catch (error) {
           console.error("[AUTH] Database error during authorize:", error);
@@ -93,23 +64,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role;
-        const dbUser = await prisma.user.findUnique({
-          where: { id: (user as any).id },
-          select: { phone: true, referralCode: true },
-        });
-        if (dbUser?.phone) {
-          token.phone = dbUser.phone;
-        }
-        if (dbUser?.referralCode) {
-          token.referralCode = dbUser.referralCode;
-        }
-        const collaborator = await prisma.collaborator.findFirst({
-          where: { userId: (user as any).id },
-          select: { publicReferralToken: true },
-        });
-        if (collaborator) {
-          token.publicReferralToken = collaborator.publicReferralToken;
-        }
+        token.phone = (user as any).phone;
+        token.referralCode = (user as any).referralCode;
       }
       return token;
     },
@@ -119,7 +75,6 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).phone = token.phone;
         (session.user as any).referralCode = token.referralCode;
-        (session.user as any).publicReferralToken = token.publicReferralToken;
       }
       return session;
     },
