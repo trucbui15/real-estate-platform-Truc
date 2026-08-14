@@ -34,23 +34,30 @@ export default function ListingDetailClient({
   const [errorMsg, setErrorMsg] = useState("");
   const [consultModalOpen, setConsultModalOpen] = useState(false);
 
+  const [ctvToken, setCtvToken] = useState<string | null>(null);
+
   // Auto fill logged in user details (with /api/me fallback for existing sessions)
   useEffect(() => {
     if (session?.user) {
+      if ((session.user as any).publicReferralToken) {
+        setCtvToken((session.user as any).publicReferralToken);
+      }
       if (session.user.name && !fullName) setFullName(session.user.name);
       if ((session.user as any).phone) {
         setPhone((session.user as any).phone);
-      } else {
-        fetch("/api/me")
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            if (data?.phone) setPhone(data.phone);
-            if (data?.name && !fullName) setFullName(data.name);
-          })
-          .catch(() => {});
       }
+      fetch("/api/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.phone && !phone) setPhone(data.phone);
+          if (data?.name && !fullName) setFullName(data.name);
+          if (data?.publicReferralToken) setCtvToken(data.publicReferralToken);
+        })
+        .catch(() => {});
     }
   }, [session]);
+
+  const effectiveCtvToken = (session?.user as any)?.publicReferralToken || ctvToken;
 
   const price = listing.transactionType === "RENT" ? listing.rentPrice : listing.salePrice;
   const zaloUrl = CONTACT_CONFIG.zaloOAUrl;
@@ -447,14 +454,13 @@ export default function ListingDetailClient({
               </a>
 
               {/* BUTTON NẾU DÀNH CHO CTV ĐÃ ĐĂNG NHẬP */}
-              {(session?.user as any)?.publicReferralToken && (
+              {effectiveCtvToken && (
                 <button
                   type="button"
                   onClick={() => {
-                    const token = (session?.user as any)?.publicReferralToken;
-                    const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${token}`;
+                    const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${effectiveCtvToken}`;
                     navigator.clipboard.writeText(shareUrl);
-                    alert(`✓ Đã sao chép Link giới thiệu CTV (Mã: ${token})!\nHãy dán gửi cho khách hàng: ${shareUrl}`);
+                    alert(`✓ Đã sao chép Link giới thiệu CTV (Mã: ${effectiveCtvToken})!\nHãy dán gửi cho khách hàng: ${shareUrl}`);
                   }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition shadow-xs cursor-pointer"
                 >
@@ -464,7 +470,7 @@ export default function ListingDetailClient({
               )}
 
               {/* BUTTON NẾU DÀNH CHO NHÂN VIÊN NỘI BỘ ĐÃ ĐĂNG NHẬP (ADMIN, MANAGER, STAFF) */}
-              {!(session?.user as any)?.publicReferralToken && (session?.user as any)?.referralCode && (
+              {!effectiveCtvToken && (session?.user as any)?.referralCode && (
                 <button
                   type="button"
                   onClick={() => {

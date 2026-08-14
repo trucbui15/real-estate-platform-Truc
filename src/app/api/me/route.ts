@@ -11,14 +11,23 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, phone: true, role: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
   }
 
-  return NextResponse.json(user);
+  const collab = await prisma.collaborator.findUnique({
+    where: { userId: session.user.id },
+    select: { publicReferralToken: true, status: true },
+  });
+
+  return NextResponse.json({
+    ...user,
+    publicReferralToken: collab?.publicReferralToken || null,
+    collaboratorStatus: collab?.status || null,
+  });
 }
 
 export async function PUT(req: Request) {

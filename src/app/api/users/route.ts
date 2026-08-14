@@ -1,15 +1,17 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageUsers, canManageAllListings } from "@/lib/permissions";
+import { canManageUsers, canManageCustomers } from "@/lib/permissions";
 
-// ADMIN và MANAGER được xem danh sách nhân sự để phân công khách hàng
+// ADMIN, MANAGER và STAFF được xem danh sách nhân sự để phân công / hiển thị khách hàng
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !canManageAllListings(session.user.role)) {
-    return NextResponse.json({ error: "Chỉ Quản lý và Admin được xem danh sách nhân sự" }, { status: 403 });
+  if (!session || !canManageCustomers(session.user.role)) {
+    return NextResponse.json({ error: "Không có quyền xem danh sách nhân sự" }, { status: 403 });
   }
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role") || undefined;

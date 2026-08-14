@@ -43,17 +43,15 @@ export async function processPublicLead(input: ProcessLeadInput) {
 
   // 1. Kiểm tra referral token của CTV (nếu có)
   let collaboratorId: string | null = null;
-  let recruiterId: string | null = null;
 
   if (input.refToken?.trim()) {
     const col = await prisma.collaborator.findUnique({
       where: { publicReferralToken: input.refToken.trim() },
-      select: { id: true, referredByUserId: true, status: true },
+      select: { id: true, status: true },
     });
 
     if (col && col.status === "ACTIVE") {
       collaboratorId = col.id;
-      recruiterId = col.referredByUserId;
     }
   }
 
@@ -68,21 +66,33 @@ export async function processPublicLead(input: ProcessLeadInput) {
 
   let customerId: string;
   let finalAssignedToId: string | null = null;
+  let finalAssignedCollaboratorId: string | null = null;
+  let finalAssignedAt: Date | null = null;
 
   if (existingCustomer) {
     // ---- TRƯỜNG HỢP: CUSTOMER ĐÃ TỒN TẠI ----
     customerId = existingCustomer.id;
+    const hasAssignee = !!(existingCustomer.assignedToId || existingCustomer.assignedCollaboratorId);
 
-    if (existingCustomer.assignedToId) {
-      // Giữ nguyên người phụ trách cũ, tuyệt đối không cướp lead
-      finalAssignedToId = existingCustomer.assignedToId;
-    } else if (recruiterId) {
-      // Nếu chưa có người phụ trách và lead đến từ CTV -> Gán cho nhân viên tuyển CTV đó
-      finalAssignedToId = recruiterId;
+    if (!hasAssignee && collaboratorId) {
+      // Lead từ CTV A và Customer chưa có người phụ trách -> CTV A mặc định chăm sóc
+      finalAssignedCollaboratorId = collaboratorId;
+      finalAssignedToId = null;
+      finalAssignedAt = new Date();
+
       await prisma.customer.update({
         where: { id: customerId },
-        data: { assignedToId: finalAssignedToId },
+        data: {
+          assignedCollaboratorId: finalAssignedCollaboratorId,
+          assignedToId: null,
+          assignedAt: finalAssignedAt,
+        },
       });
+    } else {
+      // Giữ nguyên người phụ trách cũ, tuyệt đối không cướp lead
+      finalAssignedToId = existingCustomer.assignedToId;
+      finalAssignedCollaboratorId = existingCustomer.assignedCollaboratorId;
+      finalAssignedAt = existingCustomer.assignedAt;
     }
 
     // Cập nhật email hoặc tên nếu thông tin mới đầy đủ hơn
@@ -97,10 +107,15 @@ export async function processPublicLead(input: ProcessLeadInput) {
     }
   } else {
     // ---- TRƯỜNG HỢP: CUSTOMER MỚI HOÀN TOÀN ----
-    if (recruiterId) {
-      finalAssignedToId = recruiterId; // Gán cho nhân viên tuyển CTV
+    if (collaboratorId) {
+      // CTV A mang khách về -> CTV A mặc định chăm sóc
+      finalAssignedCollaboratorId = collaboratorId;
+      finalAssignedToId = null;
+      finalAssignedAt = new Date();
     } else {
-      finalAssignedToId = null; // Unassigned (Chưa phân công) -> Admin/Manager sẽ chia sau
+      finalAssignedCollaboratorId = null;
+      finalAssignedToId = null; // Unassigned (Chưa phân công)
+      finalAssignedAt = null;
     }
 
     const newCustomer = await prisma.customer.create({
@@ -113,6 +128,8 @@ export async function processPublicLead(input: ProcessLeadInput) {
         projectId: input.projectId || null,
         interestedListingId: input.listingId || null,
         assignedToId: finalAssignedToId,
+        assignedCollaboratorId: finalAssignedCollaboratorId,
+        assignedAt: finalAssignedAt,
         status: "MOI",
         note: input.note?.trim() || null,
       },
@@ -121,7 +138,7 @@ export async function processPublicLead(input: ProcessLeadInput) {
     customerId = newCustomer.id;
   }
 
-  // 3. Luôn luôn tạo mới 1 CustomerInquiry đại diện cho lượt yêu cầu tư vấn này
+  // 3. Luôn luôn tạo mới 1 CustomerInquiry đại diện cho lượt yêu cầu tư vấn này (Inquiry.collaboratorId = nguồn CTV)
   const inquiry = await prisma.customerInquiry.create({
     data: {
       customerId,
@@ -158,6 +175,7 @@ export async function processPublicLead(input: ProcessLeadInput) {
     customerId,
     inquiryId: inquiry.id,
     assignedToId: finalAssignedToId,
+    assignedCollaboratorId: finalAssignedCollaboratorId,
     collaboratorId,
   };
 }

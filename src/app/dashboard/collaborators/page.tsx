@@ -83,13 +83,29 @@ export default function CollaboratorsDashboardPage() {
           </p>
         </div>
 
-        <Link
-          href="/cong-tac-vien/dang-ky"
-          target="_blank"
-          className="btn-primary text-xs font-bold px-4 py-2 self-start sm:self-auto"
-        >
-          + Link Đăng ký CTV mới ↗
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const refCode = (session?.user as any)?.referralCode || "";
+              const regUrl = `${window.location.origin}/cong-tac-vien/dang-ky${refCode ? `?ref=${refCode}` : ""}`;
+              navigator.clipboard.writeText(regUrl);
+              alert(`✓ Đã sao chép Link Đăng ký CTV mới${refCode ? ` (Mã bảo trợ: ${refCode})` : ""}!\n${regUrl}`);
+            }}
+            className="btn-primary text-xs font-bold px-3.5 py-2 self-start sm:self-auto flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 border-none shadow-xs"
+          >
+            <span>🔗</span>
+            <span>Sao chép Link Tuyển dụng CTV</span>
+          </button>
+
+          <Link
+            href={`/cong-tac-vien/dang-ky${(session?.user as any)?.referralCode ? `?ref=${(session?.user as any)?.referralCode}` : ""}`}
+            target="_blank"
+            className="btn-outline text-xs font-bold px-3 py-2 self-start sm:self-auto"
+          >
+            Mẫu Đăng ký CTV ↗
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
@@ -129,9 +145,22 @@ export default function CollaboratorsDashboardPage() {
                   </td>
 
                   <td className="px-4 py-3.5">
-                    <code className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
-                      {c.publicReferralToken}
-                    </code>
+                    <div className="flex items-center gap-1.5">
+                      <code className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
+                        {c.publicReferralToken}
+                      </code>
+                      <button
+                        type="button"
+                        title="Sao chép Token CTV"
+                        onClick={() => {
+                          navigator.clipboard.writeText(c.publicReferralToken);
+                          alert(`✓ Đã sao chép Mã Token CTV: ${c.publicReferralToken}`);
+                        }}
+                        className="text-[11px] font-semibold text-slate-600 hover:text-blue-700 px-1.5 py-0.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded transition cursor-pointer"
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
                   </td>
 
                   <td className="px-4 py-3.5 text-xs">

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import UserProfileManager from "@/components/UserProfileManager";
+import CollaboratorTokenCard from "@/components/CollaboratorTokenCard";
 
 
 
@@ -57,7 +58,7 @@ export default async function ProfilePage() {
   // 2. Query Collaborator record if this user is a CTV
   const collaborator = await prisma.collaborator.findUnique({
     where: { userId: session.user.id },
-    select: { id: true, publicReferralToken: true },
+    select: { id: true, publicReferralToken: true, status: true },
   });
 
   // 3. Query all CustomerInquiries
@@ -107,7 +108,7 @@ export default async function ProfilePage() {
 
               <div className="flex items-center gap-2">
                 <a
-                  href={`/cong-tac-vien/dang-ky`}
+                  href={`/cong-tac-vien/dang-ky?ref=${dbUser.referralCode}`}
                   target="_blank"
                   className="text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3.5 py-2 rounded-xl border border-blue-200 transition"
                 >
@@ -121,6 +122,14 @@ export default async function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* CARD DÀNH CHO CỘNG TÁC VIÊN (CTV) DEPLOY LINK & TOKEN */}
+      {collaborator && (
+        <CollaboratorTokenCard
+          publicReferralToken={collaborator.publicReferralToken}
+          status={collaborator.status}
+        />
+      )}
 
       {/* CHỨC NĂNG QUẢN LÝ THÔNG TIN CÁ NHÂN & ĐỔI MẬT KHẨU */}
       <UserProfileManager

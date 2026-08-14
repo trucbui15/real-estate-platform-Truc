@@ -67,6 +67,17 @@ export const authOptions: NextAuthOptions = {
         token.phone = (user as any).phone;
         token.referralCode = (user as any).referralCode;
       }
+      if (token.id && token.publicReferralToken === undefined) {
+        try {
+          const collab = await prisma.collaborator.findUnique({
+            where: { userId: token.id as string },
+            select: { publicReferralToken: true },
+          });
+          token.publicReferralToken = collab?.publicReferralToken || null;
+        } catch {
+          token.publicReferralToken = null;
+        }
+      }
       return token;
     },
     async session({ session, token }) {
@@ -75,6 +86,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).phone = token.phone;
         (session.user as any).referralCode = token.referralCode;
+        (session.user as any).publicReferralToken = token.publicReferralToken || null;
       }
       return session;
     },

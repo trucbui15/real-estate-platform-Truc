@@ -330,6 +330,7 @@ model Collaborator {
   updatedAt           DateTime           @updatedAt
 
   inquiries           CustomerInquiry[]  @relation("InquiryCollaborator")
+  assignedCustomers   Customer[]         @relation("AssignedCollaborator")
 
   @@index([referredByUserId])
   @@index([publicReferralToken])
@@ -362,9 +363,12 @@ model Customer {
   interestedListingId String?
   interestedListing   Listing? @relation("InterestedListing", fields: [interestedListingId], references: [id])
 
-  status             LeadStatus @default(MOI)        // Trạng thái chăm sóc
-  assignedToId        String?
-  assignedTo           User?    @relation("AssignedStaff", fields: [assignedToId], references: [id])
+  status                 LeadStatus    @default(MOI)        // Trạng thái chăm sóc
+  assignedToId           String?
+  assignedTo             User?         @relation("AssignedStaff", fields: [assignedToId], references: [id])
+  assignedCollaboratorId String?
+  assignedCollaborator   Collaborator? @relation("AssignedCollaborator", fields: [assignedCollaboratorId], references: [id])
+  assignedAt             DateTime?
 
   nextFollowUpAt        DateTime?                     // Ngày hẹn tiếp theo
   note                   String?
@@ -377,6 +381,7 @@ model Customer {
 
   @@index([status])
   @@index([assignedToId])
+  @@index([assignedCollaboratorId])
 }
 
 // Chi tiết từng lần phát sinh nhu cầu tư vấn (Lead Inquiry Request)

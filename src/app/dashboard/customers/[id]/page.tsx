@@ -11,6 +11,7 @@ export default function CustomerDetailPage() {
 
   const [customer, setCustomer] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
@@ -24,31 +25,43 @@ export default function CustomerDetailPage() {
     setLoading(false);
   }
 
-  async function loadUsers() {
-    if (!isManagerUp) return;
-    const res = await fetch("/api/users");
-    if (res.ok) setUsers(await res.json());
+  async function loadAssignees() {
+    try {
+      const [resUsers, resCols] = await Promise.all([
+        fetch("/api/users"),
+        fetch("/api/collaborators"),
+      ]);
+      if (resUsers.ok) setUsers(await resUsers.json());
+      if (resCols.ok) setCollaborators(await resCols.json());
+    } catch (e) {
+      console.error("Lỗi tải danh sách người phụ trách", e);
+    }
   }
 
   useEffect(() => {
     if (session) {
       load();
-      if (["ADMIN", "MANAGER"].includes((session.user as any).role)) {
-        loadUsers();
-      }
+      loadAssignees();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, session]);
 
-  async function handleAssignUser(newUserId: string) {
+  async function handleAssign(selectedValue: string) {
     setAssigning(true);
     setAssignFeedback(null);
+
+    let payload: any = { assigneeType: "UNASSIGNED", assigneeId: null };
+    if (selectedValue.startsWith("user:")) {
+      payload = { assigneeType: "USER", assigneeId: selectedValue.replace("user:", "") };
+    } else if (selectedValue.startsWith("collaborator:")) {
+      payload = { assigneeType: "COLLABORATOR", assigneeId: selectedValue.replace("collaborator:", "") };
+    }
 
     try {
       const res = await fetch(`/api/customers/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignedToId: newUserId }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -59,10 +72,16 @@ export default function CustomerDetailPage() {
         return;
       }
 
+      const assignedName = data.assignedTo?.name
+        ? `👤 ${data.assignedTo.name}`
+        : data.assignedCollaborator?.fullName
+        ? `🤝 CTV ${data.assignedCollaborator.fullName}`
+        : null;
+
       setAssignFeedback({
         type: "success",
-        text: data.assignedTo?.name
-          ? `✓ Đã phân công cho ${data.assignedTo.name}`
+        text: assignedName
+          ? `✓ Đã phân công cho ${assignedName}`
           : "✓ Đã đưa về trạng thái Chưa phân công",
       });
 
@@ -96,6 +115,12 @@ export default function CustomerDetailPage() {
 
   if (loading) return <div className="text-brand-300">Đang tải...</div>;
   if (!customer) return <div className="text-brand-300">Không tìm thấy khách hàng, hoặc bạn không có quyền xem.</div>;
+
+  const currentSelectValue = customer.assignedToId
+    ? `user:${customer.assignedToId}`
+    : customer.assignedCollaboratorId
+    ? `collaborator:${customer.assignedCollaboratorId}`
+    : "UNASSIGNED";
 
   return (
     <div className="space-y-4">
@@ -134,31 +159,55 @@ export default function CustomerDetailPage() {
               <div className="font-medium text-brand-900 mt-0.5">
                 {LABELS.leadSource[customer.source as keyof typeof LABELS.leadSource] || customer.source}
               </div>
+              {customer.inquiries?.[0]?.collaborator && (
+                <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                  <span>🤝</span>
+                  <span>CTV {customer.inquiries[0].collaborator.fullName} ({customer.inquiries[0].collaborator.publicReferralToken})</span>
+                </div>
+              )}
             </div>
 
             {/* BẢNG PHÂN CÔNG NGƯỜI PHỤ TRÁCH */}
             <div className="col-span-2 sm:col-span-3 pt-2 border-t border-sand-200/60">
-              <div className="text-xs font-semibold uppercase text-brand-400 mb-1.5 flex items-center gap-1.5">
-                <span>👤 Người phụ trách chăm sóc</span>
-                {assigning && <span className="text-blue-600 font-normal italic text-[11px]">(Đang lưu...)</span>}
+              <div className="text-xs font-semibold uppercase text-brand-400 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  👤 Người phụ trách chăm sóc
+                  {assigning && <span className="text-blue-600 font-normal italic text-[11px]">(Đang lưu...)</span>}
+                </span>
+                {customer.assignedAt && (
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    ⏰ Phân công lúc: {new Date(customer.assignedAt).toLocaleString("vi-VN")}
+                  </span>
+                )}
               </div>
 
               {isManagerUp ? (
                 <div className="space-y-1.5 max-w-md">
                   <select
-                    value={customer.assignedToId || ""}
+                    value={currentSelectValue}
                     disabled={assigning}
-                    onChange={(e) => handleAssignUser(e.target.value)}
+                    onChange={(e) => handleAssign(e.target.value)}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 focus:border-blue-500 focus:outline-none cursor-pointer transition shadow-xs"
                   >
-                    <option value="">-- ⚠️ Chưa phân công --</option>
-                    {users
-                      .filter((u) => ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
-                        </option>
-                      ))}
+                    <option value="UNASSIGNED">-- ⚠️ Chưa phân công --</option>
+                    <optgroup label="NHÂN SỰ NỘI BỘ">
+                      {users
+                        .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                        .map((u) => (
+                          <option key={`user:${u.id}`} value={`user:${u.id}`}>
+                            👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                          </option>
+                        ))}
+                    </optgroup>
+                    <optgroup label="CỘNG TÁC VIÊN (CTV)">
+                      {collaborators
+                        .filter((col) => col.status === "ACTIVE")
+                        .map((col) => (
+                          <option key={`collaborator:${col.id}`} value={`collaborator:${col.id}`}>
+                            🤝 CTV {col.fullName} ({col.publicReferralToken})
+                          </option>
+                        ))}
+                    </optgroup>
                   </select>
 
                   {assignFeedback && (
@@ -176,6 +225,10 @@ export default function CustomerDetailPage() {
                   {customer.assignedTo?.name ? (
                     <span className="inline-flex items-center gap-1 text-slate-800">
                       👤 {customer.assignedTo.name}
+                    </span>
+                  ) : customer.assignedCollaborator?.fullName ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-800 font-bold">
+                      🤝 CTV {customer.assignedCollaborator.fullName} ({customer.assignedCollaborator.publicReferralToken})
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">

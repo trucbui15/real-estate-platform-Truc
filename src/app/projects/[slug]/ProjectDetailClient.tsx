@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ListingCard from "@/components/ListingCard";
@@ -83,6 +83,25 @@ export default function ProjectDetailClient({
   rentListings,
 }: ProjectDetailClientProps) {
   const { data: session } = useSession();
+  const [ctvToken, setCtvToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if ((session?.user as any)?.publicReferralToken) {
+      setCtvToken((session?.user as any)?.publicReferralToken);
+    } else if (session?.user) {
+      fetch("/api/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.publicReferralToken) {
+            setCtvToken(data.publicReferralToken);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [session]);
+
+  const effectiveCtvToken = (session?.user as any)?.publicReferralToken || ctvToken;
+
   const [activeTab, setActiveTab] = useState<"overview" | "inventory" | "sales" | "rent">("inventory");
 
   // Simona Heights block tabs (THE SEA / THE HARBOUR)
@@ -470,14 +489,13 @@ export default function ProjectDetailClient({
               )}
 
               {/* REFERRAL SHARE BUTTON FOR CTV */}
-              {(session?.user as any)?.publicReferralToken && (
+              {effectiveCtvToken && (
                 <button
                   type="button"
                   onClick={() => {
-                    const token = (session?.user as any)?.publicReferralToken;
-                    const shareUrl = `${window.location.origin}/projects/${project.slug}?ref=${token}`;
+                    const shareUrl = `${window.location.origin}/projects/${project.slug}?ref=${effectiveCtvToken}`;
                     navigator.clipboard.writeText(shareUrl);
-                    alert(`✓ Đã sao chép Link Bảng hàng đính kèm Mã CTV (${token})!\nHãy dán để chia sẻ cho khách hàng: ${shareUrl}`);
+                    alert(`✓ Đã sao chép Link Bảng hàng đính kèm Mã CTV (${effectiveCtvToken})!\nHãy dán để chia sẻ cho khách hàng: ${shareUrl}`);
                   }}
                   className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 text-[13px] font-bold shadow-xs transition cursor-pointer"
                 >
@@ -487,7 +505,7 @@ export default function ProjectDetailClient({
               )}
 
               {/* REFERRAL SHARE BUTTON FOR INTERNAL STAFF */}
-              {!(session?.user as any)?.publicReferralToken && (session?.user as any)?.referralCode && (
+              {!effectiveCtvToken && (session?.user as any)?.referralCode && (
                 <button
                   type="button"
                   onClick={() => {
@@ -552,14 +570,13 @@ export default function ProjectDetailClient({
           </button>
 
           <div className="ml-auto flex items-center shrink-0">
-            {(session?.user as any)?.publicReferralToken && (
+            {effectiveCtvToken && (
               <button
                 type="button"
                 onClick={() => {
-                  const token = (session?.user as any)?.publicReferralToken;
-                  const shareUrl = `${window.location.origin}/projects/${project.slug}?ref=${token}`;
+                  const shareUrl = `${window.location.origin}/projects/${project.slug}?ref=${effectiveCtvToken}`;
                   navigator.clipboard.writeText(shareUrl);
-                  alert(`✓ Đã sao chép Link Bảng hàng CTV (${token})!\nHãy dán để chia sẻ: ${shareUrl}`);
+                  alert(`✓ Đã sao chép Link Bảng hàng CTV (${effectiveCtvToken})!\nHãy dán để chia sẻ: ${shareUrl}`);
                 }}
                 className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-2xs cursor-pointer flex items-center gap-1"
               >
@@ -568,7 +585,7 @@ export default function ProjectDetailClient({
               </button>
             )}
 
-            {!(session?.user as any)?.publicReferralToken && (session?.user as any)?.referralCode && (
+            {!effectiveCtvToken && (session?.user as any)?.referralCode && (
               <button
                 type="button"
                 onClick={() => {
