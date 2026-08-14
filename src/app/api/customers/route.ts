@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageCustomers, canManageAllListings } from "@/lib/permissions";
+import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
 
 // GET /api/customers?status=..&keyword=..&assignee=..
 // STAFF: thấy khách được giao cho mình + khách giao cho CTV do mình giới thiệu
@@ -131,6 +132,16 @@ export async function POST(req: Request) {
       assignedTo: { select: { id: true, name: true, role: true } },
       assignedCollaborator: { select: { id: true, fullName: true, publicReferralToken: true } },
     },
+  });
+
+  // Tự động đẩy dữ liệu khách mới tạo thủ công sang Google Trang Tính
+  pushLeadToGoogleSheet({
+    fullName: customer.fullName,
+    phone: customer.phone,
+    email: customer.email,
+    demandType: customer.demandType,
+    source: customer.source + " (CRM)",
+    note: customer.note || "Tạo từ Bảng điều khiển CRM",
   });
 
   return NextResponse.json(customer, { status: 201 });

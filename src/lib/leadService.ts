@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DemandType, LeadSource } from "@prisma/client";
+import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
 
 export interface ProcessLeadInput {
   fullName: string;
@@ -169,6 +170,17 @@ export async function processPublicLead(input: ProcessLeadInput) {
         collaboratorId ? " [Nguồn CTV]" : ""
       }`,
     },
+  });
+
+  // Tự động đẩy dữ liệu sang Google Trang Tính (Google Sheets)
+  pushLeadToGoogleSheet({
+    fullName: cleanName,
+    phone: cleanPhone,
+    email: input.email,
+    demandType: String(demand),
+    source: String(src),
+    note: input.note,
+    pageUrl: input.pageUrl,
   });
 
   return {
