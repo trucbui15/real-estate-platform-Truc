@@ -1,10 +1,31 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBackofficeRole } from "@/lib/permissions";
 import ListingDetailClient from "./ListingDetailClient";
 
 export default async function ListingDetailPage({ params }: { params: { slug: string } }) {
-  const listing = await prisma.listing.findUnique({
-    where: { slug: params.slug },
+  const session = await getServerSession(authOptions);
+  const isBackoffice = isBackofficeRole(session?.user?.role);
+
+  const rawSlug = params.slug;
+  let decodedSlug = rawSlug;
+  try {
+    decodedSlug = decodeURIComponent(rawSlug);
+  } catch (e) {}
+
+  const rawListing = await prisma.listing.findFirst({
+    where: {
+      OR: [
+        { slug: rawSlug },
+        { slug: decodedSlug },
+        { productCode: rawSlug },
+        { productCode: decodedSlug },
+        { unitCode: rawSlug },
+        { unitCode: decodedSlug },
+      ],
+    },
     include: {
       project: true,
       province: true,
@@ -13,7 +34,17 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
     },
   });
 
-  if (!listing) return notFound();
+  if (!rawListing) return notFound();
+
+  // Ẩn mã căn thực tế & tòa tầng với tài khoản CTV / Khách hàng công khai
+  const listing = isBackoffice
+    ? rawListing
+    : {
+        ...rawListing,
+        unitCode: rawListing.productCode || rawListing.unitCode,
+        block: null,
+        floor: null,
+      };
 
   // Increment view count
   await prisma.listing.update({

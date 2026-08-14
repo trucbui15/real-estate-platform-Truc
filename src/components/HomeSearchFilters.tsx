@@ -264,7 +264,7 @@ export default function HomeSearchFilters({ projects }: HomeSearchFiltersProps) 
         {extraFilterOpen && (
           <div className="hidden md:grid grid-cols-3 gap-4 p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0]">
             <div>
-              <label className="label">Hướng cửa</label>
+              <label className="label">Hướng ban công</label>
               <select
                 value={currentDirection}
                 onChange={(e) => updateFilter("direction", e.target.value)}
@@ -359,7 +359,7 @@ export default function HomeSearchFilters({ projects }: HomeSearchFiltersProps) 
               </div>
 
               <div>
-                <label className="label">Hướng cửa</label>
+                <label className="label">Hướng ban công</label>
                 <select
                   value={currentDirection}
                   onChange={(e) => updateFilter("direction", e.target.value)}

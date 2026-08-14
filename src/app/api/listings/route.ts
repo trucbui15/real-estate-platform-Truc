@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -5,10 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { canCreateListing, isBackofficeRole } from "@/lib/permissions";
 
-// GET /api/listings?transactionType=SALE&propertyType=CAN_HO&provinceId=..&minPrice=..&maxPrice=..
-//     &bedrooms=2&keyword=..&page=1
-// Khách công khai chỉ thấy tin DANG_BAN / DANG_CHO_THUE.
-// Nhân viên/Quản lý/Admin (đăng nhập) có thể xem thêm ?all=1 để thấy cả tin chờ duyệt/tạm ngưng.
+// GET /api/listings
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const session = await getServerSession(authOptions);
@@ -28,7 +27,8 @@ export async function GET(req: Request) {
   const legalStatus = searchParams.get("legalStatus") || undefined;
   const furnitureStatus = searchParams.get("furnitureStatus") || undefined;
   const keyword = searchParams.get("keyword") || undefined;
-  const showAll = searchParams.get("all") === "1" && isBackofficeRole(session?.user?.role);
+  const isBackoffice = isBackofficeRole(session?.user?.role);
+  const showAll = searchParams.get("all") === "1" && isBackoffice;
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const pageSize = 12;
 
@@ -65,7 +65,8 @@ export async function GET(req: Request) {
       ? {
           OR: [
             { title: { contains: keyword, mode: "insensitive" } },
-            { unitCode: { contains: keyword, mode: "insensitive" } },
+            { productCode: { contains: keyword, mode: "insensitive" } },
+            ...(isBackoffice ? [{ unitCode: { contains: keyword, mode: "insensitive" } }] : []),
             { project: { name: { contains: keyword, mode: "insensitive" } } },
           ],
         }
@@ -91,7 +92,17 @@ export async function GET(req: Request) {
     prisma.listing.count({ where }),
   ]);
 
-  return NextResponse.json({ items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
+  const sanitizedItems = items.map((l) => {
+    if (!isBackoffice) {
+      return {
+        ...l,
+        unitCode: l.productCode || l.unitCode, // Ẩn mã căn thật đối với CTV và Khách hàng
+      };
+    }
+    return l;
+  });
+
+  return NextResponse.json({ items: sanitizedItems, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
 }
 
 // POST /api/listings — Nhân viên trở lên mới được đăng tin
@@ -105,6 +116,8 @@ export async function POST(req: Request) {
   if (!body.unitCode || !body.title || !body.transactionType || !body.propertyType || !body.area) {
     return NextResponse.json({ error: "Thiếu thông tin bắt buộc (mã căn, tiêu đề, loại giao dịch, loại BĐS, diện tích)" }, { status: 400 });
   }
+
+  const productCode = (body.productCode || "").trim() || `SP-${Math.floor(1000 + Math.random() * 9000)}`;
 
   const apartmentTypes = ["CAN_HO", "OFFICETEL", "CONDOTEL", "PENTHOUSE", "DUPLEX", "SHOPHOUSE_KHOI_DE", "DAT_NEN_DU_AN"];
   const isApartment = apartmentTypes.includes(body.propertyType);
@@ -128,13 +141,15 @@ export async function POST(req: Request) {
     }
   }
 
-  const baseSlug = slugify(body.title) + "-" + body.unitCode.toLowerCase();
+  // Đường dẫn link chia sẻ (slug) tạo từ Mã Sản Phẩm thay vì Mã Căn để tránh lộ thông tin căn
+  const baseSlug = slugify(body.title) + "-" + slugify(productCode);
   const initialStatus =
     session.user.role === "STAFF" ? "CHO_DUYET" : body.unitStatus || "DANG_BAN";
 
   try {
     const listing = await prisma.listing.create({
       data: {
+        productCode,
         unitCode: body.unitCode,
         title: body.title,
         slug: baseSlug,
@@ -164,7 +179,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(listing, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: "Mã căn đã tồn tại hoặc dữ liệu không hợp lệ" }, { status: 400 });
+    return NextResponse.json({ error: "Mã sản phẩm hoặc mã căn đã tồn tại hoặc dữ liệu không hợp lệ" }, { status: 400 });
   }
 }
 

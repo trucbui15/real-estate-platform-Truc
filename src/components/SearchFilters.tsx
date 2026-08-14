@@ -252,7 +252,7 @@ export default function SearchFilters({
         {extraFiltersOpen && (
           <div className="space-y-3 pt-3">
             <div>
-              <label className="text-[12px] font-semibold text-slate-600">Hướng cửa</label>
+              <label className="text-[12px] font-semibold text-slate-600">Hướng ban công</label>
               <select
                 className="w-full px-3 py-2 text-[13px] font-medium rounded-lg border border-slate-200 bg-slate-50 text-slate-900 outline-none"
                 value={localDirection}

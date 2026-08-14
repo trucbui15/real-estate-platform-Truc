@@ -103,9 +103,9 @@ export default function ListingCard({ listing }: { listing: any }) {
         </div>
 
         {/* CODE & FOOTER */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
           <span>Minh Dũng Land</span>
-          <span>#{listing.unitCode}</span>
+          <span className="font-semibold text-slate-700">Mã SP: {listing.productCode || listing.unitCode}</span>
         </div>
       </div>
     </Link>

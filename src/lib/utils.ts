@@ -11,6 +11,28 @@ export function formatVND(value?: number | null) {
   return value.toLocaleString("vi-VN") + " đ";
 }
 
+export function formatVNDText(value?: number | string | null): string {
+  if (value === null || value === undefined || value === "") return "";
+  const num = typeof value === "number" ? value : Number(value);
+  if (isNaN(num) || num <= 0) return "";
+
+  const billion = Math.floor(num / 1_000_000_000);
+  const million = Math.floor((num % 1_000_000_000) / 1_000_000);
+  const thousand = Math.floor((num % 1_000_000) / 1_000);
+  const remainder = Math.floor(num % 1_000);
+
+  const parts: string[] = [];
+
+  if (billion > 0) parts.push(`${billion} tỷ`);
+  if (million > 0) parts.push(`${million} triệu`);
+  if (thousand > 0) parts.push(`${thousand} nghìn`);
+  if (remainder > 0 && parts.length === 0) parts.push(`${remainder} đồng`);
+
+  if (parts.length === 0) return "";
+
+  return parts.join(" ") + " VNĐ";
+}
+
 export function slugify(str: string) {
   const map: Record<string, string> = {
     à: "a", á: "a", ạ: "a", ả: "a", ã: "a", â: "a", ầ: "a", ấ: "a", ậ: "a", ẩ: "a", ẫ: "a",

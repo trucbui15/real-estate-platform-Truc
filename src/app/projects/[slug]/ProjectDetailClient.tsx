@@ -807,7 +807,7 @@ export default function ProjectDetailClient({
                     <th className="px-4 py-3.5">Tòa & Tầng</th>
                     <th className="px-4 py-3.5">Cấu trúc</th>
                     <th className="px-4 py-3.5">Diện tích</th>
-                    <th className="px-4 py-3.5">Hướng cửa</th>
+                    <th className="px-4 py-3.5">Hướng ban công</th>
                     <th className="px-4 py-3.5">Giá bán niêm yết</th>
                     <th className="px-4 py-3.5">Trạng thái</th>
                     <th className="px-4 py-3.5">Sơ đồ / Tài liệu</th>
@@ -851,7 +851,7 @@ export default function ProjectDetailClient({
                           📐 {unit.area} m²
                         </td>
 
-                        {/* 5. HƯỚNG CỬA */}
+                        {/* 5. HƯỚNG BAN CÔNG */}
                         <td className="px-4 py-3.5 text-slate-600">
                           {unit.doorDirection ? `🧭 ${directionLabel[unit.doorDirection] || unit.doorDirection}` : "—"}
                         </td>
@@ -1350,7 +1350,7 @@ export default function ProjectDetailClient({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Hướng cửa</label>
+                  <label className="label">Hướng ban công</label>
                   <select
                     className="input"
                     value={addForm.doorDirection}
@@ -1581,7 +1581,7 @@ export default function ProjectDetailClient({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Hướng cửa</label>
+                  <label className="label">Hướng ban công</label>
                   <select
                     className="input"
                     value={editForm.doorDirection}

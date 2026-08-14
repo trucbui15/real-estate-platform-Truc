@@ -104,12 +104,13 @@ export default function ListingDetailClient({
   }
 
   const specsList = [
-    { label: "Mã sản phẩm", value: `#${listing.unitCode}` },
+    { label: "Mã sản phẩm", value: listing.productCode || listing.unitCode },
+    ...(isBackoffice ? [{ label: "Mã căn (Nội bộ)", value: listing.unitCode }] : []),
     { label: "Diện tích", value: `${listing.area} m²` },
     { label: "Phòng ngủ", value: listing.bedrooms ? `${listing.bedrooms} PN` : null },
     { label: "Nhà vệ sinh", value: listing.bathrooms ? `${listing.bathrooms} WC` : null },
     {
-      label: "Hướng cửa",
+      label: "Hướng ban công",
       value: listing.doorDirection
         ? LABELS.direction[listing.doorDirection as keyof typeof LABELS.direction]
         : null,
@@ -132,8 +133,12 @@ export default function ListingDetailClient({
         ? LABELS.legalStatus[listing.legalStatus as keyof typeof LABELS.legalStatus]
         : null,
     },
-    { label: "Tòa", value: listing.block ? `Tòa ${listing.block}` : null },
-    { label: "Tầng", value: listing.floor ? `Tầng ${listing.floor}` : null },
+    ...(isBackoffice
+      ? [
+          { label: "Tòa (Nội bộ)", value: listing.block ? `Tòa ${listing.block}` : null },
+          { label: "Tầng (Nội bộ)", value: listing.floor ? `Tầng ${listing.floor}` : null },
+        ]
+      : []),
     { label: "View", value: listing.view },
   ].filter((s) => s.value !== null && s.value !== undefined);
 
@@ -143,7 +148,9 @@ export default function ListingDetailClient({
       {isBackoffice && (
         <div className="bg-slate-900 text-white rounded-xl p-3 flex items-center justify-between text-[13px]">
           <div className="flex items-center gap-2 text-slate-300">
-            <span className="font-semibold text-amber-300">Quản trị:</span>
+            <span className="font-semibold text-amber-300">Quản trị nội bộ:</span>
+            <span>Mã căn: <strong className="text-white">{listing.unitCode}</strong></span>
+            <span>·</span>
             <span>Trạng thái:</span>
             <span className="font-bold text-white">
               {LABELS.unitStatus[listing.unitStatus as keyof typeof LABELS.unitStatus] || listing.unitStatus}
@@ -183,7 +190,7 @@ export default function ListingDetailClient({
           </>
         )}
         <span>/</span>
-        <span className="text-slate-900 font-semibold truncate">#{listing.unitCode}</span>
+        <span className="text-slate-900 font-semibold truncate">Mã SP: {listing.productCode || listing.unitCode}</span>
       </div>
 
       {/* MAIN CONTENT LAYOUT: LEFT DETAILS + RIGHT CONTACT SIDEBAR */}
@@ -200,7 +207,7 @@ export default function ListingDetailClient({
                     setLightboxImg(images[activeImgIndex] || images[0]);
                     setLightboxOpen(true);
                   }}
-                  className="h-full w-full object-cover cursor-pointer hover:scale-101 transition duration-200"
+                  className="h-full w-full object-cover cursor-pointer hover:scale-102 transition duration-300"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-slate-400 text-[14px]">
@@ -257,9 +264,20 @@ export default function ListingDetailClient({
                 ) : null}
               </div>
 
-              <div className="text-[12px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                Mã: #{listing.unitCode}
-              </div>
+              {isBackoffice ? (
+                <div className="flex flex-wrap items-center gap-2 text-[12px] font-mono">
+                  <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-bold">
+                    Mã SP: {listing.productCode || "—"}
+                  </span>
+                  <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-bold">
+                    Mã căn: {listing.unitCode}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[12px] font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded">
+                  Mã SP: {listing.productCode || listing.unitCode}
+                </div>
+              )}
             </div>
 
             <h1 className="text-[18px] sm:text-[22px] font-bold text-slate-900 leading-snug">
@@ -517,7 +535,7 @@ export default function ListingDetailClient({
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-[15px] font-bold text-slate-900">
-                Yêu cầu tư vấn #{listing.unitCode}
+                Yêu cầu tư vấn - Mã SP: {listing.productCode || listing.unitCode}
               </h3>
               <button
                 onClick={() => setConsultModalOpen(false)}

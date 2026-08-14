@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LABELS } from "@/lib/utils";
+import { LABELS, formatVNDText } from "@/lib/utils";
 import ProjectSelect from "@/components/ProjectSelect";
 
 const initial = {
+  productCode: "",
   unitCode: "",
   title: "",
   projectId: "",
@@ -121,8 +122,14 @@ export default function ListingForm({
     setLoading(false);
 
     if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Có lỗi xảy ra");
+      let errorMessage = "Có lỗi xảy ra khi lưu tin đăng (Mã lỗi: " + res.status + ")";
+      try {
+        const data = await res.json();
+        if (data?.error) errorMessage = data.error;
+      } catch (err) {
+        // Fallback khi server trả về HTML hoặc trang lỗi không phải JSON
+      }
+      setError(errorMessage);
       return;
     }
     router.push("/dashboard/listings");
@@ -133,14 +140,34 @@ export default function ListingForm({
     <form onSubmit={submit} className="card space-y-4 p-6">
       {error && <div className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div>
-          <label className="label">Mã căn *</label>
-          <input className="input" required disabled={!!listingId} value={form.unitCode} onChange={(e) => set("unitCode", e.target.value)} />
+          <label className="label font-bold text-blue-800">Mã sản phẩm * (Công khai)</label>
+          <input
+            className="input font-bold border-blue-300 bg-blue-50/50"
+            required
+            placeholder="VD: SP-8899"
+            value={form.productCode}
+            onChange={(e) => set("productCode", e.target.value)}
+          />
+          <p className="text-[11px] text-slate-500 mt-1">Dành cho CTV & Khách thấy (dùng tạo link chia sẻ)</p>
         </div>
+
+        <div>
+          <label className="label font-bold text-amber-800">Mã căn * (Nội bộ)</label>
+          <input
+            className="input font-bold border-amber-300 bg-amber-50/50"
+            required
+            value={form.unitCode}
+            placeholder="VD: A-12.05"
+            onChange={(e) => set("unitCode", e.target.value)}
+          />
+          <p className="text-[11px] text-slate-500 mt-1">Chỉ Quản lý & Nhân viên thấy</p>
+        </div>
+
         <div>
           <label className="label">Loại giao dịch *</label>
-          <select className="input" value={form.transactionType} onChange={(e) => set("transactionType", e.target.value)}>
+          <select className="input font-semibold" value={form.transactionType} onChange={(e) => set("transactionType", e.target.value)}>
             <option value="SALE">Bán</option>
             <option value="RENT">Cho thuê</option>
           </select>
@@ -211,12 +238,42 @@ export default function ListingForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Giá bán (VNĐ)</label>
-          <input type="number" className="input" value={form.salePrice} onChange={(e) => set("salePrice", e.target.value)} />
+          <label className="label font-bold text-slate-700">Giá bán (VNĐ)</label>
+          <div className="relative flex items-center">
+            <input
+              type="number"
+              className="input font-semibold text-blue-900 border-blue-200 bg-blue-50/20 pr-36"
+              placeholder="VD: 2000000000"
+              value={form.salePrice}
+              onChange={(e) => set("salePrice", e.target.value)}
+            />
+            {form.salePrice && formatVNDText(form.salePrice) && (
+              <div className="absolute right-2 flex items-center pointer-events-none">
+                <span className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-2xs">
+                  🏷️ {formatVNDText(form.salePrice)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div>
-          <label className="label">Giá thuê (VNĐ/tháng)</label>
-          <input type="number" className="input" value={form.rentPrice} onChange={(e) => set("rentPrice", e.target.value)} />
+          <label className="label font-bold text-slate-700">Giá thuê (VNĐ/tháng)</label>
+          <div className="relative flex items-center">
+            <input
+              type="number"
+              className="input font-semibold text-emerald-900 border-emerald-200 bg-emerald-50/20 pr-36"
+              placeholder="VD: 15000000"
+              value={form.rentPrice}
+              onChange={(e) => set("rentPrice", e.target.value)}
+            />
+            {form.rentPrice && formatVNDText(form.rentPrice) && (
+              <div className="absolute right-2 flex items-center pointer-events-none">
+                <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-2xs">
+                  🏷️ {formatVNDText(form.rentPrice)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -231,24 +288,33 @@ export default function ListingForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Hướng cửa</label>
-          <select className="input" value={form.doorDirection} onChange={(e) => set("doorDirection", e.target.value)}>
-            <option value="">-- Chọn --</option>
-            {Object.entries(LABELS.direction).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label">Hướng ban công</label>
-          <select className="input" value={form.balconyDirection} onChange={(e) => set("balconyDirection", e.target.value)}>
-            <option value="">-- Chọn --</option>
-            {Object.entries(LABELS.direction).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          <label className="label font-bold text-slate-700">Hướng ban công</label>
+          <select
+            className="input font-semibold"
+            value={form.doorDirection || form.balconyDirection}
+            onChange={(e) => {
+              set("doorDirection", e.target.value);
+              set("balconyDirection", e.target.value);
+            }}
+          >
+            <option value="">-- Chọn hướng --</option>
+            {Object.entries(LABELS.direction).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="label">View</label>
-          <input className="input" placeholder="VD: View sông, View biển" value={form.view} onChange={(e) => set("view", e.target.value)} />
+          <input
+            className="input"
+            placeholder="VD: View sông, View biển"
+            value={form.view}
+            onChange={(e) => set("view", e.target.value)}
+          />
         </div>
       </div>
 

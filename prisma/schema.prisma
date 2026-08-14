@@ -234,7 +234,8 @@ model Listing {
   id                String   @id @default(cuid())
 
   // --- Định danh ---
-  unitCode          String   @unique          // Mã căn (vd: SP-2XIKPP)
+  productCode       String?  @unique          // Mã sản phẩm công khai / chia sẻ (vd: SP-001)
+  unitCode          String   @unique          // Mã căn nội bộ (vd: A-12.05)
   title             String
   slug              String   @unique
 
@@ -302,10 +303,15 @@ model News {
   title       String
   slug        String   @unique
   thumbnail   String?
-  content     String
+  summary     String?  // Mô tả ngắn / Meta description (dưới 160 ký tự cho SEO)
+  category    String?  // Danh mục bài viết (vd: Quy hoạch, Đầu tư căn hộ, Tin thị trường)
+  tags        String?  // Từ khóa Tags SEO
+  metaTitle   String?  // Tiêu đề SEO tùy chỉnh
+  ogImage     String?  // Hình ảnh khi chia sẻ mạng xã hội (OG Image)
+  content     String   // Nội dung bài viết (HTML / Rich text)
   authorId    String
   author      User     @relation("NewsAuthor", fields: [authorId], references: [id])
-  published   Boolean  @default(false)
+  published   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

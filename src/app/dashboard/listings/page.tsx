@@ -49,7 +49,7 @@ export default function DashboardListingsPage() {
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3">Mã căn</th>
+              <th className="px-4 py-3">Mã SP / Mã căn</th>
               <th className="px-4 py-3">Tiêu đề BĐS</th>
               <th className="px-4 py-3">Người đăng tin</th>
               <th className="px-4 py-3">Giá</th>
@@ -66,7 +66,10 @@ export default function DashboardListingsPage() {
             ) : (
               items.map((l) => (
                 <tr key={l.id} className="border-t border-sand-100 hover:bg-slate-50 transition">
-                  <td className="px-4 py-3 font-bold text-slate-900">{l.unitCode}</td>
+                  <td className="px-4 py-3 text-xs">
+                    <div className="font-bold text-blue-700 font-mono">Mã SP: {l.productCode || "—"}</div>
+                    <div className="font-semibold text-amber-700 font-mono text-[11px]">Mã căn: {l.unitCode}</div>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-slate-900">{l.title}</div>
                     {l.project && (

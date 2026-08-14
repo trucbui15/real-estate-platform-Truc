@@ -1,15 +1,29 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canEditListing, canManageAllListings } from "@/lib/permissions";
+import { canEditListing, canManageAllListings, isBackofficeRole } from "@/lib/permissions";
+import { slugify } from "@/lib/utils";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions);
+  const isBackoffice = isBackofficeRole(session?.user?.role);
+
   const listing = await prisma.listing.findUnique({
     where: { id: params.id },
     include: { project: true, province: true, district: true, author: { select: { name: true, phone: true } } },
   });
   if (!listing) return NextResponse.json({ error: "Không tìm thấy tin" }, { status: 404 });
+
+  if (!isBackoffice) {
+    return NextResponse.json({
+      ...listing,
+      unitCode: listing.productCode || listing.unitCode, // Ẩn mã căn thực tế với CTV và Khách
+    });
+  }
+
   return NextResponse.json(listing);
 }
 
@@ -41,42 +55,53 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (!project.isActive) return NextResponse.json({ error: "Dự án chọn đang tạm ngưng hoạt động" }, { status: 400 });
   }
 
+  const newProductCode = (body.productCode ?? existing.productCode ?? "").trim();
+  const newTitle = body.title ?? existing.title;
+  const newSlug = slugify(newTitle) + "-" + slugify(newProductCode || existing.unitCode);
+
   const unitStatus =
     session.user.role === "STAFF" && body.unitStatus !== existing.unitStatus
       ? "CHO_DUYET"
       : body.unitStatus ?? existing.unitStatus;
 
-  const updated = await prisma.listing.update({
-    where: { id: params.id },
-    data: {
-      title: body.title ?? existing.title,
-      block: body.block ?? existing.block,
-      floor: body.floor ?? existing.floor,
-      address: body.address ?? existing.address,
-      provinceId: body.provinceId ?? existing.provinceId,
-      districtId: body.districtId ?? existing.districtId,
-      projectId: finalProjectId,
-      transactionType: body.transactionType ?? existing.transactionType,
-      salePrice: body.salePrice !== undefined ? Number(body.salePrice) || null : existing.salePrice,
-      rentPrice: body.rentPrice !== undefined ? Number(body.rentPrice) || null : existing.rentPrice,
-      propertyType: propType,
-      area: body.area ? Number(body.area) : existing.area,
-      bedrooms: body.bedrooms !== undefined ? Number(body.bedrooms) || null : existing.bedrooms,
-      bathrooms: body.bathrooms !== undefined ? Number(body.bathrooms) || null : existing.bathrooms,
-      doorDirection: body.doorDirection ?? existing.doorDirection,
-      balconyDirection: body.balconyDirection ?? existing.balconyDirection,
-      view: body.view ?? existing.view,
-      furnitureStatus: body.furnitureStatus ?? existing.furnitureStatus,
-      legalStatus: body.legalStatus ?? existing.legalStatus,
-      unitStatus,
-      description: body.description ?? existing.description,
-      images: body.images ? JSON.stringify(body.images) : existing.images,
-      verified: canManageAllListings(session.user.role) ? body.verified ?? existing.verified : existing.verified,
-    },
-    include: { project: true, province: true, district: true },
-  });
+  try {
+    const updated = await prisma.listing.update({
+      where: { id: params.id },
+      data: {
+        productCode: newProductCode || null,
+        unitCode: body.unitCode ?? existing.unitCode,
+        title: newTitle,
+        slug: newSlug,
+        block: body.block ?? existing.block,
+        floor: body.floor ?? existing.floor,
+        address: body.address ?? existing.address,
+        provinceId: body.provinceId ?? existing.provinceId,
+        districtId: body.districtId ?? existing.districtId,
+        projectId: finalProjectId,
+        transactionType: body.transactionType ?? existing.transactionType,
+        salePrice: body.salePrice !== undefined ? Number(body.salePrice) || null : existing.salePrice,
+        rentPrice: body.rentPrice !== undefined ? Number(body.rentPrice) || null : existing.rentPrice,
+        propertyType: propType,
+        area: body.area ? Number(body.area) : existing.area,
+        bedrooms: body.bedrooms !== undefined ? Number(body.bedrooms) || null : existing.bedrooms,
+        bathrooms: body.bathrooms !== undefined ? Number(body.bathrooms) || null : existing.bathrooms,
+        doorDirection: body.doorDirection ?? existing.doorDirection,
+        balconyDirection: body.balconyDirection ?? existing.balconyDirection,
+        view: body.view ?? existing.view,
+        furnitureStatus: body.furnitureStatus ?? existing.furnitureStatus,
+        legalStatus: body.legalStatus ?? existing.legalStatus,
+        unitStatus,
+        description: body.description ?? existing.description,
+        images: body.images ? JSON.stringify(body.images) : existing.images,
+        verified: canManageAllListings(session.user.role) ? body.verified ?? existing.verified : existing.verified,
+      },
+      include: { project: true, province: true, district: true },
+    });
 
-  return NextResponse.json(updated);
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    return NextResponse.json({ error: "Mã sản phẩm hoặc mã căn bị trùng lặp hoặc dữ liệu không hợp lệ." }, { status: 400 });
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {

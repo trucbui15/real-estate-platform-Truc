@@ -9,7 +9,7 @@ export default function Header() {
   const { data: session } = useSession();
   const pathname = usePathname() || "";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileAccordion, setMobileAccordion] = useState<"listings" | "projects" | null>("projects");
+  const [mobileAccordion, setMobileAccordion] = useState<"listings" | "projects" | "services" | null>("projects");
 
   const isBackoffice = session && ["ADMIN", "MANAGER", "STAFF"].includes((session.user as any).role);
 
@@ -18,6 +18,7 @@ export default function Header() {
   const isProjectsActive = pathname.startsWith("/projects") || pathname.startsWith("/tai-lieu-du-an");
   const isKyGuiActive = pathname.startsWith("/ky-gui");
   const isNewsActive = pathname.startsWith("/news");
+  const isServicesActive = pathname.startsWith("/dat-phong") || pathname.startsWith("/dich-vu-visa");
 
   return (
     <header className="sticky top-0 z-50 h-[68px] md:h-[72px] border-b border-slate-200 bg-white transition-all">
@@ -102,7 +103,37 @@ export default function Header() {
             </div>
           </div>
 
-          {/* MENU 3: KÝ GỬI BĐS */}
+          {/* MENU 3: ĐẶT PHÒNG / VISA ▾ */}
+          <div className="relative group py-5">
+            <button
+              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
+                isServicesActive
+                  ? "text-[#2563EB] font-bold"
+                  : "text-slate-700 hover:text-[#2563EB]"
+              }`}
+            >
+              <span>Đặt phòng/Visa</span>
+              <span className="text-[11px] transition-transform duration-200 group-hover:rotate-180">▾</span>
+            </button>
+
+            {/* DROPDOWN MENU */}
+            <div className="absolute top-full left-0 hidden group-hover:block w-52 bg-white border border-slate-200 shadow-md rounded-xl p-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+              <Link
+                href="/dat-phong"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+              >
+                🏢 Đặt phòng/Book phòng
+              </Link>
+              <Link
+                href="/dich-vu-visa"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+              >
+                🛂 Dịch vụ Visa
+              </Link>
+            </div>
+          </div>
+
+          {/* MENU 4: KÝ GỬI BĐS */}
           <Link
             href="/ky-gui"
             className={`text-[14px] md:text-[15px] font-semibold transition ${
@@ -114,7 +145,7 @@ export default function Header() {
             Ký gửi BĐS
           </Link>
 
-          {/* MENU 4: TIN TỨC */}
+          {/* MENU 5: TIN TỨC */}
           <Link
             href="/news"
             className={`text-[14px] md:text-[15px] font-semibold transition ${
@@ -257,6 +288,38 @@ export default function Header() {
                       className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
                     >
                       Sa bàn / 360° dự án
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* ACCORDION 3: ĐẶT PHÒNG / VISA */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <button
+                  onClick={() => setMobileAccordion(mobileAccordion === "services" ? null : "services")}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
+                    isServicesActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>Đặt phòng/Visa</span>
+                  <span className="text-xs">{mobileAccordion === "services" ? "▲" : "▼"}</span>
+                </button>
+
+                {mobileAccordion === "services" && (
+                  <div className="bg-slate-50 p-2 space-y-1 border-t border-slate-100">
+                    <Link
+                      href="/dat-phong"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      🏢 Đặt phòng/Book phòng
+                    </Link>
+                    <Link
+                      href="/dich-vu-visa"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-3 py-2 rounded-lg font-medium text-slate-700 hover:text-[#2563EB] hover:bg-white transition"
+                    >
+                      🛂 Dịch vụ Visa
                     </Link>
                   </div>
                 )}
