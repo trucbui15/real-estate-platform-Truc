@@ -417,13 +417,13 @@ export default function ListingForm({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
+          accept="image/*"
           multiple
           onChange={(e) => handleUpload(e.target.files)}
           className="input cursor-pointer"
         />
-        {uploading && <p className="mt-1 text-xs text-brand-500">Đang tải ảnh lên...</p>}
-        <p className="mt-1 text-xs text-brand-300">Tối đa 5MB/ảnh, định dạng JPG/PNG/WEBP/GIF. Hoặc dán URL ảnh ngoài bên dưới (mỗi dòng 1 URL):</p>
+        {uploading && <p className="mt-1 text-xs text-brand-500 font-bold">Đang tải ảnh lên...</p>}
+        <p className="mt-1 text-xs text-brand-300">Tối đa 15MB/ảnh, chấp nhận tất cả định dạng ảnh (JPG/PNG/WEBP/HEIC/AVIF/JFIF...). Hoặc dán URL ảnh ngoài bên dưới (mỗi dòng 1 URL):</p>
         <textarea className="input mt-1" rows={2} placeholder="https://..." value={form.imagesText} onChange={(e) => set("imagesText", e.target.value)} />
       </div>
 

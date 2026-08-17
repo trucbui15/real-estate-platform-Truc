@@ -9,8 +9,22 @@ import crypto from "crypto";
 
 // Upload ảnh tin đăng — hỗ trợ Cloudinary (Cloud) & Local storage (/public/uploads)
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+const ALLOWED_MIME = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/x-png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+  "image/heic",
+  "image/heif",
+  "image/jfif",
+  "image/bmp",
+]);
+const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif", "heic", "heif", "jfif", "bmp"]);
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -30,11 +44,14 @@ export async function POST(req: Request) {
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Thiếu file" }, { status: 400 });
 
-  if (!ALLOWED.has(file.type)) {
-    return NextResponse.json({ error: "Chỉ chấp nhận ảnh JPG/PNG/WEBP/GIF" }, { status: 400 });
+  const extName = (file.name.split(".").pop() || "").toLowerCase();
+  const isAllowed = ALLOWED_MIME.has(file.type) || ALLOWED_EXT.has(extName) || file.type.startsWith("image/");
+
+  if (!isAllowed) {
+    return NextResponse.json({ error: "Chỉ chấp nhận các tệp định dạng hình ảnh (JPG, PNG, WEBP, HEIC...)" }, { status: 400 });
   }
   if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: "Ảnh tối đa 5MB" }, { status: 400 });
+    return NextResponse.json({ error: "Dung lượng ảnh tối đa 15MB" }, { status: 400 });
   }
 
   // 1. Ưu tiên Cloudinary nếu có cấu hình biến môi trường (Lưu vĩnh viễn trên Cloud)
