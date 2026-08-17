@@ -78,23 +78,57 @@ export default function ListingForm({
     setError("");
     try {
       const uploaded: string[] = [];
-      for (const file of Array.from(files)) {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        let data: any = {};
-        try {
-          data = await res.json();
-        } catch (e) {}
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
 
-        if (!res.ok) {
-          setError(data.error || `Upload "${file.name}" thất bại (Lỗi ${res.status})`);
-          continue;
+      for (const file of Array.from(files)) {
+        let imageUrl = "";
+
+        // 1. Thử upload trực tiếp từ trình duyệt lên Cloudinary (Bỏ qua rào cản server VPS)
+        try {
+          const cloudFd = new FormData();
+          cloudFd.append("file", file);
+          cloudFd.append("upload_preset", uploadPreset);
+
+          const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: "POST",
+            body: cloudFd,
+          });
+
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (cloudData.secure_url) {
+              imageUrl = cloudData.secure_url;
+            }
+          }
+        } catch (e) {
+          console.warn("Lỗi upload trực tiếp Cloudinary, fallback sang API server", e);
         }
-        if (data.url) {
-          uploaded.push(data.url);
+
+        // 2. Nếu upload trực tiếp chưa thành công, fallback sang API server /api/upload
+        if (!imageUrl) {
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch("/api/upload", { method: "POST", body: fd });
+          let data: any = {};
+          try {
+            data = await res.json();
+          } catch (e) {}
+
+          if (!res.ok) {
+            setError(data.error || `Upload "${file.name}" thất bại (Lỗi ${res.status})`);
+            continue;
+          }
+          if (data.url) {
+            imageUrl = data.url;
+          }
+        }
+
+        if (imageUrl) {
+          uploaded.push(imageUrl);
         }
       }
+
       if (uploaded.length) {
         setImageUrls([...imageUrls, ...uploaded]);
       }
