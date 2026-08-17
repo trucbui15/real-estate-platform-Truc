@@ -85,6 +85,13 @@ export function parseImages(images?: string | string[] | null): string[] {
   return [trimmed];
 }
 
+export function optimizeCloudinaryUrl(url: string, width = 800): string {
+  if (!url || typeof url !== "string") return url;
+  if (!url.includes("res.cloudinary.com")) return url;
+  if (url.includes("/upload/f_auto,q_auto")) return url;
+  return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width},c_limit/`);
+}
+
 export const LABELS = {
   propertyType: {
     CAN_HO: "Căn hộ",

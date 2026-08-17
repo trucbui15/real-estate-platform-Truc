@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatVND, parseImages, LABELS } from "@/lib/utils";
+import { formatVND, parseImages, LABELS, optimizeCloudinaryUrl } from "@/lib/utils";
 
 export default function ListingCard({ listing }: { listing: any }) {
   const router = useRouter();
   const images = parseImages(listing.images);
-  const coverImage = images[0] || null;
+  const coverImage = images[0] ? optimizeCloudinaryUrl(images[0], 600) : null;
   const price = listing.transactionType === "RENT" ? listing.rentPrice : listing.salePrice;
 
   function handleProjectClick(e: React.MouseEvent) {
@@ -28,6 +28,8 @@ export default function ListingCard({ listing }: { listing: any }) {
           <img
             src={coverImage}
             alt={listing.title}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-300"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/logo.png";
