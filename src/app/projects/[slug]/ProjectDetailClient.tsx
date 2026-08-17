@@ -532,7 +532,7 @@ export default function ProjectDetailClient({
             onClick={() => scrollToSection("inventory-section", "inventory")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
               activeTab === "inventory"
-                ? "bg-[#2563EB] text-white shadow-xs"
+                ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -542,7 +542,7 @@ export default function ProjectDetailClient({
             onClick={() => scrollToSection("overview-section", "overview")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
               activeTab === "overview"
-                ? "bg-[#2563EB] text-white shadow-xs"
+                ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -552,7 +552,7 @@ export default function ProjectDetailClient({
             onClick={() => scrollToSection("sales-section", "sales")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
               activeTab === "sales"
-                ? "bg-[#2563EB] text-white shadow-xs"
+                ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -562,7 +562,7 @@ export default function ProjectDetailClient({
             onClick={() => scrollToSection("rent-section", "rent")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
               activeTab === "rent"
-                ? "bg-[#2563EB] text-white shadow-xs"
+                ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -639,7 +639,7 @@ export default function ProjectDetailClient({
                 onClick={() => setBlockTab("THE SEA")}
                 className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${
                   blockTab === "THE SEA"
-                    ? "bg-[#2563EB] text-white border-[#2563EB] shadow-xs"
+                    ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs"
                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -653,7 +653,7 @@ export default function ProjectDetailClient({
                 onClick={() => setBlockTab("THE HARBOUR")}
                 className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${
                   blockTab === "THE HARBOUR"
-                    ? "bg-[#2563EB] text-white border-[#2563EB] shadow-xs"
+                    ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs"
                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -683,7 +683,7 @@ export default function ProjectDetailClient({
                     onClick={() => setBedroomFilter(btn.key)}
                     className={`px-2.5 py-1 rounded-lg text-[12px] font-bold transition border ${
                       bedroomFilter === btn.key
-                        ? "bg-[#2563EB] text-white border-[#2563EB]"
+                        ? "bg-[#0284C7] text-white border-[#0284C7]"
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900"
                     }`}
                   >
@@ -754,7 +754,7 @@ export default function ProjectDetailClient({
                   onClick={() => setViewMode("table")}
                   className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
                     viewMode === "table"
-                      ? "bg-white text-[#2563EB] shadow-xs"
+                      ? "bg-white text-[#0284C7] shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -765,7 +765,7 @@ export default function ProjectDetailClient({
                   onClick={() => setViewMode("grid")}
                   className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
                     viewMode === "grid"
-                      ? "bg-white text-[#2563EB] shadow-xs"
+                      ? "bg-white text-[#0284C7] shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -858,7 +858,7 @@ export default function ProjectDetailClient({
 
                         {/* 6. GIÁ BÁN NIÊM YẾT */}
                         <td className="px-4 py-3.5">
-                          <span className="font-black text-[#2563EB] text-[15px]">
+                          <span className="font-black text-[#0284C7] text-[15px]">
                             {formatPrice(unit)}
                           </span>
                         </td>
@@ -969,7 +969,7 @@ export default function ProjectDetailClient({
 
                     {/* GIÁ & MÃ CĂN */}
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="font-black text-[#2563EB] text-[18px] tracking-tight">
+                      <div className="font-black text-[#0284C7] text-[18px] tracking-tight">
                         {formatPrice(unit)}
                       </div>
 

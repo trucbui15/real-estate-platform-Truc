@@ -21,7 +21,7 @@ export default function Header() {
   const isServicesActive = pathname.startsWith("/dat-phong") || pathname.startsWith("/dich-vu-visa");
 
   return (
-    <header className="sticky top-0 z-50 h-[68px] md:h-[72px] border-b border-slate-200 bg-white transition-all">
+    <header className="sticky top-0 z-50 h-[68px] md:h-[72px] border-b border-sky-100/90 bg-gradient-to-r from-sky-50/95 via-blue-50/90 to-indigo-50/95 backdrop-blur-md shadow-xs transition-all">
       <div className="container-page flex h-full items-center justify-between">
         {/* LEFT: BRAND LOGO */}
         <div className="flex items-center gap-3">
@@ -31,7 +31,7 @@ export default function Header() {
               alt="Minh Dũng Land Logo"
               className="h-9 w-9 object-contain rounded-lg shadow-xs"
             />
-            <span className="font-bold tracking-tight text-slate-900">Minh Dũng Land</span>
+            <span className="font-extrabold tracking-tight text-slate-900">Minh Dũng Land</span>
           </Link>
         </div>
 
@@ -42,8 +42,8 @@ export default function Header() {
             <button
               className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
                 isListingsActive
-                  ? "text-[#2563EB] font-bold"
-                  : "text-slate-700 hover:text-[#2563EB]"
+                  ? "text-[#0284C7] font-extrabold"
+                  : "text-slate-700 hover:text-[#0284C7]"
               }`}
             >
               <span>Mua bán / Cho thuê</span>
@@ -54,13 +54,13 @@ export default function Header() {
             <div className="absolute top-full left-0 hidden group-hover:block w-48 bg-white border border-slate-200 shadow-md rounded-xl p-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
               <Link
                 href="/listings?transactionType=SALE"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 Mua bán
               </Link>
               <Link
                 href="/listings?transactionType=RENT"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 Cho thuê
               </Link>
@@ -72,8 +72,8 @@ export default function Header() {
             <button
               className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
                 isProjectsActive
-                  ? "text-[#2563EB] font-bold"
-                  : "text-slate-700 hover:text-[#2563EB]"
+                  ? "text-[#0284C7] font-bold"
+                  : "text-slate-700 hover:text-[#0284C7]"
               }`}
             >
               <span>Dự án</span>
@@ -84,19 +84,19 @@ export default function Header() {
             <div className="absolute top-full left-0 hidden group-hover:block w-52 bg-white border border-slate-200 shadow-md rounded-xl p-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
               <Link
                 href="/projects"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 Bảng hàng các dự án
               </Link>
               <Link
                 href="/tai-lieu-du-an"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 Tài liệu dự án
               </Link>
               <Link
                 href="/tai-lieu-du-an/360"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 Sa bàn / 360° dự án
               </Link>
@@ -108,8 +108,8 @@ export default function Header() {
             <button
               className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
                 isServicesActive
-                  ? "text-[#2563EB] font-bold"
-                  : "text-slate-700 hover:text-[#2563EB]"
+                  ? "text-[#0284C7] font-bold"
+                  : "text-slate-700 hover:text-[#0284C7]"
               }`}
             >
               <span>Đặt phòng/Visa</span>
@@ -120,13 +120,13 @@ export default function Header() {
             <div className="absolute top-full left-0 hidden group-hover:block w-52 bg-white border border-slate-200 shadow-md rounded-xl p-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
               <Link
                 href="/dat-phong"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 🏢 Đặt phòng/Book phòng
               </Link>
               <Link
                 href="/dich-vu-visa"
-                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] transition"
+                className="block px-3 py-2 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0284C7] transition"
               >
                 🛂 Dịch vụ Visa
               </Link>
@@ -138,8 +138,8 @@ export default function Header() {
             href="/ky-gui"
             className={`text-[14px] md:text-[15px] font-semibold transition ${
               isKyGuiActive
-                ? "text-[#2563EB] font-bold"
-                : "text-slate-700 hover:text-[#2563EB]"
+                ? "text-[#0284C7] font-bold"
+                : "text-slate-700 hover:text-[#0284C7]"
             }`}
           >
             Ký gửi BĐS
@@ -150,8 +150,8 @@ export default function Header() {
             href="/news"
             className={`text-[14px] md:text-[15px] font-semibold transition ${
               isNewsActive
-                ? "text-[#2563EB] font-bold"
-                : "text-slate-700 hover:text-[#2563EB]"
+                ? "text-[#0284C7] font-bold"
+                : "text-slate-700 hover:text-[#0284C7]"
             }`}
           >
             Tin tức
@@ -165,14 +165,14 @@ export default function Header() {
               {isBackoffice && (
                 <Link
                   href="/dashboard"
-                  className="rounded-xl bg-blue-50 px-3.5 py-2 text-[13px] font-semibold text-[#2563EB] hover:bg-blue-100 transition"
+                  className="rounded-xl bg-blue-50 px-3.5 py-2 text-[13px] font-semibold text-[#0284C7] hover:bg-blue-100 transition"
                 >
                   Bảng điều khiển
                 </Link>
               )}
               <Link
                 href="/profile"
-                className="text-[14px] font-bold text-slate-800 hover:text-[#2563EB] transition flex items-center gap-1.5"
+                className="text-[14px] font-bold text-slate-800 hover:text-[#0284C7] transition flex items-center gap-1.5"
               >
                 <span>👤</span>
                 <span>{session.user?.name}</span>

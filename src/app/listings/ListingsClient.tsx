@@ -92,7 +92,7 @@ export default function ListingsClient({
                 onClick={() => switchTransactionType("SALE")}
                 className={`px-3.5 py-1.5 rounded-lg text-[13px] font-bold transition border ${
                   transactionType === "SALE"
-                    ? "bg-[#2563EB] text-white border-[#2563EB]"
+                    ? "bg-[#0284C7] text-white border-[#0284C7]"
                     : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                 }`}
               >
@@ -103,7 +103,7 @@ export default function ListingsClient({
                 onClick={() => switchTransactionType("RENT")}
                 className={`px-3.5 py-1.5 rounded-lg text-[13px] font-bold transition border ${
                   transactionType === "RENT"
-                    ? "bg-[#2563EB] text-white border-[#2563EB]"
+                    ? "bg-[#0284C7] text-white border-[#0284C7]"
                     : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                 }`}
               >
@@ -124,7 +124,7 @@ export default function ListingsClient({
             </h1>
 
             <p className="text-[13px] text-slate-500">
-              Hiển thị <span className="text-[#2563EB] font-bold">{total}</span> sản phẩm phù hợp
+              Hiển thị <span className="text-[#0284C7] font-bold">{total}</span> sản phẩm phù hợp
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function ListingsClient({
             >
               <span>Bộ lọc</span>
               {activeChips.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded bg-[#2563EB] text-white text-[10px]">
+                <span className="ml-1 px-1.5 py-0.2 rounded bg-[#0284C7] text-white text-[10px]">
                   {activeChips.length}
                 </span>
               )}
@@ -226,7 +226,7 @@ export default function ListingsClient({
                     href={`/listings?${next.toString()}`}
                     className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition ${
                       p === page
-                        ? "bg-[#2563EB] text-white"
+                        ? "bg-[#0284C7] text-white"
                         : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
                     }`}
                   >

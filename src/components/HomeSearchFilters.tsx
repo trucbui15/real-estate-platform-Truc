@@ -136,7 +136,7 @@ export default function HomeSearchFilters({ projects }: HomeSearchFiltersProps) 
                     key={p.id}
                     type="button"
                     onClick={() => handleSelectSuggestion(p.name, p.slug)}
-                    className="w-full text-left px-4 py-3 hover:bg-[#EEF2FF] hover:text-[#4F46E5] transition border-b border-[#F1F5F9] last:border-none flex items-center justify-between"
+                    className="w-full text-left px-4 py-3 hover:bg-[#E0F2FE] hover:text-[#0284C7] transition border-b border-[#F1F5F9] last:border-none flex items-center justify-between"
                   >
                     <span className="font-semibold text-[14px] text-[#0F172A]">{p.name}</span>
                     <span className="text-[13px] text-[#64748B]">Xem chi tiết ➔</span>
@@ -157,7 +157,7 @@ export default function HomeSearchFilters({ projects }: HomeSearchFiltersProps) 
             </svg>
             <span>Bộ lọc nâng cao</span>
             {activeExtraCount > 0 && (
-              <span className="rounded-full bg-[#4F46E5] px-2 text-[12px] text-white">
+              <span className="rounded-full bg-[#0284C7] px-2 text-[12px] text-white">
                 {activeExtraCount}
               </span>
             )}

@@ -43,7 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <Link
                 key={l.href}
                 href={l.href}
-                className="shrink-0 rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#2563EB] transition whitespace-nowrap"
+                className="shrink-0 rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0284C7] transition whitespace-nowrap"
               >
                 {l.label}
               </Link>

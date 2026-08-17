@@ -249,7 +249,7 @@ export default function ListingDetailClient({
                     onClick={() => setActiveImgIndex(idx)}
                     className={`relative w-18 h-14 shrink-0 rounded-lg overflow-hidden border transition ${
                       activeImgIndex === idx
-                        ? "border-[#2563EB] ring-2 ring-blue-100"
+                        ? "border-[#0284C7] ring-2 ring-blue-100"
                         : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
@@ -270,7 +270,7 @@ export default function ListingDetailClient({
           {/* 2. TITLE & PRICE HEADER */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div className="text-[26px] sm:text-[30px] font-bold text-[#2563EB] tracking-tight">
+              <div className="text-[26px] sm:text-[30px] font-bold text-[#0284C7] tracking-tight">
                 {formatVND(price)}
                 {listing.transactionType === "RENT" ? (
                   <span className="text-[14px] font-normal text-slate-500"> /tháng</span>
@@ -316,7 +316,7 @@ export default function ListingDetailClient({
 
               <Link
                 href={`/projects/${listing.project.slug}`}
-                className="text-[13px] font-bold text-[#2563EB] hover:underline shrink-0"
+                className="text-[13px] font-bold text-[#0284C7] hover:underline shrink-0"
               >
                 Xem dự án →
               </Link>
@@ -364,7 +364,7 @@ export default function ListingDetailClient({
                 {listing.project && (
                   <Link
                     href={`/listings?project=${listing.project.slug}`}
-                    className="text-[13px] font-bold text-[#2563EB] hover:underline"
+                    className="text-[13px] font-bold text-[#0284C7] hover:underline"
                   >
                     Xem thêm →
                   </Link>
@@ -418,7 +418,7 @@ export default function ListingDetailClient({
                     placeholder="Nguyễn Văn A"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none transition"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none transition"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export default function ListingDetailClient({
                     placeholder="0901234567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none transition"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none transition"
                   />
                 </div>
 
@@ -443,7 +443,7 @@ export default function ListingDetailClient({
                   <select
                     value={demandType}
                     onChange={(e) => setDemandType(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] font-medium text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none transition"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] font-medium text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none transition"
                   >
                     <option value="MUA">Mua bất động sản</option>
                     <option value="THUE">Thuê bất động sản</option>
@@ -458,7 +458,7 @@ export default function ListingDetailClient({
                     placeholder="Ghi chú thêm (vd: cần xem nhà chiều nay)..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none transition"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none transition"
                   />
                 </div>
 
@@ -478,7 +478,7 @@ export default function ListingDetailClient({
                 href={zaloUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#2563EB] text-white font-bold text-[13px] hover:bg-blue-700 transition shadow-xs"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#0284C7] text-white font-bold text-[13px] hover:bg-blue-700 transition shadow-xs"
               >
                 <span>💬</span>
                 <span>Nhắn Zalo OA tư vấn</span>
@@ -527,7 +527,7 @@ export default function ListingDetailClient({
           href={zaloUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-[13px] text-center shadow-xs flex items-center justify-center gap-1.5"
+          className="flex-1 py-2.5 rounded-xl bg-[#0284C7] text-white font-bold text-[13px] text-center shadow-xs flex items-center justify-center gap-1.5"
         >
           <span>💬</span>
           <span>Nhắn Zalo OA</span>
@@ -580,7 +580,7 @@ export default function ListingDetailClient({
                     placeholder="Nguyễn Văn A"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none"
                   />
                 </div>
 
@@ -594,7 +594,7 @@ export default function ListingDetailClient({
                     placeholder="0901234567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none"
                   />
                 </div>
 
@@ -603,7 +603,7 @@ export default function ListingDetailClient({
                   <select
                     value={demandType}
                     onChange={(e) => setDemandType(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none"
                   >
                     <option value="MUA">Mua bất động sản</option>
                     <option value="THUE">Thuê bất động sản</option>
@@ -618,7 +618,7 @@ export default function ListingDetailClient({
                     placeholder="Ghi chú thêm..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#2563EB] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none"
                   />
                 </div>
 

@@ -207,7 +207,7 @@ export default function SearchFilters({
               }}
               className={`h-[32px] px-2.5 rounded border text-[12px] font-medium transition ${
                 activeRangeId === id
-                  ? "border-[#2563EB] bg-blue-50 text-[#2563EB] font-semibold"
+                  ? "border-[#0284C7] bg-blue-50 text-[#0284C7] font-semibold"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
@@ -228,7 +228,7 @@ export default function SearchFilters({
               onClick={() => setLocalBedrooms(localBedrooms === n ? "" : n)}
               className={`h-[34px] rounded border text-[12px] font-medium transition flex items-center justify-center ${
                 localBedrooms === n
-                  ? "border-[#2563EB] bg-blue-50 text-[#2563EB] font-semibold"
+                  ? "border-[#0284C7] bg-blue-50 text-[#0284C7] font-semibold"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
@@ -243,7 +243,7 @@ export default function SearchFilters({
         <button
           type="button"
           onClick={() => setExtraFiltersOpen(!extraFiltersOpen)}
-          className="w-full flex items-center justify-between text-[13px] font-semibold text-[#2563EB] py-1"
+          className="w-full flex items-center justify-between text-[13px] font-semibold text-[#0284C7] py-1"
         >
           <span>Bộ lọc nâng cao</span>
           <span className="text-xs">{extraFiltersOpen ? "▲" : "▼"}</span>

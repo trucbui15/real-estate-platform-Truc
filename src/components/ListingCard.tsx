@@ -20,7 +20,7 @@ export default function ListingCard({ listing }: { listing: any }) {
   return (
     <Link
       href={`/listings/${listing.slug}`}
-      className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-[#2563EB] hover:shadow-md transition-all duration-200"
+      className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-[#0284C7] hover:shadow-md transition-all duration-200"
     >
       {/* 1. COVER IMAGE CONTAINER */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
@@ -65,7 +65,7 @@ export default function ListingCard({ listing }: { listing: any }) {
       <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
         <div className="space-y-1.5">
           {/* PRICE */}
-          <div className="text-[18px] font-bold text-[#2563EB] tracking-tight">
+          <div className="text-[18px] font-bold text-[#0284C7] tracking-tight">
             {formatVND(price)}
             {listing.transactionType === "RENT" ? (
               <span className="text-[12px] font-normal text-slate-500"> /tháng</span>
@@ -73,7 +73,7 @@ export default function ListingCard({ listing }: { listing: any }) {
           </div>
 
           {/* TITLE */}
-          <h3 className="text-[14px] font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#2563EB] transition">
+          <h3 className="text-[14px] font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#0284C7] transition">
             {listing.title}
           </h3>
 
@@ -81,7 +81,7 @@ export default function ListingCard({ listing }: { listing: any }) {
           {listing.project ? (
             <div
               onClick={handleProjectClick}
-              className="text-[13px] font-semibold text-slate-700 hover:text-[#2563EB] truncate cursor-pointer"
+              className="text-[13px] font-semibold text-slate-700 hover:text-[#0284C7] truncate cursor-pointer"
             >
               {listing.project.name}
             </div>

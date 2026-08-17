@@ -425,7 +425,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                 <button
                   type="submit"
                   disabled={isSaving || isUploading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#2563EB] hover:bg-blue-700 rounded-xl shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#0284C7] hover:bg-blue-700 rounded-xl shadow-2xs transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>

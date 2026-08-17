@@ -52,11 +52,11 @@ export default async function HomePage() {
               <Link
                 key={p.id}
                 href={`/listings?project=${p.slug}`}
-                className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#0F172A] hover:border-[#4F46E5] hover:text-[#4F46E5] transition shadow-sm"
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#0F172A] hover:border-[#0284C7] hover:text-[#0284C7] transition shadow-sm"
               >
                 <span>{p.name}</span>
                 {p._count.listings > 0 && (
-                  <span className="rounded-md bg-[#EEF2FF] px-1.5 py-0.5 text-[12px] font-semibold text-[#4F46E5]">
+                  <span className="rounded-md bg-[#E0F2FE] px-1.5 py-0.5 text-[12px] font-semibold text-[#0284C7]">
                     {p._count.listings}
                   </span>
                 )}
@@ -75,11 +75,11 @@ export default async function HomePage() {
               Bất động sản mới nhất
             </h2>
             <p className="text-[14px] text-[#64748B] font-normal mt-0.5">
-              Có <span className="text-[#4F46E5] font-bold">{totalCount}</span> bất động sản sẵn sàng giao dịch
+              Có <span className="text-[#0284C7] font-bold">{totalCount}</span> bất động sản sẵn sàng giao dịch
             </p>
           </div>
 
-          <Link href="/listings" className="text-[14px] font-semibold text-[#4F46E5] hover:underline">
+          <Link href="/listings" className="text-[14px] font-semibold text-[#0284C7] hover:underline">
             Xem tất cả ➔
           </Link>
         </div>
@@ -109,7 +109,7 @@ export default async function HomePage() {
         <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-sm">
           <div className="grid items-center gap-6 md:grid-cols-3">
             <div className="md:col-span-2 space-y-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#EEF2FF] px-3 py-1 text-[13px] font-semibold text-[#4F46E5]">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#E0F2FE] px-3 py-1 text-[13px] font-semibold text-[#0284C7]">
                 Dịch vụ ký gửi BĐS
               </span>
               <h2 className="text-[20px] md:text-[22px] font-bold text-[#0F172A] leading-snug">
