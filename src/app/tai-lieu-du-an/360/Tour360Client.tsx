@@ -43,28 +43,35 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
           href={cityResource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative block overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl transition hover:shadow-2xl md:p-8 border border-slate-800"
+          className="group relative block overflow-hidden rounded-3xl p-6 text-white shadow-xl transition hover:shadow-2xl md:p-8 border border-white/30"
         >
-          {/* Background Gradient Decorative circles */}
-          <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-primary-600/30 blur-3xl group-hover:bg-primary-600/40 transition"></div>
+          {/* Full Brightness Background Image - NO DARK OVERLAY */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cityResource.thumbnail || "/quynhon_panorama_360_banner.jpg"}
+              alt="Toàn cảnh 360° Quy Nhơn"
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
+            />
+          </div>
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/20 px-3.5 py-1 text-xs font-bold text-amber-300 border border-amber-400/30">
+            <div className="space-y-2 max-w-2xl bg-slate-950/40 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/20 shadow-lg">
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-3.5 py-1 text-xs font-extrabold text-slate-950 shadow-sm">
                 <span>🌐</span>
                 <span>TOÀN CẢNH KHU VỰC QUY NHƠN</span>
               </div>
-              <h2 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-white group-hover:text-amber-200 transition">
+              <h2 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-white drop-shadow-md">
                 {cityResource.title}
               </h2>
-              <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs md:text-sm text-slate-100 leading-relaxed font-medium drop-shadow-sm">
                 {cityResource.description ||
                   "Khám phá góc nhìn thực tế ảo 360° toàn cảnh bờ biển, quy hoạch và không gian đô thị TP. Quy Nhơn từ trên cao."}
               </p>
             </div>
 
             <div className="shrink-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-xs font-extrabold text-slate-950 shadow-md group-hover:bg-amber-300 transition transform group-hover:scale-105">
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3.5 text-xs font-extrabold text-slate-950 shadow-xl group-hover:bg-amber-300 transition transform group-hover:scale-105 border border-amber-300">
                 <span>Trải nghiệm sa bàn 360°</span>
                 <span className="text-base">↗</span>
               </span>
