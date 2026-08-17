@@ -71,19 +71,58 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
 
   async function handleFileUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
+    const file = files[0];
+
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Dung lượng ảnh vượt quá 15MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
     setIsUploading(true);
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
+    let uploadedUrl = "";
+
     try {
-      const formData = new FormData();
-      formData.append("file", files[0]);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setEditForm((prev) => ({ ...prev, thumbnail: data.url }));
-      } else {
-        alert("Tải ảnh thất bại. Vui lòng thử lại!");
+      // 1. Direct Cloudinary Browser Upload
+      try {
+        const cloudFd = new FormData();
+        cloudFd.append("file", file);
+        cloudFd.append("upload_preset", uploadPreset);
+
+        const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: cloudFd,
+        });
+
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (cloudData.secure_url) {
+            uploadedUrl = cloudData.secure_url;
+          }
+        }
+      } catch (e) {
+        console.warn("Direct Cloudinary upload failed, falling back to /api/upload", e);
       }
-    } catch (err) {
-      alert("Lỗi tải tệp ảnh");
+
+      // 2. Fallback to /api/upload
+      if (!uploadedUrl) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          uploadedUrl = data.url;
+        } else {
+          throw new Error(data.error || "Tải ảnh lên máy chủ thất bại.");
+        }
+      }
+
+      if (uploadedUrl) {
+        setEditForm((prev) => ({ ...prev, thumbnail: uploadedUrl }));
+      }
+    } catch (err: any) {
+      alert(err.message || "Tải ảnh thất bại. Vui lòng thử lại!");
     } finally {
       setIsUploading(false);
     }
