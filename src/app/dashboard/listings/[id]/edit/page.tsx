@@ -8,6 +8,7 @@ export default async function EditListingPage({ params }: { params: { id: string
   if (!listing) return notFound();
 
   const defaultValues = {
+    productCode: listing.productCode || "",
     unitCode: listing.unitCode,
     title: listing.title,
     projectId: listing.projectId || "",

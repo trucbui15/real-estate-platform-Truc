@@ -55,7 +55,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (!project.isActive) return NextResponse.json({ error: "Dự án chọn đang tạm ngưng hoạt động" }, { status: 400 });
   }
 
-  const newProductCode = (body.productCode ?? existing.productCode ?? "").trim();
+  const newProductCode = body.productCode && body.productCode.trim() !== "" ? body.productCode.trim() : existing.productCode;
   const newTitle = body.title ?? existing.title;
   const newSlug = slugify(newTitle) + "-" + slugify(newProductCode || existing.unitCode);
 
@@ -68,7 +68,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const updated = await prisma.listing.update({
       where: { id: params.id },
       data: {
-        productCode: newProductCode || null,
+        productCode: newProductCode,
         unitCode: body.unitCode ?? existing.unitCode,
         title: newTitle,
         slug: newSlug,
