@@ -56,22 +56,33 @@ export function slugify(str: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export function parseImages(images?: string | null): string[] {
+export function parseImages(images?: string | string[] | null): string[] {
   if (!images) return [];
-  if (typeof images === "string" && (images.startsWith("http://") || images.startsWith("https://") || images.startsWith("/"))) {
+  if (Array.isArray(images)) return images.map((s) => String(s).trim()).filter(Boolean);
+  if (typeof images !== "string") return [];
+
+  const trimmed = images.trim();
+  if (!trimmed) return [];
+
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
     try {
-      const arr = JSON.parse(images);
-      return Array.isArray(arr) ? arr : [images];
-    } catch {
-      return [images];
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch (e) {
+      // Fallback
     }
   }
-  try {
-    const arr = JSON.parse(images);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
+
+  if (trimmed.includes("\n") || trimmed.includes(",")) {
+    return trimmed
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
+
+  return [trimmed];
 }
 
 export const LABELS = {

@@ -29,6 +29,9 @@ export default function ListingCard({ listing }: { listing: any }) {
             src={coverImage}
             alt={listing.title}
             className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-300"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/logo.png";
+            }}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-slate-400 text-[13px] bg-slate-50">

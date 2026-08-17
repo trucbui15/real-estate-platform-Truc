@@ -76,21 +76,34 @@ export default function ListingForm({
     if (!files || files.length === 0) return;
     setUploading(true);
     setError("");
-    const uploaded: string[] = [];
-    for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || `Upload "${file.name}" thất bại`);
-        continue;
+    try {
+      const uploaded: string[] = [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        let data: any = {};
+        try {
+          data = await res.json();
+        } catch (e) {}
+
+        if (!res.ok) {
+          setError(data.error || `Upload "${file.name}" thất bại (Lỗi ${res.status})`);
+          continue;
+        }
+        if (data.url) {
+          uploaded.push(data.url);
+        }
       }
-      uploaded.push(data.url);
+      if (uploaded.length) {
+        setImageUrls([...imageUrls, ...uploaded]);
+      }
+    } catch (err: any) {
+      setError(err.message || "Lỗi kết nối khi tải ảnh lên server.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    if (uploaded.length) setImageUrls([...imageUrls, ...uploaded]);
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function removeImage(url: string) {
