@@ -19,7 +19,10 @@ export default function ListingDetailClient({
   const { data: session } = useSession();
   const isBackoffice = session && ["ADMIN", "MANAGER", "STAFF"].includes((session.user as any).role);
 
-  const images = parseImages(listing.images);
+  let images = parseImages(listing.images);
+  if (images.length === 0 && listing.project?.images) {
+    images = parseImages(listing.project.images);
+  }
   const [activeImgIndex, setActiveImgIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
@@ -207,6 +210,9 @@ export default function ListingDetailClient({
                     setLightboxImg(images[activeImgIndex] || images[0]);
                     setLightboxOpen(true);
                   }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/logo.png";
+                  }}
                   className="h-full w-full object-cover cursor-pointer hover:scale-102 transition duration-300"
                 />
               ) : (
@@ -247,7 +253,14 @@ export default function ListingDetailClient({
                         : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt=""
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/logo.png";
+                      }}
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
