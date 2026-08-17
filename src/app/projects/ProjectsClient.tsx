@@ -174,21 +174,28 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
 
   return (
     <div className="container-page py-8 space-y-8">
-      {/* 1. LUXURY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 p-8 sm:p-10 text-white shadow-xl border border-slate-800">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-16 w-60 h-60 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
+      {/* 1. LUXURY HERO BANNER WITH VIBRANT PROJECT IMAGE */}
+      <div className="group relative overflow-hidden rounded-3xl p-6 sm:p-10 text-white shadow-xl border border-white/30">
+        {/* Full Brightness Background Image - NO DARK OVERLAY */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/quynhon_key_projects_hero_banner.jpg"
+            alt="Khám phá các dự án trọng điểm Quy Nhơn"
+            className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
+          />
+        </div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-300 backdrop-blur-md border border-white/10">
+          <div className="space-y-2 max-w-2xl bg-slate-950/40 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-white/20 shadow-lg">
+            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-3.5 py-1 text-xs font-extrabold text-slate-950 shadow-sm">
               <span>💎</span>
               <span>Bảng Hàng Bất Động Sản Quy Nhơn & Bình Định</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight font-display">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight font-display drop-shadow-md">
               Khám Phá Các Dự Án Trọng Điểm
             </h1>
-            <p className="text-sm text-slate-300 font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-100 font-medium leading-relaxed drop-shadow-sm">
               Tra cứu nhanh thông tin dự án, mặt bằng căn hộ, tiến độ thanh toán và bảng hàng giá gốc từ Chủ đầu tư.
             </p>
           </div>
@@ -200,13 +207,13 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
               placeholder="Tìm dự án, CĐT, vị trí..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-9 py-3 text-sm rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:bg-slate-950/80 backdrop-blur-md transition shadow-inner"
+              className="w-full pl-10 pr-9 py-3.5 text-sm rounded-2xl border border-white/40 bg-slate-950/50 text-white placeholder:text-slate-300 focus:outline-none focus:border-amber-400 focus:bg-slate-950/80 backdrop-blur-md transition shadow-lg font-medium"
             />
-            <span className="absolute left-3.5 top-3.5 text-base text-slate-400">🔍</span>
+            <span className="absolute left-3.5 top-4 text-base text-slate-300">🔍</span>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400 hover:text-white"
+                className="absolute right-3.5 top-4 text-xs font-bold text-slate-300 hover:text-white"
               >
                 ✕
               </button>
