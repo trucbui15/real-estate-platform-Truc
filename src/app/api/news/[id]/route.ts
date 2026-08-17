@@ -38,6 +38,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
   }
 
+  const newPublished = body.published !== undefined ? Boolean(body.published) : existing.published;
+  let finalPublishedAt = existing.publishedAt;
+  if (newPublished && !existing.publishedAt) {
+    finalPublishedAt = new Date();
+  }
+
   const updated = await prisma.news.update({
     where: { id: params.id },
     data: {
@@ -50,7 +56,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       metaTitle: body.metaTitle !== undefined ? body.metaTitle?.trim() || null : existing.metaTitle,
       ogImage: body.ogImage !== undefined ? body.ogImage || null : existing.ogImage,
       content: body.content !== undefined ? body.content : existing.content,
-      published: body.published !== undefined ? body.published : existing.published,
+      published: newPublished,
+      publishedAt: finalPublishedAt,
     },
   });
 

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "News" ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3);

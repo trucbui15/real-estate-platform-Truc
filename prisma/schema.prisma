@@ -311,9 +311,10 @@ model News {
   content     String   // Nội dung bài viết (HTML / Rich text)
   authorId    String
   author      User     @relation("NewsAuthor", fields: [authorId], references: [id])
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  published   Boolean   @default(true)
+  publishedAt DateTime? // Ngày xuất bản chính thức đầu tiên
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // --------- CTV: Cộng tác viên ---------

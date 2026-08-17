@@ -63,6 +63,8 @@ export async function POST(req: Request) {
     finalSlug = `${finalSlug}-${Date.now().toString(36)}`;
   }
 
+  const isPublished = Boolean(body.published);
+
   try {
     const news = await prisma.news.create({
       data: {
@@ -76,7 +78,8 @@ export async function POST(req: Request) {
         ogImage: body.ogImage || null,
         content: body.content,
         authorId: session.user.id,
-        published: body.published ?? true,
+        published: isPublished,
+        publishedAt: isPublished ? new Date() : null,
       },
     });
     return NextResponse.json(news, { status: 201 });
