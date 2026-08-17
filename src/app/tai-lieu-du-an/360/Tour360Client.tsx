@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { parseImages } from "@/lib/utils";
+import { parseImages, getProjectCoverImage } from "@/lib/utils";
+import ProjectImageEditorModal from "@/components/ProjectImageEditorModal";
 
 interface Tour360ClientProps {
   cityResource: any | null;
   projects: any[];
+  canEdit?: boolean;
 }
 
-export default function Tour360Client({ cityResource, projects }: Tour360ClientProps) {
+export default function Tour360Client({ cityResource, projects, canEdit = false }: Tour360ClientProps) {
   const [search, setSearch] = useState("");
+  const [editingProject, setEditingProject] = useState<any | null>(null);
 
   const filteredProjects = projects.filter((p) => {
     if (!search.trim()) return true;
@@ -25,6 +28,15 @@ export default function Tour360Client({ cityResource, projects }: Tour360ClientP
 
   return (
     <div className="mt-8 space-y-10">
+      {/* MODAL CẬP NHẬT ẢNH DỰ ÁN CHO ADMIN/MANAGER */}
+      {canEdit && (
+        <ProjectImageEditorModal
+          project={editingProject}
+          isOpen={Boolean(editingProject)}
+          onClose={() => setEditingProject(null)}
+        />
+      )}
+
       {/* 1. TOP FEATURED BANNER: TOÀN CẢNH QUY NHƠN CITY */}
       {cityResource && (
         <a
@@ -91,8 +103,7 @@ export default function Tour360Client({ cityResource, projects }: Tour360ClientP
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
-            const projectImages = parseImages(project.images);
-            const imageCover = project.thumbnail || projectImages[0] || null;
+            const imageCover = getProjectCoverImage(project);
             const primaryResource = project.resources[0];
 
             if (!primaryResource) return null;
@@ -100,30 +111,50 @@ export default function Tour360Client({ cityResource, projects }: Tour360ClientP
             return (
               <div
                 key={project.id}
-                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl transition duration-300"
+                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl transition duration-300 relative"
               >
                 <div className="space-y-4">
                   {/* IMAGE CONTAINER WITH 360 BADGE */}
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-100">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
                     {imageCover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={imageCover}
                         alt={project.name}
                         className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/logo.png";
+                        }}
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-900 text-white text-xs font-bold p-4 text-center">
-                        🏢 {project.name}
+                      <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-slate-50 text-slate-400">
+                        <svg className="w-10 h-10 stroke-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span className="text-xs font-bold text-slate-700 mt-1">{project.name}</span>
+                        <span className="text-[11px] text-slate-400">Chưa tải ảnh đại diện</span>
                       </div>
                     )}
 
-                    {/* OVERLAY BADGE */}
+                    {/* OVERLAY BADGE 360° */}
                     <div className="absolute left-3 top-3">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 backdrop-blur px-3 py-1 text-[10px] font-extrabold text-amber-300 shadow">
                         <span className="animate-pulse text-xs">🔄</span> 360° TOUR
                       </span>
                     </div>
+
+                    {/* NÚT CHỈNH ẢNH DÀNH CHO ADMIN / MANAGER */}
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingProject(project)}
+                        className="absolute right-2.5 top-2.5 bg-slate-900/85 hover:bg-sky-600 text-white font-bold text-[11px] px-2.5 py-1 rounded-xl shadow-lg transition backdrop-blur flex items-center gap-1 z-10 cursor-pointer"
+                        title="Chỉnh sửa ảnh đại diện dự án"
+                      >
+                        <span>📷</span>
+                        <span>Sửa ảnh</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* CONTENT */}

@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Tour360Client from "./Tour360Client";
 
@@ -11,6 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Tour360Page() {
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const canEdit = userRole === "ADMIN" || userRole === "MANAGER" || userRole === "STAFF";
+
   let cityResource: any = null;
   let projects: any[] = [];
 
@@ -36,6 +42,7 @@ export default async function Tour360Page() {
         },
       },
       include: {
+        listings: { select: { id: true, images: true } },
         resources: {
           where: {
             type: "TOUR_360",
@@ -67,7 +74,7 @@ export default async function Tour360Page() {
         </p>
       </div>
 
-      <Tour360Client cityResource={cityResource} projects={projects} />
+      <Tour360Client cityResource={cityResource} projects={projects} canEdit={canEdit} />
     </div>
   );
 }

@@ -177,3 +177,23 @@ export const LABELS = {
   },
 } as const;
 
+export function getProjectCoverImage(project: any): string | null {
+  if (!project) return null;
+  if (project.thumbnail && typeof project.thumbnail === "string" && project.thumbnail.trim() !== "" && !project.thumbnail.includes("placeholder")) {
+    return project.thumbnail;
+  }
+  const projectImages = parseImages(project.images);
+  if (projectImages.length > 0) {
+    return projectImages[0];
+  }
+  if (project.listings && Array.isArray(project.listings) && project.listings.length > 0) {
+    for (const listing of project.listings) {
+      const listingImages = parseImages(listing.images);
+      if (listingImages.length > 0) {
+        return listingImages[0];
+      }
+    }
+  }
+  return null;
+}
+

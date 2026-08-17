@@ -249,48 +249,99 @@ export default function ProjectDetailClient({
     return "Thỏa thuận";
   }
 
-  // Upload handler reusing /api/upload
+  // Upload handler hỗ trợ Direct Cloudinary & Fallback /api/upload
   async function handleFileUpload(files: FileList | null, isEdit: boolean) {
     if (!files || files.length === 0) return;
 
-    if (isEdit) setEditUploading(true);
-    else setAddUploading(true);
-
-    const uploadedUrls: string[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.url) uploadedUrls.push(data.url);
-        } else {
-          const err = await res.json();
-          const msg = err.error || "Lỗi upload ảnh";
-          if (isEdit) setEditError(msg);
-          else setAddError(msg);
-        }
-      } catch (e) {
-        const msg = "Không thể tải ảnh lên server";
-        if (isEdit) setEditError(msg);
-        else setAddError(msg);
-      }
+    if (isEdit) {
+      setEditUploading(true);
+      setEditError("");
+    } else {
+      setAddUploading(true);
+      setAddError("");
     }
 
-    if (isEdit) {
-      setEditForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
-      setEditUploading(false);
-    } else {
-      setAddForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
-      setAddUploading(false);
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
+    const MAX_SIZE = 15 * 1024 * 1024;
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        if (file.size > MAX_SIZE) {
+          const msg = `Tệp "${file.name}" vượt quá dung lượng cho phép (tối đa 15MB)`;
+          if (isEdit) setEditError(msg);
+          else setAddError(msg);
+          continue;
+        }
+
+        let fileUrl = "";
+
+        // 1. Thử upload trực tiếp Cloudinary từ Client
+        try {
+          const cloudFd = new FormData();
+          cloudFd.append("file", file);
+          cloudFd.append("upload_preset", uploadPreset);
+
+          const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: "POST",
+            body: cloudFd,
+          });
+
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (cloudData.secure_url) {
+              fileUrl = cloudData.secure_url;
+            }
+          }
+        } catch (e) {
+          console.warn("Direct Cloudinary upload failed, falling back to /api/upload", e);
+        }
+
+        // 2. Fallback sang /api/upload
+        if (!fileUrl) {
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await fetch("/api/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.url) fileUrl = data.url;
+            } else {
+              const err = await res.json();
+              const msg = err.error || `Lỗi upload tệp "${file.name}" (Mã lỗi: ${res.status})`;
+              if (isEdit) setEditError(msg);
+              else setAddError(msg);
+            }
+          } catch (e: any) {
+            const msg = `Không thể kết nối máy chủ để tải tệp "${file.name}": ${e.message}`;
+            if (isEdit) setEditError(msg);
+            else setAddError(msg);
+          }
+        }
+
+        if (fileUrl) {
+          uploadedUrls.push(fileUrl);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        if (isEdit) {
+          setEditForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+        } else {
+          setAddForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+        }
+      }
+    } finally {
+      if (isEdit) setEditUploading(false);
+      else setAddUploading(false);
     }
   }
 

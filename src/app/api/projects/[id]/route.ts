@@ -51,6 +51,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   if (body.provinceId !== undefined) updateData.provinceId = body.provinceId || null;
   if (body.districtId !== undefined) updateData.districtId = body.districtId || null;
   if (body.thumbnail !== undefined) updateData.thumbnail = body.thumbnail || null;
+  if (body.images !== undefined) updateData.images = typeof body.images === "string" ? body.images : JSON.stringify(body.images);
   if (body.isActive !== undefined) updateData.isActive = Boolean(body.isActive);
   if (body.featured !== undefined) updateData.featured = Boolean(body.featured);
 
@@ -67,7 +68,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json(updated);
   } catch (e: any) {
-    return NextResponse.json({ error: "Lỗi cập nhật dự án." }, { status: 400 });
+    console.error("Lỗi cập nhật dự án PUT /api/projects/[id]:", e);
+    return NextResponse.json({ error: e.message || "Lỗi cập nhật dự án." }, { status: 400 });
   }
 }
 

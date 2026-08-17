@@ -20,27 +20,11 @@ interface ProjectsClientProps {
   projects: ProjectItem[];
 }
 
-const FALLBACK_PROJECT_IMAGES: Record<string, string> = {
-  simona: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
-  cadia: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80",
-  ocean: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80",
-  flc: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
-  nhon: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80",
-  richmond: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-  melody: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
-  altara: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
-  sailing: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
-};
-
-function getCoverPhoto(project: ProjectItem): string {
+function getCoverPhoto(project: ProjectItem): string | null {
   if (project.bannerImage && project.bannerImage.length > 5 && !project.bannerImage.includes("placeholder")) {
     return project.bannerImage;
   }
-  const nameLower = project.name.toLowerCase();
-  for (const [key, url] of Object.entries(FALLBACK_PROJECT_IMAGES)) {
-    if (nameLower.includes(key)) return url;
-  }
-  return "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80";
+  return null;
 }
 
 export default function ProjectsClient({ projects: initialProjects }: ProjectsClientProps) {
@@ -220,12 +204,25 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                 <Link href={`/projects/${p.slug}`} className="block space-y-4">
                   {/* COVER IMAGE CONTAINER WITH GRADIENT OVERLAY & GLASS BADGES */}
                   <div className="relative w-full h-52 bg-slate-950 overflow-hidden">
-                    <img
-                      src={photoUrl}
-                      alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-90" />
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/logo.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-slate-900 text-slate-300">
+                        <svg className="w-10 h-10 stroke-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span className="text-xs font-bold text-white">{p.name}</span>
+                        <span className="text-[11px] text-slate-400">Chưa có ảnh đại diện</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-90 pointer-events-none" />
 
                     {/* TOP BADGES */}
                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">

@@ -79,13 +79,22 @@ export async function POST(req: Request) {
   }
 
   // 2. Lưu ổ đĩa local (dùng cho môi trường dev local hoặc chạy VPS)
-  await mkdir(UPLOAD_DIR, { recursive: true });
+  try {
+    await mkdir(UPLOAD_DIR, { recursive: true });
 
-  const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-  const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+    const safeExt = extName || (file.type ? file.type.split("/")[1] : "jpg") || "jpg";
+    const finalExt = safeExt === "jpeg" ? "jpg" : safeExt;
+    const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${finalExt}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(path.join(UPLOAD_DIR, filename), buffer);
 
-  return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+    return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+  } catch (err: any) {
+    console.error("Lỗi ghi file local storage:", err);
+    return NextResponse.json(
+      { error: `Không thể ghi file lên lưu trữ server (${err.message || "Lỗi lưu file"})` },
+      { status: 500 }
+    );
+  }
 }
 
