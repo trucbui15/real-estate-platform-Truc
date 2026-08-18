@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/dashboard", label: "Tổng quan", show: true },
     { href: "/dashboard/listings", label: "Tin đăng BĐS", show: true },
     { href: "/dashboard/customers", label: "Khách hàng (CRM)", show: true },
-    { href: "/dashboard/services", label: "🏨 Đặt phòng & Visa", show: true },
+    { href: "/dashboard/services", label: "Đặt phòng & Visa", show: true },
     { href: "/dashboard/collaborators", label: "Cộng tác viên (CTV)", show: true },
     { href: "/dashboard/projects", label: "Dự án", show: canManageProjectsAndNews(role) },
     { href: "/dashboard/news", label: "Tin tức", show: canManageProjectsAndNews(role) },
