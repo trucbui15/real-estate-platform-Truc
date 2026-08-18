@@ -10,21 +10,24 @@ export default function DatPhongPage() {
   return (
     <div className="container-page py-10 space-y-10">
       {/* HERO SECTION */}
-      <div className="bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-        <div className="max-w-2xl space-y-4 relative z-10">
-          <span className="inline-block rounded-full bg-amber-400/20 border border-amber-400/30 px-3.5 py-1 text-xs font-bold text-amber-300 backdrop-blur">
+      <div 
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-12 shadow-2xl text-white bg-cover bg-center bg-no-repeat min-h-[380px] flex items-center border border-slate-200/20"
+        style={{ backgroundImage: "url('/quynhon_homestay_hero_bg.jpg')" }}
+      >
+        <div className="max-w-2xl space-y-4 relative z-10 bg-slate-900/35 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-white/20 shadow-xl">
+          <span className="inline-block rounded-full bg-amber-400/20 border border-amber-400/40 px-3.5 py-1 text-xs font-bold text-amber-300 backdrop-blur-sm shadow-xs">
             🏨 Dịch Vụ Đặt Phòng Quy Nhơn
           </span>
-          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md">
             Book Phòng Căn Hộ, Homestay & Khách Sạn View Biển Quy Nhơn
           </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-medium drop-shadow-sm">
             Hệ thống căn hộ nghỉ dưỡng cao cấp theo ngày/tháng tại Altara Residences, Simona Heights, Phú Tài Residence... Đầy đủ tiện nghi, view biển tuyệt đẹp, hỗ trợ 24/7.
           </p>
-          <div className="flex flex-wrap gap-4 text-xs font-bold pt-2">
-            <span className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">✨ Căn hộ mới 100%</span>
-            <span className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">🌊 View biển trực diện</span>
-            <span className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">🔑 Check-in tự động</span>
+          <div className="flex flex-wrap gap-3 text-xs font-bold pt-2">
+            <span className="bg-white/20 backdrop-blur-sm px-3.5 py-1.5 rounded-lg border border-white/30 text-white shadow-xs">✨ Căn hộ mới 100%</span>
+            <span className="bg-white/20 backdrop-blur-sm px-3.5 py-1.5 rounded-lg border border-white/30 text-white shadow-xs">🌊 View biển trực diện</span>
+            <span className="bg-white/20 backdrop-blur-sm px-3.5 py-1.5 rounded-lg border border-white/30 text-white shadow-xs">🔑 Check-in tự động</span>
           </div>
         </div>
       </div>
