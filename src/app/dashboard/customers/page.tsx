@@ -236,7 +236,7 @@ export default function CustomersPage() {
             ))}
           </select>
         </div>
-        
+
         {isManagerUp && (
           <div className="col-span-1 sm:w-48">
             <select
@@ -286,8 +286,8 @@ export default function CustomersPage() {
               <th className="px-4 py-3.5 min-w-[160px]">Khách hàng</th>
               <th className="px-4 py-3.5 min-w-[140px]">Nhu cầu</th>
               <th className="px-4 py-3.5 min-w-[140px]">Nguồn</th>
-              <th className="px-4 py-3.5 min-w-[120px]">Trạng thái</th>
-              <th className="px-4 py-3.5 min-w-[220px]">Phụ trách (Phân công)</th>
+              <th className="px-4 py-3.5 min-w-[130px]">Trạng thái</th>
+              <th className="px-4 py-3.5 min-w-[180px]">Phụ trách (Phân công)</th>
               <th className="px-4 py-3.5 min-w-[120px]">Cập nhật</th>
               {isManagerUp && <th className="px-4 py-3.5 text-right min-w-[100px]">Thao tác</th>}
             </tr>
@@ -302,8 +302,8 @@ export default function CustomersPage() {
                 const selectValue = c.assignedToId
                   ? `user:${c.assignedToId}`
                   : c.assignedCollaboratorId
-                  ? `collaborator:${c.assignedCollaboratorId}`
-                  : "UNASSIGNED";
+                    ? `collaborator:${c.assignedCollaboratorId}`
+                    : "UNASSIGNED";
 
                 return (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition">
@@ -341,13 +341,12 @@ export default function CustomersPage() {
                           value={selectValue}
                           disabled={updatingId === c.id}
                           onChange={(e) => handleQuickAssign(c.id, e.target.value)}
-                          className={`w-full rounded-lg border px-2.5 py-1 text-xs font-bold transition outline-none cursor-pointer ${
-                            selectValue === "UNASSIGNED"
-                              ? "bg-amber-50 border-amber-300 text-amber-800 font-bold"
-                              : selectValue.startsWith("collaborator:")
+                          className={`w-full rounded-lg border px-2.5 py-1 text-xs font-bold transition outline-none cursor-pointer ${selectValue === "UNASSIGNED"
+                            ? "bg-amber-50 border-amber-300 text-amber-800 font-bold"
+                            : selectValue.startsWith("collaborator:")
                               ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold"
                               : "bg-white border-slate-300 text-slate-900 focus:border-blue-500"
-                          }`}
+                            }`}
                         >
                           <option value="UNASSIGNED">-- Chưa phân công --</option>
                           <optgroup label="NHÂN SỰ NỘI BỘ">
