@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { LABELS } from "@/lib/utils";
@@ -23,6 +23,20 @@ export default function CustomersPage() {
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: -260, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: 260, behavior: "smooth" });
+    }
+  };
 
   // Modal tạo khách hàng mới
   const [showAddModal, setShowAddModal] = useState(false);
@@ -158,6 +172,26 @@ export default function CustomersPage() {
     }
   }
 
+  async function handleDeleteCustomer(id: string, name: string) {
+    if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn khách hàng "${name}" khỏi hệ thống? Hành động này không thể hoàn tác.`)) {
+      return;
+    }
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+      setUpdatingId(null);
+      if (res.ok) {
+        load();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Không thể xóa khách hàng.");
+      }
+    } catch (e) {
+      setUpdatingId(null);
+      alert("Lỗi kết nối máy chủ khi xóa.");
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -178,70 +212,91 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      {/* FILTER BAR */}
-      <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2.5">
-        <input
-          className="input w-full sm:max-w-xs text-sm"
-          placeholder="Tìm theo tên hoặc SĐT..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && load()}
-        />
-        <select className="input w-full sm:max-w-[180px] text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">Tất cả trạng thái</option>
-          {Object.entries(LABELS.leadStatus).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
+      {/* FILTER BAR - ULTRA COMPACT & PROPORTIONAL ON MOBILE & DESKTOP */}
+      <div className="mt-3 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-2xs">
+        <div className="col-span-2 sm:col-span-1 sm:w-56">
+          <input
+            className="input w-full h-9 text-xs py-1.5 px-2.5 rounded-xl border border-slate-300"
+            placeholder="🔍 Tìm theo tên hoặc SĐT..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+          />
+        </div>
+
+        <div className="col-span-1 sm:w-40">
+          <select
+            className="input w-full h-9 text-xs py-1.5 px-2 rounded-xl border border-slate-300 font-medium"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            {Object.entries(LABELS.leadStatus).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </div>
         
         {isManagerUp && (
-          <select
-            className="input w-full sm:max-w-[220px] text-sm font-medium"
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-          >
-            <option value="">Tất cả người phụ trách</option>
-            <option value="UNASSIGNED">⚠️ Chưa phân công</option>
-            <optgroup label="NHÂN SỰ NỘI BỘ">
-              {users
-                .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
-                .map((u) => (
-                  <option key={`filter-user:${u.id}`} value={`user:${u.id}`}>
-                    👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
-                  </option>
-                ))}
-            </optgroup>
-            <optgroup label="CỘNG TÁC VIÊN (CTV)">
-              {collaborators
-                .filter((col) => col.status === "ACTIVE")
-                .map((col) => (
-                  <option key={`filter-col:${col.id}`} value={`collaborator:${col.id}`}>
-                    🤝 CTV {col.fullName} ({col.publicReferralToken})
-                  </option>
-                ))}
-            </optgroup>
-          </select>
+          <div className="col-span-1 sm:w-48">
+            <select
+              className="input w-full h-9 text-xs py-1.5 px-2 rounded-xl border border-slate-300 font-medium truncate"
+              value={assigneeFilter}
+              onChange={(e) => setAssigneeFilter(e.target.value)}
+            >
+              <option value="">Tất cả phụ trách</option>
+              <option value="UNASSIGNED">⚠️ Chưa phân công</option>
+              <optgroup label="NHÂN SỰ NỘI BỘ">
+                {users
+                  .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                  .map((u) => (
+                    <option key={`filter-user:${u.id}`} value={`user:${u.id}`}>
+                      👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                    </option>
+                  ))}
+              </optgroup>
+              <optgroup label="CỘNG TÁC VIÊN (CTV)">
+                {collaborators
+                  .filter((col) => col.status === "ACTIVE")
+                  .map((col) => (
+                    <option key={`filter-col:${col.id}`} value={`collaborator:${col.id}`}>
+                      🤝 CTV {col.fullName} ({col.publicReferralToken})
+                    </option>
+                  ))}
+              </optgroup>
+            </select>
+          </div>
         )}
 
-        <button onClick={load} className="btn-secondary w-full sm:w-auto text-sm">Lọc</button>
+        <div className="col-span-2 sm:col-span-1 sm:w-auto">
+          <button
+            onClick={load}
+            className="btn-primary w-full sm:w-auto h-9 text-xs py-1.5 px-4 rounded-xl cursor-pointer font-bold flex items-center justify-center gap-1"
+          >
+            🔍 Lọc
+          </button>
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div className="mt-4 overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
-        <table className="w-full min-w-[750px] text-left text-sm">
+      {/* UNIFIED DATA TABLE FOR ALL DEVICES */}
+      <div className="mt-4 w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+        <table className="w-full min-w-[1050px] text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-600 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3.5">Khách hàng</th>
-              <th className="px-4 py-3.5">Nhu cầu</th>
-              <th className="px-4 py-3.5">Nguồn</th>
-              <th className="px-4 py-3.5">Trạng thái</th>
-              <th className="px-4 py-3.5">Phụ trách (Phân công)</th>
-              <th className="px-4 py-3.5">Cập nhật</th>
+              <th className="px-4 py-3.5 min-w-[160px]">Khách hàng</th>
+              <th className="px-4 py-3.5 min-w-[140px]">Nhu cầu</th>
+              <th className="px-4 py-3.5 min-w-[140px]">Nguồn</th>
+              <th className="px-4 py-3.5 min-w-[120px]">Trạng thái</th>
+              <th className="px-4 py-3.5 min-w-[220px]">Phụ trách (Phân công)</th>
+              <th className="px-4 py-3.5 min-w-[120px]">Cập nhật</th>
+              {isManagerUp && <th className="px-4 py-3.5 text-right min-w-[100px]">Thao tác</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Đang tải danh sách...</td></tr>
+              <tr><td colSpan={isManagerUp ? 7 : 6} className="px-4 py-8 text-center text-slate-400">Đang tải danh sách...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Chưa có khách hàng nào</td></tr>
+              <tr><td colSpan={isManagerUp ? 7 : 6} className="px-4 py-8 text-center text-slate-400">Chưa có khách hàng nào</td></tr>
             ) : (
               items.map((c) => {
                 const selectValue = c.assignedToId
@@ -252,19 +307,19 @@ export default function CustomersPage() {
 
                 return (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition">
-                    <td className="px-4 py-3.5">
-                      <Link href={`/dashboard/customers/${c.id}`} className="font-bold text-slate-900 hover:text-blue-600 hover:underline">
+                    <td className="px-4 py-3.5 min-w-[160px]">
+                      <Link href={`/dashboard/customers/${c.id}`} className="font-bold text-slate-900 hover:text-blue-600 hover:underline block">
                         {c.fullName}
                       </Link>
                       <div className="text-xs text-slate-500 font-mono">📞 {c.phone}</div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 min-w-[140px]">
                       <div className="font-semibold text-slate-800">{LABELS.demandType[c.demandType as keyof typeof LABELS.demandType] || c.demandType}</div>
                       {c.project && (
                         <div className="text-xs font-medium text-slate-500">🏢 {c.project.name}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 min-w-[140px]">
                       <span className="inline-block text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                         {LABELS.leadSource[c.source as keyof typeof LABELS.leadSource] || c.source}
                       </span>
@@ -275,18 +330,18 @@ export default function CustomersPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 min-w-[120px]">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusColor[c.status] || "bg-slate-100 text-slate-700"}`}>
                         {LABELS.leadStatus[c.status as keyof typeof LABELS.leadStatus] || c.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-xs">
+                    <td className="px-4 py-3.5 text-xs min-w-[220px]">
                       {isManagerUp ? (
                         <select
                           value={selectValue}
                           disabled={updatingId === c.id}
                           onChange={(e) => handleQuickAssign(c.id, e.target.value)}
-                          className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition outline-none cursor-pointer ${
+                          className={`w-full rounded-lg border px-2.5 py-1 text-xs font-bold transition outline-none cursor-pointer ${
                             selectValue === "UNASSIGNED"
                               ? "bg-amber-50 border-amber-300 text-amber-800 font-bold"
                               : selectValue.startsWith("collaborator:")
@@ -326,9 +381,21 @@ export default function CustomersPage() {
                         )
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-400 font-mono">
+                    <td className="px-4 py-3.5 text-xs text-slate-400 font-mono min-w-[120px]">
                       {new Date(c.updatedAt).toLocaleDateString("vi-VN")}
                     </td>
+                    {isManagerUp && (
+                      <td className="px-4 py-3.5 text-right min-w-[100px]">
+                        <button
+                          onClick={() => handleDeleteCustomer(c.id, c.fullName)}
+                          disabled={updatingId === c.id}
+                          className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200"
+                          title="Xóa vĩnh viễn khách hàng này"
+                        >
+                          🗑️ Xóa
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })

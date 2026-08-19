@@ -438,6 +438,13 @@ export default function DashboardProjectsPage() {
 
                   {canEdit && (
                     <div className="flex flex-wrap items-center gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                      <Link
+                        href={`/dashboard/projects/${p.id}/website`}
+                        className="text-[13px] font-bold px-3 py-1.5 rounded-xl bg-[#0284C7]/10 text-[#0284C7] border border-[#0284C7]/30 hover:bg-[#0284C7] hover:text-white transition flex items-center gap-1.5 shadow-2xs"
+                        title="Quản lý giao diện & nội dung Website cho dự án này"
+                      >
+                        <span>🌐</span> Quản lý Website
+                      </Link>
                       <button
                         onClick={() => openAddResource(p.id)}
                         className="text-[13px] font-semibold px-3 py-1.5 rounded-xl bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] hover:bg-[#4F46E5] hover:text-white transition"

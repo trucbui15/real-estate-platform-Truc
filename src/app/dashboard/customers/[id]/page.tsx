@@ -113,6 +113,25 @@ export default function CustomerDetailPage() {
     load();
   }
 
+  async function handleDeleteCustomer() {
+    if (!customer) return;
+    if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn khách hàng "${customer.fullName}" khỏi hệ thống? Hành động này không thể hoàn tác.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        alert("Đã xóa khách hàng thành công!");
+        router.push("/dashboard/customers");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Không thể xóa khách hàng.");
+      }
+    } catch (e) {
+      alert("Lỗi kết nối máy chủ khi xóa.");
+    }
+  }
+
   if (loading) return <div className="text-brand-300">Đang tải...</div>;
   if (!customer) return <div className="text-brand-300">Không tìm thấy khách hàng, hoặc bạn không có quyền xem.</div>;
 
@@ -128,6 +147,15 @@ export default function CustomerDetailPage() {
         <button onClick={() => router.back()} className="text-sm font-semibold text-brand-600 hover:underline">
           ← Quay lại danh sách
         </button>
+
+        {isManagerUp && (
+          <button
+            onClick={handleDeleteCustomer}
+            className="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200 flex items-center gap-1"
+          >
+            <span>🗑️</span> Xóa khách hàng
+          </button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -13,6 +13,20 @@ export default function CollaboratorsDashboardPage() {
   const isManagerUp = ["ADMIN", "MANAGER"].includes(role);
 
   const [actionId, setActionId] = useState<string | null>(null);
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: -260, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: 260, behavior: "smooth" });
+    }
+  };
 
   async function load() {
     setLoading(true);
@@ -108,17 +122,18 @@ export default function CollaboratorsDashboardPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
-        <table className="w-full min-w-[850px] text-left text-sm">
+      {/* UNIFIED DATA TABLE FOR ALL DEVICES */}
+      <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3.5">Họ tên & Liên hệ</th>
-              <th className="px-4 py-3.5">Mã Token Public</th>
-              <th className="px-4 py-3.5">Người giới thiệu</th>
-              <th className="px-4 py-3.5 text-center">Số Lead mang về</th>
-              <th className="px-4 py-3.5">Trạng thái</th>
-              <th className="px-4 py-3.5">Ngày tham gia</th>
-              <th className="px-4 py-3.5 text-right">Thao tác</th>
+              <th className="px-4 py-3.5 min-w-[160px]">Họ tên & Liên hệ</th>
+              <th className="px-4 py-3.5 min-w-[150px]">Mã Token Public</th>
+              <th className="px-4 py-3.5 min-w-[150px]">Người giới thiệu</th>
+              <th className="px-4 py-3.5 text-center min-w-[100px]">Số Lead</th>
+              <th className="px-4 py-3.5 min-w-[110px]">Trạng thái</th>
+              <th className="px-4 py-3.5 min-w-[110px]">Ngày tham gia</th>
+              <th className="px-4 py-3.5 text-right min-w-[130px]">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -137,14 +152,14 @@ export default function CollaboratorsDashboardPage() {
             ) : (
               collaborators.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 min-w-[160px]">
                     <div className="font-bold text-slate-900">{c.fullName}</div>
                     <div className="text-xs text-slate-500 font-mono">
                       📞 {c.phone} {c.email ? `· ✉️ ${c.email}` : ""}
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 min-w-[150px]">
                     <div className="flex items-center gap-1.5">
                       <code className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
                         {c.publicReferralToken}
@@ -163,7 +178,7 @@ export default function CollaboratorsDashboardPage() {
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5 text-xs">
+                  <td className="px-4 py-3.5 text-xs min-w-[150px]">
                     <span className="font-semibold text-slate-800">
                       👤 {c.referredByUser?.name || "Hệ thống"}
                     </span>
@@ -172,11 +187,11 @@ export default function CollaboratorsDashboardPage() {
                     </span>
                   </td>
 
-                  <td className="px-4 py-3.5 text-center font-bold text-slate-900">
+                  <td className="px-4 py-3.5 text-center font-bold text-slate-900 min-w-[100px]">
                     {c._count?.inquiries || 0}
                   </td>
 
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 min-w-[110px]">
                     {c.status === "ACTIVE" ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         ● Hoạt động
@@ -188,11 +203,11 @@ export default function CollaboratorsDashboardPage() {
                     )}
                   </td>
 
-                  <td className="px-4 py-3.5 text-xs text-slate-500 font-mono">
+                  <td className="px-4 py-3.5 text-xs text-slate-500 font-mono min-w-[110px]">
                     {new Date(c.createdAt).toLocaleDateString("vi-VN")}
                   </td>
 
-                  <td className="px-4 py-3.5 text-right">
+                  <td className="px-4 py-3.5 text-right min-w-[130px]">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         disabled={actionId === c.id}

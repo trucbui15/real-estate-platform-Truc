@@ -1,0 +1,1119 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { canManageProjectsAndNews, isBackofficeRole } from "@/lib/permissions";
+
+// Danh mục mặc định 13 Sections chuẩn CMS
+const DEFAULT_SECTIONS = [
+  { id: "hero", title: "Hero / Banner Trang Chủ", enabled: true, order: 1 },
+  { id: "overview", title: "Tổng Quan Dự Án", enabled: true, order: 2 },
+  { id: "location", title: "Vị Trí & Kết Nối Giao Thông", enabled: true, order: 3 },
+  { id: "amenities", title: "Hệ Thống Tiện Ích Đẳng Cấp", enabled: true, order: 4 },
+  { id: "floor_plans", title: "Mặt Bằng Tầng & Khối Đế", enabled: true, order: 5 },
+  { id: "unit_types", title: "Loại Căn Hộ & Thiết Kế", enabled: true, order: 6 },
+  { id: "gallery", title: "Bộ Sưu Tập Ảnh Thực Tế", enabled: true, order: 7 },
+  { id: "video", title: "Video Showcase & Tour 360°", enabled: true, order: 8 },
+  { id: "progress", title: "Cập Nhật Tiến Độ Thi Công", enabled: true, order: 9 },
+  { id: "sales_policy", title: "Chính Sách Bán Hàng & Ưu Đãi", enabled: true, order: 10 },
+  { id: "documents", title: "Tài Liệu & Bảng Giá Dự Án", enabled: true, order: 11 },
+  { id: "contact", title: "Form Đăng Ký & Liên Hệ", enabled: true, order: 12 },
+  { id: "seo", title: "Cấu Hình SEO & Thẻ Meta", enabled: true, order: 13 },
+];
+
+export default function ProjectWebsiteCmsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const projectId = params.id as string;
+  const { data: session, status: authStatus } = useSession();
+
+  const role = (session?.user as any)?.role;
+  const canEdit = canManageProjectsAndNews(role);
+  const isStaff = isBackofficeRole(role);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // System Metadata
+  const [projectInfo, setProjectInfo] = useState<{ id: string; name: string; slug: string } | null>(null);
+  const [websiteStatus, setWebsiteStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
+
+  // Active Tab View in Editor
+  const [activeTab, setActiveTab] = useState<string>("sections");
+  const [activeSectionId, setActiveSectionId] = useState<string>("hero");
+
+  // State Sections Config List
+  const [sectionsConfig, setSectionsConfig] = useState(DEFAULT_SECTIONS);
+
+  // State Details Content
+  const [contentJson, setContentJson] = useState<any>({
+    hero: {
+      title: "",
+      subtitle: "",
+      tagLine: "",
+      videoUrl: "",
+      bgImage: "",
+      ctaText: "Đăng ký nhận bảng giá",
+      ctaLink: "#contact",
+    },
+    overview: {
+      headline: "",
+      summary: "",
+      specs: [
+        { label: "Vị trí", value: "" },
+        { label: "Quy mô", value: "" },
+        { label: "Loại hình", value: "" },
+        { label: "Bàn giao", value: "" },
+      ],
+      descriptionHtml: "",
+    },
+    location: {
+      address: "",
+      googleMapUrl: "",
+      mapImage: "",
+      connectivity: [{ title: "", distance: "" }],
+    },
+    amenities: {
+      title: "Hệ thống Tiện ích Độc bản",
+      description: "",
+      items: [{ name: "", image: "", desc: "" }],
+    },
+    floor_plans: {
+      title: "Mặt bằng Tổng thể & Chi tiết",
+      description: "",
+      blocks: [{ name: "", image: "", desc: "", area: "" }],
+    },
+    unit_types: {
+      title: "Căn hộ Mẫu & Thiết kế",
+      description: "",
+      units: [{ name: "Căn 2 Phòng Ngủ", area: "68m2", priceFrom: "2.1 tỷ", image: "" }],
+    },
+    gallery: {
+      title: "Hình ảnh Dự án",
+      description: "",
+      images: [{ url: "", caption: "" }],
+    },
+    video: {
+      title: "Video Trải Nghiệm 360°",
+      videoUrl: "",
+      tour360Url: "",
+    },
+    progress: {
+      title: "Cập nhật Tiến độ Thi công",
+      items: [{ date: "", title: "", image: "", desc: "" }],
+    },
+    sales_policy: {
+      title: "Chính sách Bán hàng & Ưu đãi",
+      summary: "",
+      pdfUrl: "",
+      promos: [""],
+    },
+    documents: {
+      title: "Tài liệu & Hồ sơ Dự án",
+      description: "Xem và tải xuống bảng giá, chính sách, hợp đồng mẫu.",
+    },
+    contact: {
+      title: "Đăng Ký Tư Vấn & Nhận Bảng Giá Chi Tiết",
+      subtitle: "Để lại thông tin để chuyên viên tư vấn hỗ trợ quý khách ngay lập tức.",
+      hotline: "",
+      zaloUrl: "",
+      buttonText: "Gửi thông tin ngay",
+    },
+    seo: {
+      metaTitle: "",
+      metaDescription: "",
+      ogImage: "",
+    },
+  });
+
+  // State Modal Preview
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Load Data Website từ API Phase 1
+  useEffect(() => {
+    if (!projectId) return;
+
+    async function loadData() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/projects/${projectId}/website`);
+        if (!res.ok) {
+          const errData = await res.json();
+          setError(errData.error || "Không thể tải dữ liệu website dự án");
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setProjectInfo({
+          id: data.projectId,
+          name: data.projectName,
+          slug: data.projectSlug,
+        });
+
+        if (data.hasWebsite && data.website) {
+          const ws = data.website;
+          setWebsiteStatus(ws.status || "DRAFT");
+          setPublishedAt(ws.publishedAt || null);
+
+          // Parse draftSectionsConfig
+          if (ws.draftSectionsConfig) {
+            try {
+              const parsed = JSON.parse(ws.draftSectionsConfig);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setSectionsConfig(parsed);
+              }
+            } catch (e) {
+              console.error("Lỗi parse draftSectionsConfig:", e);
+            }
+          }
+
+          // Parse draftContentJson
+          if (ws.draftContentJson) {
+            try {
+              const parsedContent = JSON.parse(ws.draftContentJson);
+              setContentJson((prev: any) => ({
+                ...prev,
+                ...parsedContent,
+                seo: {
+                  metaTitle: ws.draftMetaTitle || parsedContent.seo?.metaTitle || "",
+                  metaDescription: ws.draftMetaDescription || parsedContent.seo?.metaDescription || "",
+                  ogImage: ws.draftOgImage || parsedContent.seo?.ogImage || "",
+                },
+              }));
+            } catch (e) {
+              console.error("Lỗi parse draftContentJson:", e);
+            }
+          }
+        }
+      } catch (err: any) {
+        setError("Lỗi kết nối máy chủ");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [projectId]);
+
+  // Upload Ảnh Reusable via /api/upload
+  async function handleFileUpload(file: File, onSuccess: (url: string) => void) {
+    if (!file) return;
+    setUploadingField("file");
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Tải ảnh thất bại");
+      }
+      onSuccess(data.url);
+      setSuccess("Upload ảnh thành công!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Không thể upload ảnh");
+    } finally {
+      setUploadingField(null);
+    }
+  }
+
+  // Sắp xếp thứ tự Section Lên / Xuống
+  function moveSection(index: number, direction: "up" | "down") {
+    if (!canEdit) return;
+    const newItems = [...sectionsConfig];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newItems.length) return;
+
+    const temp = newItems[index];
+    newItems[index] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+
+    // Cập nhật lại thuộc tính order
+    const reordered = newItems.map((item, idx) => ({ ...item, order: idx + 1 }));
+    setSectionsConfig(reordered);
+  }
+
+  // Bật / Tắt Section
+  function toggleSectionEnabled(id: string) {
+    if (!canEdit) return;
+    setSectionsConfig((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    );
+  }
+
+  // 1. Lưu bản nháp (Save Draft)
+  async function handleSaveDraft() {
+    if (!canEdit) return;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const payload = {
+        draftSectionsConfig: JSON.stringify(sectionsConfig),
+        draftContentJson: JSON.stringify(contentJson),
+        draftMetaTitle: contentJson.seo?.metaTitle || "",
+        draftMetaDescription: contentJson.seo?.metaDescription || "",
+        draftOgImage: contentJson.seo?.ogImage || "",
+      };
+
+      const res = await fetch(`/api/projects/${projectId}/website`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Không thể lưu bản nháp");
+
+      setSuccess("Đã lưu bản nháp website dự án thành công!");
+      setTimeout(() => setSuccess(""), 4000);
+    } catch (err: any) {
+      setError(err.message || "Lỗi lưu bản nháp");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // 2. Xuất bản (Publish)
+  async function handlePublish() {
+    if (!canEdit) return;
+    if (!confirm("Bạn có chắc chắn muốn Xuất bản phiên bản nháp hiện tại ra website chính thức?")) return;
+
+    setPublishing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Đầu tiên lưu nháp mới nhất
+      await handleSaveDraft();
+
+      // Gọi API Publish Phase 1
+      const res = await fetch(`/api/projects/${projectId}/website/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Không thể xuất bản");
+
+      setWebsiteStatus("PUBLISHED");
+      setPublishedAt(new Date().toISOString());
+      setSuccess("🎉 Xuất bản Website dự án thành công!");
+    } catch (err: any) {
+      setError(err.message || "Lỗi xuất bản website");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  // 3. Tạm ngưng xuất bản (Unpublish)
+  async function handleUnpublish() {
+    if (!canEdit) return;
+    if (!confirm("Tạm ngưng xuất bản sẽ chuyển trạng thái về DRAFT và ẩn website khỏi danh sách tài liệu công khai. Bạn có chắc chắn?")) return;
+
+    setPublishing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/website/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unpublish" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Không thể ngưng xuất bản");
+
+      setWebsiteStatus("DRAFT");
+      setSuccess("Đã chuyển website về trạng thái Bản nháp (DRAFT).");
+    } catch (err: any) {
+      setError(err.message || "Lỗi hủy xuất bản");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  // Render Check Quyền Truy Cập
+  if (authStatus === "loading" || loading) {
+    return (
+      <div className="flex h-96 items-center justify-center text-sm font-medium text-slate-500">
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+          <span>Đang tải CMS Builder...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isStaff) {
+    return (
+      <div className="mx-auto max-w-lg p-12 text-center">
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-8 space-y-4">
+          <span className="text-4xl">🚫</span>
+          <h2 className="text-lg font-bold text-red-800">Không có quyền truy cập</h2>
+          <p className="text-xs text-red-600">Bạn không có quyền truy cập trang quản trị CMS Website dự án này.</p>
+          <Link href="/dashboard" className="btn-primary inline-block text-xs">Trở về Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-20">
+      {/* 1. HEADER CMS STATUS BAR */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary-600 mb-1">
+              <Link href="/dashboard/projects" className="hover:underline flex items-center gap-1">
+                ← Danh sách Dự án
+              </Link>
+              <span>/</span>
+              <span>CMS Website</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+              <span>🌐</span> Quản Lý Website: <span className="text-primary-700">{projectInfo?.name}</span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Slug: <code className="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{projectInfo?.slug}</code>
+            </p>
+          </div>
+
+          {/* TRẠNG THÁI & NÚT THAO TÁC */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* BADGE TRẠNG THÁI */}
+            <div className="flex flex-col items-end mr-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                  websiteStatus === "PUBLISHED"
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                    : "bg-amber-100 text-amber-800 border border-amber-300"
+                }`}
+              >
+                <span>{websiteStatus === "PUBLISHED" ? "● PUBLISHED" : "📝 DRAFT"}</span>
+              </span>
+              {publishedAt && (
+                <span className="text-[10px] text-slate-400 mt-0.5">
+                  Xuất bản: {new Date(publishedAt).toLocaleDateString("vi-VN")}
+                </span>
+              )}
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <button
+              type="button"
+              onClick={() => {
+                if (projectInfo?.slug) {
+                  window.open(`/du-an/${projectInfo.slug}/preview`, "_blank");
+                } else {
+                  setShowPreviewModal(true);
+                }
+              }}
+              className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs flex items-center gap-1"
+              title="Mở giao diện xem trước bản nháp (Draft Preview)"
+            >
+              👁️ Xem trước ↗
+            </button>
+
+            {canEdit ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={saving || publishing}
+                  className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition shadow-2xs flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {saving ? "Đang lưu..." : "💾 Lưu nháp"}
+                </button>
+
+                {websiteStatus === "PUBLISHED" ? (
+                  <button
+                    type="button"
+                    onClick={handleUnpublish}
+                    disabled={publishing}
+                    className="px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition shadow-2xs"
+                  >
+                    ⏸️ Tạm ngưng
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={publishing || saving}
+                  className="px-4 py-2 rounded-xl bg-primary-600 text-white text-xs font-bold hover:bg-primary-700 transition shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {publishing ? "Đang xuất bản..." : "🚀 Xuất bản"}
+                </button>
+              </>
+            ) : (
+              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg">
+                Chế độ xem (Staff Read-Only)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* CẢNH BÁO / THÔNG BÁO */}
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 flex justify-between items-center font-medium">
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError("")} className="font-bold">✕</button>
+          </div>
+        )}
+        {success && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-700 flex justify-between items-center font-medium">
+            <span>✓ {success}</span>
+            <button onClick={() => setSuccess("")} className="font-bold">✕</button>
+          </div>
+        )}
+
+        {/* NAVIGATION TABS */}
+        <div className="flex border-b border-slate-200 gap-4 overflow-x-auto custom-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveTab("sections")}
+            className={`pb-2.5 text-xs font-bold border-b-2 transition shrink-0 ${
+              activeTab === "sections"
+                ? "border-primary-600 text-primary-600"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            📋 Quản lý Cấu hình Sections ({sectionsConfig.filter((s) => s.enabled).length}/{sectionsConfig.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("content")}
+            className={`pb-2.5 text-xs font-bold border-b-2 transition shrink-0 ${
+              activeTab === "content"
+                ? "border-primary-600 text-primary-600"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            ✍️ Chỉnh sửa Nội dung Sections
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("seo")}
+            className={`pb-2.5 text-xs font-bold border-b-2 transition shrink-0 ${
+              activeTab === "seo"
+                ? "border-primary-600 text-primary-600"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            🔍 Cấu hình SEO & Thẻ Meta
+          </button>
+        </div>
+      </div>
+
+      {/* 2. TAB 1: SẮP XẾP VÀ BẬT/TẮT SECTIONS */}
+      {activeTab === "sections" && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Danh sách & Thứ tự hiển thị các Sections</h2>
+              <p className="text-xs text-slate-500">Sử dụng các nút ↑ Lên / ↓ Xuống để sắp xếp thứ tự và công tắc để Bật/Tắt hiển thị.</p>
+            </div>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                className="btn-primary !py-1.5 !px-3 text-xs"
+              >
+                Lưu thứ tự
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2.5">
+            {sectionsConfig.map((sec, idx) => (
+              <div
+                key={sec.id}
+                className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition ${
+                  sec.enabled
+                    ? "bg-white border-slate-200 hover:border-primary-300 shadow-2xs"
+                    : "bg-slate-50 border-slate-200 opacity-60"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-bold text-slate-400 w-6 text-center">
+                    #{sec.order || idx + 1}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={sec.enabled}
+                    disabled={!canEdit}
+                    onChange={() => toggleSectionEnabled(sec.id)}
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-900">{sec.title}</span>
+                    <span className="ml-2 font-mono text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                      id: {sec.id}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("content");
+                      setActiveSectionId(sec.id);
+                    }}
+                    className="px-2.5 py-1 text-xs font-semibold text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition"
+                  >
+                    ✏️ Sửa nội dung
+                  </button>
+
+                  {canEdit && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => moveSection(idx, "up")}
+                        className="px-2 py-1 text-xs font-bold border rounded hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                        title="Đẩy lên trên"
+                      >
+                        ↑ Lên
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === sectionsConfig.length - 1}
+                        onClick={() => moveSection(idx, "down")}
+                        className="px-2 py-1 text-xs font-bold border rounded hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                        title="Đẩy xuống dưới"
+                      >
+                        ↓ Xuống
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3. TAB 2: EDIT NỘI DUNG TỪNG SECTION */}
+      {activeTab === "content" && (
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
+          {/* MENU CÁC SECTION BÊN TRÁI */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 shadow-2xs space-y-1 sticky top-24">
+            <div className="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase">Chọn Section biên tập</div>
+            {sectionsConfig.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => setActiveSectionId(sec.id)}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between ${
+                  activeSectionId === sec.id
+                    ? "bg-primary-600 text-white shadow-2xs"
+                    : "text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <span className="truncate">{sec.title}</span>
+                {!sec.enabled && <span className="text-[10px] opacity-60">Ẩn</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* FORM BIÊN TẬP FORM CHO SECTION ĐƯỢC CHỌN */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-6">
+            {/* HERO SECTION FORM */}
+            {activeSectionId === "hero" && (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">🖼️ Cấu hình Hero / Banner Trang Chủ</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="label">Tiêu đề lớn (Headline) *</label>
+                    <input
+                      className="input"
+                      disabled={!canEdit}
+                      value={contentJson.hero?.title || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, title: e.target.value } })}
+                      placeholder="VD: Căn Hộ Cao Cấp Simona Heights Quy Nhơn"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Mô tả ngắn (Subtitle)</label>
+                    <textarea
+                      className="input"
+                      rows={2}
+                      disabled={!canEdit}
+                      value={contentJson.hero?.subtitle || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, subtitle: e.target.value } })}
+                      placeholder="VD: Biểu tượng sống thượng lưu ngay trung tâm thành phố biển Quy Nhơn..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label">Tagline Nổi bật</label>
+                      <input
+                        className="input"
+                        disabled={!canEdit}
+                        value={contentJson.hero?.tagLine || ""}
+                        onChange={(e) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, tagLine: e.target.value } })}
+                        placeholder="VD: 🏨 Đặt Phòng & Căn Hộ View Biển"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Link Video 360° / Trailer Youtube</label>
+                      <input
+                        className="input font-mono"
+                        disabled={!canEdit}
+                        value={contentJson.hero?.videoUrl || ""}
+                        onChange={(e) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, videoUrl: e.target.value } })}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* UPLOAD HERO BG IMAGE */}
+                  <div>
+                    <label className="label">Ảnh Nền Hero (Background Image)</label>
+                    <div className="flex gap-2">
+                      <input
+                        className="input font-mono flex-1"
+                        disabled={!canEdit}
+                        value={contentJson.hero?.bgImage || ""}
+                        onChange={(e) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgImage: e.target.value } })}
+                        placeholder="URL ảnh hoặc chọn file để tải lên"
+                      />
+                      {canEdit && (
+                        <label className="btn-outline !py-2 !px-3 text-xs cursor-pointer shrink-0">
+                          <span>{uploadingField === "heroBg" ? "Đang tải..." : "📁 Chọn ảnh"}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(file, (url) =>
+                                  setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgImage: url } })
+                                );
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {contentJson.hero?.bgImage && (
+                      <div className="mt-2 relative rounded-xl overflow-hidden max-h-40 border">
+                        <img src={contentJson.hero.bgImage} alt="Hero preview" className="w-full object-cover max-h-40" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* OVERVIEW SECTION FORM */}
+            {activeSectionId === "overview" && (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">🏢 Tổng Quan Dự Án</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="label">Tiêu đề đoạn giới thiệu</label>
+                    <input
+                      className="input"
+                      disabled={!canEdit}
+                      value={contentJson.overview?.headline || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, overview: { ...contentJson.overview, headline: e.target.value } })}
+                      placeholder="VD: Tổng quan Tổ hợp Căn hộ Simona Heights"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Tóm tắt ngắn gọn</label>
+                    <textarea
+                      className="input"
+                      rows={3}
+                      disabled={!canEdit}
+                      value={contentJson.overview?.summary || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, overview: { ...contentJson.overview, summary: e.target.value } })}
+                    />
+                  </div>
+
+                  {/* BẢNG THÔNG SỐ DỰ ÁN */}
+                  <div>
+                    <label className="label font-bold text-slate-800">Thông số kỹ thuật chính</label>
+                    <div className="space-y-2">
+                      {(contentJson.overview?.specs || []).map((spec: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            className="input w-1/3"
+                            disabled={!canEdit}
+                            value={spec.label}
+                            placeholder="Tên thông số (VD: Quy mô)"
+                            onChange={(e) => {
+                              const newSpecs = [...contentJson.overview.specs];
+                              newSpecs[idx].label = e.target.value;
+                              setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
+                            }}
+                          />
+                          <input
+                            className="input flex-1"
+                            disabled={!canEdit}
+                            value={spec.value}
+                            placeholder="Giá trị (VD: 2 Tòa 29 tầng)"
+                            onChange={(e) => {
+                              const newSpecs = [...contentJson.overview.specs];
+                              newSpecs[idx].value = e.target.value;
+                              setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
+                            }}
+                          />
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSpecs = contentJson.overview.specs.filter((_: any, i: number) => i !== idx);
+                                setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
+                              }}
+                              className="text-red-500 font-bold px-2 hover:bg-red-50 rounded"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSpecs = [...(contentJson.overview?.specs || []), { label: "", value: "" }];
+                            setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
+                          }}
+                          className="text-xs font-bold text-primary-600 hover:underline"
+                        >
+                          + Thêm thông số
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LOCATION SECTION FORM */}
+            {activeSectionId === "location" && (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">📍 Vị Trí & Kết Nối Giao Thông</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="label">Địa chỉ chính xác</label>
+                    <input
+                      className="input"
+                      disabled={!canEdit}
+                      value={contentJson.location?.address || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, location: { ...contentJson.location, address: e.target.value } })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Đường dẫn Google Maps Embed URL</label>
+                    <input
+                      className="input font-mono"
+                      disabled={!canEdit}
+                      value={contentJson.location?.googleMapUrl || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, location: { ...contentJson.location, googleMapUrl: e.target.value } })}
+                      placeholder="https://www.google.com/maps/embed?pb=..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Ảnh Sơ đồ vị trí</label>
+                    <div className="flex gap-2">
+                      <input
+                        className="input font-mono flex-1"
+                        disabled={!canEdit}
+                        value={contentJson.location?.mapImage || ""}
+                        onChange={(e) => setContentJson({ ...contentJson, location: { ...contentJson.location, mapImage: e.target.value } })}
+                      />
+                      {canEdit && (
+                        <label className="btn-outline !py-2 !px-3 text-xs cursor-pointer shrink-0">
+                          <span>📁 Chọn ảnh sơ đồ</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(file, (url) =>
+                                  setContentJson({ ...contentJson, location: { ...contentJson.location, mapImage: url } })
+                                );
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AMENITIES SECTION FORM */}
+            {activeSectionId === "amenities" && (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">🏊 Tiện Ích Đẳng Cấp</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="label">Tiêu đề Section Tiện ích</label>
+                    <input
+                      className="input"
+                      disabled={!canEdit}
+                      value={contentJson.amenities?.title || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, title: e.target.value } })}
+                    />
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <label className="label font-bold text-slate-800">Danh sách tiện ích nổi bật</label>
+                    {(contentJson.amenities?.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="p-3 border rounded-xl space-y-2 bg-slate-50">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-700">Tiện ích #{idx + 1}</span>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newItems = contentJson.amenities.items.filter((_: any, i: number) => i !== idx);
+                                setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
+                              }}
+                              className="text-red-500 font-bold text-xs"
+                            >
+                              Xóa tiện ích này
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            className="input"
+                            disabled={!canEdit}
+                            placeholder="Tên tiện ích (VD: Hồ bơi vô cực)"
+                            value={item.name}
+                            onChange={(e) => {
+                              const newItems = [...contentJson.amenities.items];
+                              newItems[idx].name = e.target.value;
+                              setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
+                            }}
+                          />
+                          <input
+                            className="input font-mono"
+                            disabled={!canEdit}
+                            placeholder="URL Ảnh tiện ích"
+                            value={item.image}
+                            onChange={(e) => {
+                              const newItems = [...contentJson.amenities.items];
+                              newItems[idx].image = e.target.value;
+                              setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItems = [...(contentJson.amenities?.items || []), { name: "", image: "", desc: "" }];
+                          setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
+                        }}
+                        className="btn-outline !py-1.5 !px-3 text-xs"
+                      >
+                        + Thêm tiện ích mới
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DEFAULT OTHER SECTIONS FALLBACK GENERIC INPUTS */}
+            {!["hero", "overview", "location", "amenities"].includes(activeSectionId) && (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">
+                  ⚙️ Cấu hình Section: {sectionsConfig.find((s) => s.id === activeSectionId)?.title}
+                </h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="label">Tiêu đề hiển thị Section</label>
+                    <input
+                      className="input"
+                      disabled={!canEdit}
+                      value={contentJson[activeSectionId]?.title || ""}
+                      onChange={(e) =>
+                        setContentJson({
+                          ...contentJson,
+                          [activeSectionId]: { ...contentJson[activeSectionId], title: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Mô tả ngắn / Ghi chú</label>
+                    <textarea
+                      className="input"
+                      rows={3}
+                      disabled={!canEdit}
+                      value={contentJson[activeSectionId]?.description || contentJson[activeSectionId]?.summary || ""}
+                      onChange={(e) =>
+                        setContentJson({
+                          ...contentJson,
+                          [activeSectionId]: { ...contentJson[activeSectionId], description: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 4. TAB 3: CẤU HÌNH SEO & META TAGS */}
+      {activeTab === "seo" && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">🔍 Thẻ Meta & Cấu hình SEO Trang Website Dự Án</h2>
+          <div className="space-y-3 text-xs max-w-2xl">
+            <div>
+              <label className="label">Meta Title (Tiêu đề SEO)</label>
+              <input
+                className="input"
+                disabled={!canEdit}
+                value={contentJson.seo?.metaTitle || ""}
+                onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, metaTitle: e.target.value } })}
+                placeholder="VD: Căn hộ Simona Heights Quy Nhơn | Bảng giá Chủ đầu tư"
+              />
+              <span className="text-[10px] text-slate-400">Độ dài tối ưu 50-60 ký tự</span>
+            </div>
+
+            <div>
+              <label className="label">Meta Description (Mô tả SEO)</label>
+              <textarea
+                className="input"
+                rows={3}
+                disabled={!canEdit}
+                value={contentJson.seo?.metaDescription || ""}
+                onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, metaDescription: e.target.value } })}
+                placeholder="Thông tin dự án căn hộ cao cấp Simona Heights Quy Nhơn, vị trí đắt giá..."
+              />
+            </div>
+
+            <div>
+              <label className="label">Ảnh Chia Sẻ Mạng Xã Hội (OG Image)</label>
+              <div className="flex gap-2">
+                <input
+                  className="input font-mono flex-1"
+                  disabled={!canEdit}
+                  value={contentJson.seo?.ogImage || ""}
+                  onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, ogImage: e.target.value } })}
+                />
+                {canEdit && (
+                  <label className="btn-outline !py-2 !px-3 text-xs cursor-pointer shrink-0">
+                    <span>📁 Tải OG Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleFileUpload(file, (url) =>
+                            setContentJson({ ...contentJson, seo: { ...contentJson.seo, ogImage: url } })
+                          );
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {canEdit && (
+              <div className="pt-3">
+                <button type="button" onClick={handleSaveDraft} className="btn-primary">
+                  Lưu cấu hình SEO
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL PREVIEW DRAFT SHOWCASE */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl border overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">👁️ Xem Trước Bản Nháp (Draft Preview)</span>
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-bold px-2 py-0.5 rounded">
+                  Chế độ nội bộ
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                className="text-white hover:text-red-400 font-bold text-sm px-2"
+              >
+                ✕ Đóng
+              </button>
+            </div>
+
+            {/* BODY PREVIEW SIMULATED CONTAINER */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-50 custom-scrollbar">
+              <div className="bg-blue-900 text-white rounded-2xl p-8 space-y-3 relative overflow-hidden shadow-lg">
+                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold px-3 py-1 rounded-full inline-block">
+                  {contentJson.hero?.tagLine || "Căn hộ cao cấp Quy Nhơn"}
+                </span>
+                <h1 className="text-2xl font-black">{contentJson.hero?.title || projectInfo?.name}</h1>
+                <p className="text-sm text-slate-200">{contentJson.hero?.subtitle}</p>
+              </div>
+
+              {/* SECTIONS LIST ACTIVE PREVIEW */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-sm text-slate-800">Các Section sẽ hiển thị trên trang Public:</h3>
+                <div className="grid gap-2">
+                  {sectionsConfig
+                    .filter((s) => s.enabled)
+                    .map((s, idx) => (
+                      <div key={s.id} className="p-3 bg-white border rounded-xl flex items-center justify-between text-xs font-medium">
+                        <span>#{idx + 1}. {s.title}</span>
+                        <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">Hiển thị</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

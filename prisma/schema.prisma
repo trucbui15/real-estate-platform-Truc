@@ -136,6 +136,11 @@ enum ProjectResourceType {
   OTHER
 }
 
+enum WebsiteStatus {
+  DRAFT
+  PUBLISHED
+}
+
 // ------------------- MODELS -------------------
 
 model User {
@@ -209,6 +214,7 @@ model Project {
   customerInquiries CustomerInquiry[]
   resources         ProjectResource[]
   inventories       ProjectInventory[]
+  website           ProjectWebsite?
 }
 
 model ProjectResource {
@@ -468,5 +474,35 @@ model ProjectInventory {
   @@index([projectId])
   @@index([projectId, block])
   @@index([projectId, unitStatus])
+}
+
+// --------- Microsite Website riêng cho Dự án ---------
+model ProjectWebsite {
+  id                      String        @id @default(cuid())
+  projectId               String        @unique
+  project                 Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  status                  WebsiteStatus @default(DRAFT)
+
+  // --- DỮ LIỆU NHÁP (DRAFT) ---
+  draftSectionsConfig     String?       @db.Text
+  draftContentJson        String?       @db.Text
+  draftMetaTitle          String?
+  draftMetaDescription    String?
+  draftOgImage            String?
+
+  // --- DỮ LIỆU ĐÃ XUẤT BẢN (PUBLISHED LIVE) ---
+  publishedSectionsConfig String?       @db.Text
+  publishedContentJson    String?       @db.Text
+  publishedMetaTitle      String?
+  publishedMetaDescription String?
+  publishedOgImage        String?
+
+  publishedAt             DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([status])
 }
 

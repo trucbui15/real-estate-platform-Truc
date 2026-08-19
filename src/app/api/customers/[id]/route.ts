@@ -202,6 +202,17 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!session || !canManageAllListings(session.user.role)) {
     return NextResponse.json({ error: "Chỉ Quản lý/Admin được xoá khách hàng" }, { status: 403 });
   }
-  await prisma.customer.delete({ where: { id: params.id } });
+
+  const existing = await prisma.customer.findUnique({ where: { id: params.id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Khách hàng không tồn tại" }, { status: 404 });
+  }
+
+  await prisma.$transaction([
+    prisma.customerActivity.deleteMany({ where: { customerId: params.id } }),
+    prisma.customerInquiry.deleteMany({ where: { customerId: params.id } }),
+    prisma.customer.delete({ where: { id: params.id } }),
+  ]);
+
   return NextResponse.json({ ok: true });
 }
