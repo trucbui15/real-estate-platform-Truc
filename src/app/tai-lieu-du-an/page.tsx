@@ -16,7 +16,7 @@ export default async function TaiLieuDuAnPage() {
 
   try {
     const [w, i, t] = await Promise.all([
-      prisma.projectResource.count({ where: { type: "WEBSITE", isActive: true, isPublic: true } }),
+      prisma.project.count({ where: { isActive: true } }),
       prisma.project.count({ where: { isActive: true } }),
       prisma.projectResource.count({ where: { type: "TOUR_360", isActive: true, isPublic: true } }),
     ]);

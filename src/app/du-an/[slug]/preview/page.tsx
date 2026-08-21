@@ -27,7 +27,23 @@ export default async function DraftPreviewProjectWebsitePage({ params }: Props) 
   // 2. TÌM DỰ ÁN & WEBSITE DATA
   const project = await prisma.project.findUnique({
     where: { slug },
-    include: { website: true },
+    include: {
+      website: true,
+      resources: {
+        where: { isActive: true, isPublic: true },
+        orderBy: { sortOrder: "asc" },
+      },
+      inventories: {
+        orderBy: [{ block: "asc" }, { unitCode: "asc" }],
+      },
+      listings: {
+        where: {
+          unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] },
+        },
+        orderBy: { createdAt: "desc" },
+        include: { author: true, project: true },
+      },
+    },
   });
 
   if (!project || !project.website) {
@@ -64,6 +80,9 @@ export default async function DraftPreviewProjectWebsitePage({ params }: Props) 
       address={project.address}
       sectionsConfig={sectionsConfig}
       contentJson={contentJson}
+      inventories={project.inventories}
+      listings={project.listings}
+      resources={project.resources}
       metaTitle={website.draftMetaTitle || undefined}
       metaDescription={website.draftMetaDescription || undefined}
       ogImage={website.draftOgImage || undefined}
@@ -71,3 +90,4 @@ export default async function DraftPreviewProjectWebsitePage({ params }: Props) 
     />
   );
 }
+
