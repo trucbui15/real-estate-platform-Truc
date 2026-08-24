@@ -530,8 +530,8 @@ export default function ProjectMicrositeRenderer({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
                         {overview.specs.map((spec: any, idx: number) => (
                           <div key={idx} className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-1.5 shadow-2xs hover:border-slate-300 transition-all">
-                            <span className="text-[12px] font-bold text-slate-500 block uppercase tracking-wider">{spec.label}</span>
-                            <span className="text-sm font-extrabold text-slate-900 block leading-snug break-words whitespace-pre-line">{spec.value || "—"}</span>
+                            <span className="text-[11px] font-bold text-slate-400 block uppercase tracking-wider">{spec.label}</span>
+                            <span className="text-sm sm:text-[15px] font-medium text-slate-800 block leading-normal break-words whitespace-pre-line">{spec.value || "—"}</span>
                           </div>
                         ))}
                       </div>
