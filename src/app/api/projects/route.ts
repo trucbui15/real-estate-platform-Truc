@@ -37,7 +37,8 @@ export async function GET(req: Request) {
     include: {
       province: { select: { id: true, name: true, slug: true } },
       district: { select: { id: true, name: true, slug: true } },
-      _count: { select: { listings: true } },
+      website: { select: { status: true } },
+      _count: { select: { listings: true, inventories: true, resources: true } },
     },
   });
 

@@ -136,24 +136,54 @@ export default function DashboardProjectsPage() {
     if (res.ok) loadProjects();
   }
 
-  async function deleteProject(item: any) {
+  // State modal xóa dự án
+  const [deletingProject, setDeletingProject] = useState<any | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const [deletingProjectError, setDeletingProjectError] = useState("");
+
+  function openDeleteProjectModal(item: any) {
     if (!canEdit) return;
-    if (item._count?.listings > 0) {
-      alert(
-        `Không thể xóa trực tiếp dự án đang có ${item._count.listings} tin đăng. Vui lòng chuyển các sản phẩm sang dự án khác hoặc chuyển trạng thái sang Tạm ngưng.`
+    setDeletingProject(item);
+    setDeletingProjectError("");
+  }
+
+  async function handleConfirmDeleteProject() {
+    if (!deletingProject || isDeletingProject) return;
+
+    if (deletingProject._count?.listings > 0) {
+      setDeletingProjectError(
+        `Không thể xóa trực tiếp dự án đang có ${deletingProject._count.listings} tin đăng. Vui lòng chuyển các sản phẩm sang dự án khác hoặc chuyển trạng thái sang Tạm ngưng.`
       );
       return;
     }
 
-    if (!confirm(`Bạn có chắc chắn muốn xóa dự án "${item.name}"?`)) return;
-
-    const res = await fetch(`/api/projects/${item.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      const data = await res.json();
-      alert(data.error || "Không thể xóa dự án.");
+    if (deletingProject.website?.status === "PUBLISHED") {
+      setDeletingProjectError(
+        "Không thể xóa dự án đang ở trạng thái Xuất bản (PUBLISHED). Vui lòng chuyển trạng thái Microsite về Bản nháp trước."
+      );
       return;
     }
-    loadProjects();
+
+    setIsDeletingProject(true);
+    setDeletingProjectError("");
+
+    try {
+      const res = await fetch(`/api/projects/${deletingProject.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        setDeletingProjectError(data.error || "Không thể xóa dự án.");
+        setIsDeletingProject(false);
+        return;
+      }
+
+      setDeletingProject(null);
+      setSuccess("Đã xóa dự án thành công!");
+      loadProjects();
+    } catch (err) {
+      setDeletingProjectError("Lỗi kết nối khi xóa dự án.");
+    } finally {
+      setIsDeletingProject(false);
+    }
   }
 
   // Quản lý Resource Form Handlers
@@ -479,7 +509,7 @@ export default function DashboardProjectsPage() {
                         Sửa
                       </button>
                       <button
-                        onClick={() => deleteProject(p)}
+                        onClick={() => openDeleteProjectModal(p)}
                         className="text-[13px] font-semibold text-[#EF4444] hover:underline px-2"
                       >
                         Xóa
@@ -932,6 +962,98 @@ export default function DashboardProjectsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE PROJECT CONFIRMATION MODAL */}
+      {deletingProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-[18px] font-bold text-[#0F172A]">
+                Xóa dự án?
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingProject(null);
+                  setDeletingProjectError("");
+                }}
+                className="text-[#64748B] hover:text-[#0F172A] text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-[14px]">
+              <div>
+                Tên dự án: <strong className="text-[#0F172A] font-extrabold">{deletingProject.name}</strong>
+              </div>
+
+              <div className="bg-[#F8FAFC] rounded-xl p-3 border border-[#E2E8F0] space-y-1.5 text-[13px] text-[#475569]">
+                <div className="font-bold text-[#1E293B]">Dữ liệu liên quan:</div>
+                <div>• <strong className="text-[#0F172A]">{deletingProject._count?.inventories ?? 0}</strong> căn trong bảng hàng</div>
+                <div>• <strong className="text-[#0F172A]">{deletingProject._count?.resources ?? 0}</strong> tài liệu dự án</div>
+                <div>• <strong className="text-[#0F172A]">{deletingProject._count?.listings ?? 0}</strong> tin đăng bất động sản</div>
+                <div>
+                  • Trạng thái Microsite:{" "}
+                  {deletingProject.website?.status === "PUBLISHED" ? (
+                    <span className="font-bold text-[#059669]">🟢 Đã xuất bản (LIVE)</span>
+                  ) : (
+                    <span className="font-bold text-[#64748B]">🔴 Chưa xuất bản / Bản nháp</span>
+                  )}
+                </div>
+              </div>
+
+              {deletingProject.website?.status === "PUBLISHED" && (
+                <div className="rounded-xl bg-[#FFFBEB] border border-[#FCD34D] p-3 text-[12px] font-semibold text-[#92400E]">
+                  ⚠️ Dự án này đang được xuất bản công khai. Vui lòng chuyển Microsite về dạng Bản nháp trước khi xóa.
+                </div>
+              )}
+
+              {deletingProject._count?.listings > 0 && (
+                <div className="rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] p-3 text-[12px] font-semibold text-[#991B1B]">
+                  ⚠️ Không thể xóa trực tiếp dự án đang có {deletingProject._count.listings} tin đăng bất động sản liên quan. Hãy chuyển các sản phẩm sang dự án khác hoặc chuyển trạng thái sang Tạm ngưng.
+                </div>
+              )}
+
+              {deletingProjectError && (
+                <div className="rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] p-3 text-[13px] text-[#991B1B] font-medium">
+                  {deletingProjectError}
+                </div>
+              )}
+
+              <p className="text-[12px] text-[#64748B]">
+                Thao tác này có thể ảnh hưởng dữ liệu đang hiển thị trên website.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingProject(null);
+                  setDeletingProjectError("");
+                }}
+                disabled={isDeletingProject}
+                className="btn-outline flex-1 text-[14px]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteProject}
+                disabled={
+                  isDeletingProject ||
+                  deletingProject._count?.listings > 0 ||
+                  deletingProject.website?.status === "PUBLISHED"
+                }
+                className="btn-primary bg-[#EF4444] hover:bg-[#DC2626] border-[#EF4444] flex-1 text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingProject ? "Đang xóa..." : "Xóa dự án"}
+              </button>
+            </div>
           </div>
         </div>
       )}

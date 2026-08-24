@@ -113,7 +113,7 @@ export default function ProjectDetailClient({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [directionFilter, setDirectionFilter] = useState<string>("ALL");
   const [searchUnitCode, setSearchUnitCode] = useState<string>("");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
 
   const [inventoryList, setInventoryList] = useState<any[]>(initialInventory);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -158,8 +158,111 @@ export default function ProjectDetailClient({
     images: [] as string[],
   });
 
+  // Delete & Bulk Delete State for Inventory
+  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
+  const [deletingUnit, setDeletingUnit] = useState<any | null>(null);
+  const [isDeletingUnit, setIsDeletingUnit] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteSuccess, setDeleteSuccess] = useState("");
+
+  const toggleSelectUnit = (unitId: string) => {
+    setSelectedUnitIds((prev) =>
+      prev.includes(unitId) ? prev.filter((id) => id !== unitId) : [...prev, unitId]
+    );
+  };
+
   const role = (session?.user as any)?.role;
   const canEditProduct = role === "ADMIN" || role === "MANAGER" || role === "STAFF";
+
+  const toggleSelectAllFiltered = () => {
+    const filteredIds = filteredInventory.map((u) => u.id);
+    const isAllSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedUnitIds.includes(id));
+    if (isAllSelected) {
+      setSelectedUnitIds((prev) => prev.filter((id) => !filteredIds.includes(id)));
+    } else {
+      setSelectedUnitIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
+    }
+  };
+
+  async function handleConfirmSingleDelete() {
+    if (!deletingUnit || isDeletingUnit) return;
+    setIsDeletingUnit(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/project-inventory/${deletingUnit.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setDeleteError(data.error || "Có lỗi xảy ra khi xóa sản phẩm.");
+        setIsDeletingUnit(false);
+        return;
+      }
+      setInventoryList((list) => list.filter((u) => u.id !== deletingUnit.id));
+      setSelectedUnitIds((prev) => prev.filter((id) => id !== deletingUnit.id));
+      if (editingUnit?.id === deletingUnit.id) {
+        setEditingUnit(null);
+      }
+      setDeletingUnit(null);
+      setDeleteSuccess(`Đã xóa căn ${deletingUnit.unitCode} thành công!`);
+      setTimeout(() => setDeleteSuccess(""), 4000);
+    } catch (err: any) {
+      setDeleteError("Lỗi kết nối máy chủ khi xóa căn hộ.");
+    } finally {
+      setIsDeletingUnit(false);
+    }
+  }
+
+  async function handleConfirmBulkDelete() {
+    if (selectedUnitIds.length === 0 || isBulkDeleting) return;
+    setIsBulkDeleting(true);
+    setDeleteError("");
+
+    const idsToDelete = [...selectedUnitIds];
+    const results = await Promise.allSettled(
+      idsToDelete.map(async (id) => {
+        const res = await fetch(`/api/project-inventory/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || `Lỗi xóa căn ID ${id}`);
+        }
+        return id;
+      })
+    );
+
+    const succeededIds: string[] = [];
+    const failedIds: string[] = [];
+
+    results.forEach((res, idx) => {
+      if (res.status === "fulfilled") {
+        succeededIds.push(idsToDelete[idx]);
+      } else {
+        failedIds.push(idsToDelete[idx]);
+      }
+    });
+
+    if (succeededIds.length > 0) {
+      setInventoryList((list) => list.filter((u) => !succeededIds.includes(u.id)));
+    }
+
+    setSelectedUnitIds(failedIds);
+
+    if (editingUnit && succeededIds.includes(editingUnit.id)) {
+      setEditingUnit(null);
+    }
+
+    setShowBulkDeleteConfirm(false);
+    setIsBulkDeleting(false);
+
+    if (failedIds.length === 0) {
+      setDeleteSuccess(`Đã xóa thành công ${succeededIds.length} căn hộ khỏi bảng hàng!`);
+      setTimeout(() => setDeleteSuccess(""), 4000);
+    } else {
+      setDeleteError(`Đã xóa thành công ${succeededIds.length}/${idsToDelete.length} căn. Còn ${failedIds.length} căn chưa thể xóa.`);
+    }
+  }
 
   const totalSale = saleListings.length;
   const totalRent = rentListings.length;
@@ -491,7 +594,7 @@ export default function ProjectDetailClient({
   return (
     <div className="space-y-5 py-4">
       {/* 1. COMPACT PROJECT HEADER (PREVENTS OCCUPYING TOO MUCH VIEWPORT) */}
-      <div className="container-page">
+      <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="space-y-1">
@@ -578,7 +681,7 @@ export default function ProjectDetailClient({
 
       {/* 2. STICKY NAVIGATION BAR */}
       <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="container-page flex items-center gap-2 overflow-x-auto py-2 scrollbar-none">
+        <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto py-2 scrollbar-none">
           <button
             onClick={() => scrollToSection("inventory-section", "inventory")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
@@ -645,7 +748,7 @@ export default function ProjectDetailClient({
                   navigator.clipboard.writeText(shareUrl);
                   alert(`✓ Đã sao chép Link Bảng hàng Nhân viên (${code})!\nHãy dán để chia sẻ: ${shareUrl}`);
                 }}
-                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition shadow-2xs cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition shadow-2xs cursor-pointer flex items-center gap-1"
               >
                 <span>🔗</span>
                 <span>Sao chép Link Nhân viên</span>
@@ -655,7 +758,7 @@ export default function ProjectDetailClient({
         </div>
       </div>
 
-      <div className="container-page space-y-8">
+      <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* 3. SECTION BẢNG HÀNG (PLACED FIRST & ABOVE THE FOLD) */}
         <section id="inventory-section" className="space-y-4 scroll-mt-28">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-2.5">
@@ -802,17 +905,6 @@ export default function ProjectDetailClient({
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   type="button"
-                  onClick={() => setViewMode("table")}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
-                    viewMode === "table"
-                      ? "bg-white text-[#0284C7] shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  📋 Dạng bảng hàng (1 hàng 1 căn)
-                </button>
-                <button
-                  type="button"
                   onClick={() => setViewMode("grid")}
                   className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
                     viewMode === "grid"
@@ -822,9 +914,61 @@ export default function ProjectDetailClient({
                 >
                   🎴 Dạng thẻ
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
+                    viewMode === "table"
+                      ? "bg-white text-[#0284C7] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  📋 Dạng bảng hàng (1 hàng 1 căn)
+                </button>
               </div>
             </div>
           </div>
+
+          {/* NOTIFICATIONS & BULK ACTION BAR */}
+          {deleteSuccess && (
+            <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-3.5 text-[13px] text-emerald-800 font-semibold flex justify-between items-center animate-in fade-in">
+              <span>✓ {deleteSuccess}</span>
+              <button onClick={() => setDeleteSuccess("")} className="text-emerald-800 hover:underline font-bold">✕</button>
+            </div>
+          )}
+          {deleteError && (
+            <div className="rounded-2xl bg-rose-50 border border-rose-200 p-3.5 text-[13px] text-rose-800 font-semibold flex justify-between items-center animate-in fade-in">
+              <span>⚠️ {deleteError}</span>
+              <button onClick={() => setDeleteError("")} className="text-rose-800 hover:underline font-bold">✕</button>
+            </div>
+          )}
+
+          {selectedUnitIds.length > 0 && canEditProduct && (
+            <div className="flex flex-wrap items-center justify-between bg-rose-50 border border-rose-200 p-3.5 rounded-2xl shadow-xs gap-2 animate-in fade-in">
+              <div className="flex items-center gap-2 text-rose-900 font-bold text-xs sm:text-sm">
+                <span>Đã chọn <strong className="text-rose-700 font-extrabold">{selectedUnitIds.length}</strong> căn hộ trong bảng hàng</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedUnitIds([])}
+                  className="px-3 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Hủy chọn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError("");
+                    setShowBulkDeleteConfirm(true);
+                  }}
+                  className="px-3.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Xóa {selectedUnitIds.length} căn đã chọn
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* INVENTORY DISPLAY */}
           {filteredInventory.length === 0 ? (
@@ -849,20 +993,37 @@ export default function ProjectDetailClient({
               )}
             </div>
           ) : viewMode === "table" ? (
-            /* 1 HÀNG 1 CĂN HỘ (PROFESSIONAL DATA TABLE VIEW) */
             <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-xs">
-              <table className="w-full min-w-[900px] text-left text-[13px]">
-                <thead className="bg-slate-50 text-[12px] font-bold uppercase text-slate-600 border-b border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3.5">Mã căn</th>
-                    <th className="px-4 py-3.5">Tòa & Tầng</th>
-                    <th className="px-4 py-3.5">Cấu trúc</th>
-                    <th className="px-4 py-3.5">Diện tích</th>
-                    <th className="px-4 py-3.5">Hướng ban công</th>
-                    <th className="px-4 py-3.5">Giá bán niêm yết</th>
-                    <th className="px-4 py-3.5">Trạng thái</th>
-                    <th className="px-4 py-3.5">Sơ đồ / Tài liệu</th>
-                    {canEditProduct && <th className="px-4 py-3.5 text-right">Quản trị</th>}
+              <table className="w-full text-left text-[13px] border-collapse">
+                <thead className="bg-slate-50 text-[12px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <tr className="align-middle">
+                    {canEditProduct && (
+                      <th className="px-3 py-3.5 w-10 text-center align-middle">
+                        <input
+                          type="checkbox"
+                          checked={filteredInventory.length > 0 && filteredInventory.every((u) => selectedUnitIds.includes(u.id))}
+                          ref={(el) => {
+                            if (el) {
+                              const some = filteredInventory.some((u) => selectedUnitIds.includes(u.id));
+                              const all = filteredInventory.length > 0 && filteredInventory.every((u) => selectedUnitIds.includes(u.id));
+                              el.indeterminate = some && !all;
+                            }
+                          }}
+                          onChange={toggleSelectAllFiltered}
+                          className="w-4 h-4 rounded text-blue-600 border-slate-300 cursor-pointer align-middle"
+                          title="Chọn tất cả các căn đang hiển thị"
+                        />
+                      </th>
+                    )}
+                    <th className="px-3.5 py-3.5 align-middle">Mã căn</th>
+                    <th className="px-3.5 py-3.5 align-middle">Tòa & Tầng</th>
+                    <th className="px-3.5 py-3.5 align-middle">Cấu trúc</th>
+                    <th className="px-3.5 py-3.5 align-middle">Diện tích</th>
+                    <th className="px-3.5 py-3.5 align-middle">Hướng ban công</th>
+                    <th className="px-3.5 py-3.5 align-middle">Giá bán niêm yết</th>
+                    <th className="px-3.5 py-3.5 align-middle">Trạng thái</th>
+                    <th className="px-3.5 py-3.5 align-middle">Sơ đồ / Tài liệu</th>
+                    {canEditProduct && <th className="px-3.5 py-3.5 text-right align-middle">Quản trị</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -879,51 +1040,68 @@ export default function ProjectDetailClient({
                     };
 
                     return (
-                      <tr key={unit.id} className={`hover:bg-slate-50/80 transition ${isSold ? "bg-slate-50/40" : ""}`}>
+                      <tr
+                        key={unit.id}
+                        className={`align-middle hover:bg-slate-50/80 transition ${isSold ? "bg-slate-50/40" : ""} ${
+                          selectedUnitIds.includes(unit.id) ? "bg-blue-50/40" : ""
+                        }`}
+                      >
+                        {/* 0. CHECKBOX (ADMIN/STAFF) */}
+                        {canEditProduct && (
+                          <td className="px-3 py-3.5 align-middle text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedUnitIds.includes(unit.id)}
+                              onChange={() => toggleSelectUnit(unit.id)}
+                              className="w-4 h-4 rounded text-blue-600 border-slate-300 cursor-pointer align-middle"
+                            />
+                          </td>
+                        )}
+
                         {/* 1. MÃ CĂN */}
-                        <td className="px-4 py-3.5">
-                          <code className="font-black text-[13px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                        <td className="px-3.5 py-3.5 align-middle">
+                          <code className="font-black text-[13px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg inline-block">
                             {unit.unitCode}
                           </code>
                         </td>
 
                         {/* 2. TÒA & TẦNG */}
-                        <td className="px-4 py-3.5 text-slate-800 font-semibold">
+                        <td className="px-3.5 py-3.5 align-middle text-slate-800 font-semibold whitespace-nowrap">
                           🏢 {unit.block || "The Sea"} {unit.floor ? `· Tầng ${unit.floor}` : ""}
                         </td>
 
                         {/* 3. CẤU TRÚC */}
-                        <td className="px-4 py-3.5 text-slate-700">
+                        <td className="px-3.5 py-3.5 align-middle text-slate-700 whitespace-nowrap">
                           🛏️ {unit.bedrooms || 0} PN · {unit.bathrooms || 0} WC
                         </td>
 
                         {/* 4. DIỆN TÍCH */}
-                        <td className="px-4 py-3.5 text-slate-800 font-bold">
+                        <td className="px-3.5 py-3.5 align-middle text-slate-800 font-bold whitespace-nowrap">
                           📐 {unit.area} m²
                         </td>
 
                         {/* 5. HƯỚNG BAN CÔNG */}
-                        <td className="px-4 py-3.5 text-slate-600">
+                        <td className="px-3.5 py-3.5 align-middle text-slate-600 whitespace-nowrap">
                           {unit.doorDirection ? `🧭 ${directionLabel[unit.doorDirection] || unit.doorDirection}` : "—"}
                         </td>
 
                         {/* 6. GIÁ BÁN NIÊM YẾT */}
-                        <td className="px-4 py-3.5">
+                        <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
                           <span className="font-black text-[#0284C7] text-[15px]">
                             {formatPrice(unit)}
                           </span>
                         </td>
 
                         {/* 7. TRẠNG THÁI */}
-                        <td className="px-4 py-3.5">
-                          <span className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border ${statusMeta.badgeStyle}`}>
+                        <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 text-[11px] font-bold rounded-lg border ${statusMeta.badgeStyle}`}>
                             {statusMeta.label}
                           </span>
                         </td>
 
                         {/* 8. SƠ ĐỒ & BẢNG GIÁ */}
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2">
+                        <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
                             {hasImage && primaryImg && (
                               <button
                                 type="button"
@@ -949,12 +1127,12 @@ export default function ProjectDetailClient({
 
                         {/* 9. QUẢN TRỊ (ADMIN/STAFF) */}
                         {canEditProduct && (
-                          <td className="px-4 py-3.5 text-right">
+                          <td className="px-3.5 py-3.5 align-middle text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
                               <select
                                 value={unit.unitStatus}
                                 onChange={(e) => quickUpdateStatus(unit, e.target.value)}
-                                className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
+                                className="rounded-lg border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
                               >
                                 <option value="DANG_BAN">🟢 Còn hàng</option>
                                 <option value="DA_BAN">🔴 Đã bán</option>
@@ -962,10 +1140,21 @@ export default function ProjectDetailClient({
                                 <option value="TAM_NGUNG">🟠 Tạm ngưng</option>
                               </select>
                               <button
+                                type="button"
                                 onClick={() => startEditUnit(unit)}
-                                className="font-bold text-blue-600 hover:text-blue-800 text-[12px] px-1"
+                                className="font-bold text-blue-600 hover:text-blue-800 text-[12px] px-1 cursor-pointer"
                               >
-                                ✏️ Sửa
+                                Sửa
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeleteError("");
+                                  setDeletingUnit(unit);
+                                }}
+                                className="font-bold text-rose-600 hover:text-rose-800 text-[12px] px-1 cursor-pointer"
+                              >
+                                Xóa
                               </button>
                             </div>
                           </td>
@@ -977,8 +1166,7 @@ export default function ProjectDetailClient({
               </table>
             </div>
           ) : (
-            /* DẠNG THẺ (GRID VIEW) - CHỈ HIỂN THỊ KHUNG ẢNH NẾU CÓ ẢNH THẬT */
-            <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {filteredInventory.map((unit) => {
                 const isSold = unit.unitStatus === "DA_BAN" || unit.unitStatus === "DA_CHO_THUE";
                 const unitImages = parseImagesList(unit.images);
@@ -995,97 +1183,120 @@ export default function ProjectDetailClient({
                 return (
                   <div
                     key={unit.id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 hover:border-blue-200/80 bg-white p-4 shadow-xs hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:-translate-y-[1px] transition-all duration-300 ease-out overflow-hidden space-y-2.5 cursor-default"
+                    className={`group relative flex flex-col justify-between rounded-2xl border ${
+                      selectedUnitIds.includes(unit.id)
+                        ? "border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20"
+                        : isSold
+                        ? "border-slate-200 bg-slate-50/40"
+                        : "border-slate-200 bg-white"
+                    } hover:border-blue-300 p-4 shadow-xs hover:shadow-md transition-all duration-200 space-y-3 cursor-default`}
                   >
-                    {/* STAMP OVERLAY FOR SOLD UNITS */}
-                    {isSold && (
-                      <div className="absolute top-3 -left-8 -rotate-[25deg] bg-rose-600 text-white font-extrabold text-[10px] px-8 py-0.5 shadow-xs z-20 uppercase tracking-wider pointer-events-none border-y border-white">
-                        Đã bán
+                    {/* 1. HEADER: CHECKBOX + MÃ CĂN + TRẠNG THÁI */}
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        {canEditProduct && (
+                          <input
+                            type="checkbox"
+                            checked={selectedUnitIds.includes(unit.id)}
+                            onChange={() => toggleSelectUnit(unit.id)}
+                            className="w-4 h-4 rounded text-blue-600 border-slate-300 cursor-pointer"
+                          />
+                        )}
+                        <span className="font-extrabold text-[14px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg">
+                          {unit.unitCode}
+                        </span>
                       </div>
-                    )}
 
-                    {/* ONLY SHOW IMAGE CONTAINER IF IMAGE EXISTS */}
-                    {hasImage && primaryImg && (
+                      <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-lg border ${statusMeta.badgeStyle}`}>
+                        {statusMeta.label}
+                      </span>
+                    </div>
+
+                    {/* 2. IMAGE PREVIEW / PLACEHOLDER */}
+                    {hasImage && primaryImg ? (
                       <div
                         onClick={() => setPreviewImage(primaryImg)}
-                        className="relative w-full h-[140px] rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center p-1.5 bg-slate-50 cursor-pointer hover:bg-slate-100 transition"
+                        className="relative w-full h-[140px] rounded-xl border border-slate-100 overflow-hidden bg-slate-50 cursor-pointer group/img"
                       >
                         <img
                           src={primaryImg}
                           alt={`Sơ đồ căn ${unit.unitCode}`}
-                          className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                          className="w-full h-full object-contain p-1 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
                         />
+                        <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white font-bold text-[11px] gap-1 backdrop-blur-[1px]">
+                          🖼️ Phóng to sơ đồ
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-[70px] rounded-xl bg-slate-50/80 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-[12px] font-medium gap-1">
+                        <span>📐 Sơ đồ căn đang cập nhật</span>
                       </div>
                     )}
 
-                    {/* GIÁ & MÃ CĂN */}
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="font-black text-[#0284C7] text-[18px] tracking-tight">
-                        {formatPrice(unit)}
+                    {/* 3. PRICE & SPECIFICATIONS */}
+                    <div className="space-y-2">
+                      <div className="flex items-baseline justify-between pt-0.5">
+                        <span className="text-[11px] text-slate-400 font-medium">Giá niêm yết:</span>
+                        <span className="font-black text-[#0284C7] text-[17px]">
+                          {formatPrice(unit)}
+                        </span>
                       </div>
 
-                      <div className="font-extrabold text-slate-900 text-[16px] tracking-tight">
-                        <code className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
-                          {unit.unitCode}
-                        </code>
+                      {/* SPECIFICATION GRID BOX */}
+                      <div className="grid grid-cols-2 gap-1.5 text-[12px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-medium text-slate-700">
+                        <div className="truncate flex items-center gap-1">
+                          <span className="text-slate-400">🏢</span>
+                          <span className="truncate">{unit.block || "The Sea"} {unit.floor ? `· T${unit.floor}` : ""}</span>
+                        </div>
+                        <div className="truncate flex items-center gap-1">
+                          <span className="text-slate-400">🛏️</span>
+                          <span>{unit.bedrooms || 0} PN · {unit.bathrooms || 0} WC</span>
+                        </div>
+                        <div className="truncate flex items-center gap-1">
+                          <span className="text-slate-400">📐</span>
+                          <span>{unit.area} m²</span>
+                        </div>
+                        <div className="truncate flex items-center gap-1">
+                          <span className="text-slate-400">🧭</span>
+                          <span className="truncate">{unit.doorDirection ? (directionLabel[unit.doorDirection] || unit.doorDirection) : "—"}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* TÒA · TẦNG */}
-                    <div className="text-[12px] font-semibold text-slate-600 flex items-center gap-1">
-                      <span>🏢</span>
-                      <span>
-                        {unit.block || "The Sea"} {unit.floor ? `· Tầng ${unit.floor}` : ""}
-                      </span>
-                    </div>
+                    {/* 4. ACTIONS & ADMIN CONTROLS */}
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold">
+                        {hasImage && primaryImg ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(primaryImg)}
+                            className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 cursor-pointer"
+                          >
+                            🖼️ Xem sơ đồ
+                          </button>
+                        ) : (
+                          <span />
+                        )}
 
-                    {/* MÔ TẢ THÔNG SỐ */}
-                    <div className="flex flex-wrap gap-1 text-[11px]">
-                      {unit.bedrooms && (
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
-                          🛏️ {unit.bedrooms} PN
-                        </span>
-                      )}
-                      {unit.area && (
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
-                          📐 {unit.area} m²
-                        </span>
-                      )}
-                      {unit.doorDirection && (
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
-                          🧭 Hướng {directionLabel[unit.doorDirection] || unit.doorDirection}
-                        </span>
-                      )}
-                    </div>
+                        {priceSheetUrl && (
+                          <a
+                            href={priceSheetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                          >
+                            📄 Bảng giá
+                          </a>
+                        )}
+                      </div>
 
-                    {/* TRẠNG THÁI BADGE & ACTIONS */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${statusMeta.badgeStyle}`}>
-                        {statusMeta.label}
-                      </span>
-
-                      {priceSheetUrl && (
-                        <a
-                          href={priceSheetUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                        >
-                          <span>📄</span>
-                          <span>Bảng giá chính thức</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* ADMIN EDIT CONTROLS */}
-                    {canEditProduct && (
-                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1 font-bold text-slate-500 text-[11px]">
-                          <span>⚙️ Đổi:</span>
+                      {/* ADMIN ROW */}
+                      {canEditProduct && (
+                        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100">
                           <select
                             value={unit.unitStatus}
                             onChange={(e) => quickUpdateStatus(unit, e.target.value)}
-                            className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
+                            className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-800 outline-none cursor-pointer flex-1"
                           >
                             <option value="DANG_BAN">🟢 Còn hàng</option>
                             <option value="DA_BAN">🔴 Đã bán</option>
@@ -1093,15 +1304,28 @@ export default function ProjectDetailClient({
                             <option value="TAM_NGUNG">🟠 Tạm ngưng</option>
                           </select>
 
-                          <button
-                            onClick={() => startEditUnit(unit)}
-                            className="font-bold text-blue-600 hover:text-blue-800 px-1 text-[11px]"
-                          >
-                            ✏️ Sửa
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => startEditUnit(unit)}
+                              className="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold transition cursor-pointer"
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError("");
+                                setDeletingUnit(unit);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold transition cursor-pointer"
+                            >
+                              Xóa
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -1465,7 +1689,7 @@ export default function ProjectDetailClient({
           <div className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="text-[18px] font-bold text-slate-900">
-                ✏️ Cập nhật thông tin căn {editingUnit.unitCode}
+                Cập nhật thông tin căn {editingUnit.unitCode}
               </h3>
               <button onClick={() => setEditingUnit(null)} className="text-slate-400 hover:text-slate-900 text-lg font-bold">✕</button>
             </div>
@@ -1669,23 +1893,180 @@ export default function ProjectDetailClient({
                 />
               </div>
 
-              <div className="flex gap-3 pt-3">
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setEditingUnit(null)}
-                  className="btn-outline flex-1 text-[14px]"
+                  onClick={() => {
+                    setDeleteError("");
+                    setDeletingUnit(editingUnit);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[13px] font-bold transition flex items-center cursor-pointer"
                 >
-                  Hủy
+                  <span>Xóa sản phẩm này</span>
                 </button>
-                <button
-                  type="submit"
-                  disabled={editLoading || editUploading}
-                  className="btn-primary flex-1 text-[14px]"
-                >
-                  {editLoading ? "Đang cập nhật..." : "Lưu thay đổi"}
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUnit(null)}
+                    className="btn-outline text-[13px] px-4 py-2"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading || editUploading}
+                    className="btn-primary text-[13px] px-4 py-2"
+                  >
+                    {editLoading ? "Đang cập nhật..." : "Lưu thay đổi"}
+                  </button>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SINGLE INVENTORY DELETE CONFIRMATION MODAL */}
+      {deletingUnit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="text-[18px] font-bold text-slate-900">
+                Xóa căn hộ khỏi Bảng hàng?
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingUnit(null);
+                  setDeleteError("");
+                }}
+                className="text-slate-400 hover:text-slate-900 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-[14px]">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1.5 text-[13px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Mã căn:</span>
+                  <code className="font-extrabold text-[#0284C7] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                    {deletingUnit.unitCode}
+                  </code>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Tòa & Tầng:</span>
+                  <span className="font-bold text-slate-800">
+                    🏢 {deletingUnit.block || "—"} {deletingUnit.floor ? `· Tầng ${deletingUnit.floor}` : ""}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Diện tích:</span>
+                  <span className="font-bold text-slate-800">📐 {deletingUnit.area} m²</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Giá bán:</span>
+                  <span className="font-black text-[#0284C7] text-[15px]">{formatPrice(deletingUnit)}</span>
+                </div>
+              </div>
+
+              {deleteError && (
+                <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-[13px] text-rose-800 font-medium">
+                  {deleteError}
+                </div>
+              )}
+
+              <p className="text-[12px] text-slate-500 italic">
+                Bạn đang chuẩn bị xóa vĩnh viễn căn hộ này khỏi bảng hàng dự án. Thao tác này không thể hoàn tác.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingUnit(null);
+                  setDeleteError("");
+                }}
+                disabled={isDeletingUnit}
+                className="btn-outline flex-1 text-[14px]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSingleDelete}
+                disabled={isDeletingUnit}
+                className="btn-primary bg-rose-600 hover:bg-rose-700 border-rose-600 flex-1 text-[14px] disabled:opacity-50"
+              >
+                {isDeletingUnit ? "Đang xóa..." : "Xóa căn hộ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK INVENTORY DELETE CONFIRMATION MODAL */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="text-[18px] font-bold text-slate-900">
+                Xóa {selectedUnitIds.length} căn hộ đã chọn?
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteConfirm(false);
+                  setDeleteError("");
+                }}
+                className="text-slate-400 hover:text-slate-900 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-[14px]">
+              <div className="bg-rose-50/80 p-4 rounded-2xl border border-rose-200 text-[13px] text-rose-900 space-y-1">
+                <div className="font-bold text-rose-950 text-[14px]">Xác nhận xóa hàng loạt</div>
+                <p>
+                  Bạn đang chuẩn bị xóa vĩnh viễn <strong className="text-rose-700 font-black">{selectedUnitIds.length}</strong> căn hộ đã chọn khỏi bảng hàng dự án.
+                </p>
+              </div>
+
+              {deleteError && (
+                <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-[13px] text-rose-800 font-medium">
+                  {deleteError}
+                </div>
+              )}
+
+              <p className="text-[12px] text-slate-500 italic">
+                Thao tác này sẽ xóa tất cả {selectedUnitIds.length} sản phẩm đã chọn và không thể hoàn tác.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteConfirm(false);
+                  setDeleteError("");
+                }}
+                disabled={isBulkDeleting}
+                className="btn-outline flex-1 text-[14px]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBulkDelete}
+                disabled={isBulkDeleting}
+                className="btn-primary bg-rose-600 hover:bg-rose-700 border-rose-600 flex-1 text-[14px] disabled:opacity-50"
+              >
+                {isBulkDeleting ? "Đang xóa..." : `Xóa ${selectedUnitIds.length} căn`}
+              </button>
+            </div>
           </div>
         </div>
       )}

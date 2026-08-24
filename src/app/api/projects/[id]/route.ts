@@ -11,7 +11,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     include: {
       province: { select: { id: true, name: true } },
       district: { select: { id: true, name: true } },
-      _count: { select: { listings: true } },
+      website: { select: { status: true } },
+      _count: { select: { listings: true, inventories: true, resources: true } },
     },
   });
 
@@ -62,7 +63,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       include: {
         province: { select: { id: true, name: true } },
         district: { select: { id: true, name: true } },
-        _count: { select: { listings: true } },
+        website: { select: { status: true } },
+        _count: { select: { listings: true, inventories: true, resources: true } },
       },
     });
 
@@ -81,11 +83,23 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 
   const existing = await prisma.project.findUnique({
     where: { id: params.id },
-    include: { _count: { select: { listings: true } } },
+    include: {
+      website: { select: { status: true } },
+      _count: { select: { listings: true, inventories: true, resources: true } },
+    },
   });
 
   if (!existing) {
     return NextResponse.json({ error: "Không tìm thấy dự án" }, { status: 404 });
+  }
+
+  if (existing.website?.status === "PUBLISHED") {
+    return NextResponse.json(
+      {
+        error: "Không thể xoá dự án đang ở trạng thái Xuất bản (PUBLISHED) công khai. Vui lòng chuyển trạng thái Microsite về Bản nháp (DRAFT) trước khi xoá.",
+      },
+      { status: 400 }
+    );
   }
 
   if (existing._count.listings > 0) {
