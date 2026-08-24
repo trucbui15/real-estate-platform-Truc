@@ -366,7 +366,22 @@ export default function ProjectMicrositeRenderer({
                           src={hero.bgImage}
                           alt={hero.title || projectName}
                           loading="eager"
-                          className="w-full h-full object-cover opacity-100"
+                          style={{
+                            transform: `scale(${hero.bgScale || 1})`,
+                            transformOrigin:
+                              hero.bgPosition === "top"
+                                ? "top center"
+                                : hero.bgPosition === "bottom"
+                                ? "bottom center"
+                                : "center",
+                          }}
+                          className={`w-full h-full object-cover opacity-100 transition-transform duration-300 ${
+                            hero.bgPosition === "top"
+                              ? "object-top"
+                              : hero.bgPosition === "bottom"
+                              ? "object-bottom"
+                              : "object-center"
+                          }`}
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-transparent"></div>
                       </div>
@@ -512,11 +527,11 @@ export default function ProjectMicrositeRenderer({
 
                     {/* SPECS GRID */}
                     {overview.specs && overview.specs.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
                         {overview.specs.map((spec: any, idx: number) => (
-                          <div key={idx} className="bg-slate-50 rounded-2xl p-4 border border-slate-200/70 space-y-1">
-                            <span className="text-[11px] font-bold text-slate-500 block">{spec.label}</span>
-                            <span className="text-xs sm:text-sm font-black text-slate-900 block truncate">{spec.value || "—"}</span>
+                          <div key={idx} className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-1.5 shadow-2xs hover:border-slate-300 transition-all">
+                            <span className="text-[12px] font-bold text-slate-500 block uppercase tracking-wider">{spec.label}</span>
+                            <span className="text-sm font-extrabold text-slate-900 block leading-snug break-words whitespace-pre-line">{spec.value || "—"}</span>
                           </div>
                         ))}
                       </div>

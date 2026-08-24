@@ -60,4 +60,14 @@
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #cbd5e1; }
 
+/* Hide Chrome/Webkit autofill & credentials suggestion badges */
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden !important;
+  display: none !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
 

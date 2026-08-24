@@ -594,7 +594,7 @@ export default function ProjectDetailClient({
   return (
     <div className="space-y-5 py-4">
       {/* 1. COMPACT PROJECT HEADER (PREVENTS OCCUPYING TOO MUCH VIEWPORT) */}
-      <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="space-y-1">
@@ -681,7 +681,7 @@ export default function ProjectDetailClient({
 
       {/* 2. STICKY NAVIGATION BAR */}
       <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto py-2 scrollbar-none">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto py-2 scrollbar-none">
           <button
             onClick={() => scrollToSection("inventory-section", "inventory")}
             className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
@@ -758,7 +758,7 @@ export default function ProjectDetailClient({
         </div>
       </div>
 
-      <div className="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* 3. SECTION BẢNG HÀNG (PLACED FIRST & ABOVE THE FOLD) */}
         <section id="inventory-section" className="space-y-4 scroll-mt-28">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-2.5">
@@ -993,12 +993,12 @@ export default function ProjectDetailClient({
               )}
             </div>
           ) : viewMode === "table" ? (
-            <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-xs">
-              <table className="w-full text-left text-[13px] border-collapse">
+            <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-xs w-full">
+              <table className="w-full text-left text-[13px] border-collapse min-w-[1250px]">
                 <thead className="bg-slate-50 text-[12px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                   <tr className="align-middle">
                     {canEditProduct && (
-                      <th className="px-3 py-3.5 w-10 text-center align-middle">
+                      <th className="px-3 py-3.5 w-[3%] text-center align-middle">
                         <input
                           type="checkbox"
                           checked={filteredInventory.length > 0 && filteredInventory.every((u) => selectedUnitIds.includes(u.id))}
@@ -1015,15 +1015,15 @@ export default function ProjectDetailClient({
                         />
                       </th>
                     )}
-                    <th className="px-3.5 py-3.5 align-middle">Mã căn</th>
-                    <th className="px-3.5 py-3.5 align-middle">Tòa & Tầng</th>
-                    <th className="px-3.5 py-3.5 align-middle">Cấu trúc</th>
-                    <th className="px-3.5 py-3.5 align-middle">Diện tích</th>
-                    <th className="px-3.5 py-3.5 align-middle">Hướng ban công</th>
-                    <th className="px-3.5 py-3.5 align-middle">Giá bán niêm yết</th>
-                    <th className="px-3.5 py-3.5 align-middle">Trạng thái</th>
-                    <th className="px-3.5 py-3.5 align-middle">Sơ đồ / Tài liệu</th>
-                    {canEditProduct && <th className="px-3.5 py-3.5 text-right align-middle">Quản trị</th>}
+                    <th className="px-3.5 py-3.5 align-middle w-[7%]">Mã căn</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[13%]">Tòa & Tầng</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[9%]">Cấu trúc</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[7%]">Diện tích</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[10%] whitespace-nowrap">Hướng ban công</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[10%] whitespace-nowrap">Giá bán niêm yết</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[8%]">Trạng thái</th>
+                    <th className="px-3.5 py-3.5 align-middle w-[15%]">Sơ đồ / Tài liệu</th>
+                    {canEditProduct && <th className="px-3.5 py-3.5 align-middle w-[18%] text-left">Quản trị</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -1127,8 +1127,8 @@ export default function ProjectDetailClient({
 
                         {/* 9. QUẢN TRỊ (ADMIN/STAFF) */}
                         {canEditProduct && (
-                          <td className="px-3.5 py-3.5 align-middle text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
+                            <div className="flex items-center gap-2">
                               <select
                                 value={unit.unitStatus}
                                 onChange={(e) => quickUpdateStatus(unit, e.target.value)}

@@ -688,8 +688,74 @@ export default function ProjectWebsiteCmsPage() {
                   </div>
 
                   {/* UPLOAD HERO BG IMAGE */}
-                  <div>
-                    <label className="label">Ảnh Nền Hero (Background Image)</label>
+                  <div className="space-y-2">
+                    <label className="label !mb-0">Ảnh Nền Hero (Background Image)</label>
+
+                    {contentJson.hero?.bgImage && (
+                      <div className="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-500 font-bold">Focus góc:</span>
+                          <button
+                            type="button"
+                            onClick={() => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgPosition: "top" } })}
+                            className={`px-2 py-0.5 rounded-lg font-bold border transition cursor-pointer ${
+                              contentJson.hero?.bgPosition === "top" ? "bg-primary-600 text-white border-primary-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            ⬆️ Trên
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgPosition: "center" } })}
+                            className={`px-2 py-0.5 rounded-lg font-bold border transition cursor-pointer ${
+                              !contentJson.hero?.bgPosition || contentJson.hero?.bgPosition === "center"
+                                ? "bg-primary-600 text-white border-primary-600"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            🎯 Giữa
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgPosition: "bottom" } })}
+                            className={`px-2 py-0.5 rounded-lg font-bold border transition cursor-pointer ${
+                              contentJson.hero?.bgPosition === "bottom" ? "bg-primary-600 text-white border-primary-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            ⬇️ Dưới
+                          </button>
+                        </div>
+
+                        <div className="h-4 w-px bg-slate-300 hidden sm:block"></div>
+
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-slate-500 font-bold">🔍 Zoom ảnh:</span>
+                          {[
+                            { label: "50%", val: 0.5 },
+                            { label: "75%", val: 0.75 },
+                            { label: "90%", val: 0.9 },
+                            { label: "100%", val: 1 },
+                            { label: "115%", val: 1.15 },
+                            { label: "130%", val: 1.3 },
+                            { label: "150%", val: 1.5 },
+                          ].map((opt) => (
+                            <button
+                              key={opt.val}
+                              type="button"
+                              onClick={() => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgScale: opt.val } })}
+                              className={`px-2 py-0.5 rounded-lg font-bold border transition cursor-pointer ${
+                                (contentJson.hero?.bgScale || 1) === opt.val
+                                  ? "bg-primary-600 text-white border-primary-600"
+                                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-2">
                       <input
                         className="input font-mono flex-1"
@@ -717,9 +783,29 @@ export default function ProjectWebsiteCmsPage() {
                         </label>
                       )}
                     </div>
+
                     {contentJson.hero?.bgImage && (
-                      <div className="mt-2 relative rounded-xl overflow-hidden max-h-40 border">
-                        <img src={contentJson.hero.bgImage} alt="Hero preview" className="w-full object-cover max-h-40" />
+                      <div className="mt-3 relative rounded-2xl overflow-hidden border border-slate-200 shadow-xs max-h-72 bg-slate-900 flex items-center justify-center">
+                        <img
+                          src={contentJson.hero.bgImage}
+                          alt="Hero preview"
+                          style={{
+                            transform: `scale(${contentJson.hero?.bgScale || 1})`,
+                            transformOrigin:
+                              contentJson.hero?.bgPosition === "top"
+                                ? "top center"
+                                : contentJson.hero?.bgPosition === "bottom"
+                                ? "bottom center"
+                                : "center",
+                          }}
+                          className={`w-full h-72 object-cover transition-transform duration-300 ${
+                            contentJson.hero?.bgPosition === "top"
+                              ? "object-top"
+                              : contentJson.hero?.bgPosition === "bottom"
+                              ? "object-bottom"
+                              : "object-center"
+                          }`}
+                        />
                       </div>
                     )}
                   </div>
@@ -759,10 +845,16 @@ export default function ProjectWebsiteCmsPage() {
                     <label className="label font-bold text-slate-800">Thông số kỹ thuật chính</label>
                     <div className="space-y-2">
                       {(contentJson.overview?.specs || []).map((spec: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                           <input
-                            className="input w-1/3"
+                            type="text"
+                            className="input col-span-4 min-w-0"
                             disabled={!canEdit}
+                            name={`spec_name_${idx}`}
+                            autoComplete="one-time-code"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
                             value={spec.label}
                             placeholder="Tên thông số (VD: Quy mô)"
                             onChange={(e) => {
@@ -771,11 +863,13 @@ export default function ProjectWebsiteCmsPage() {
                               setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
                             }}
                           />
-                          <input
-                            className="input flex-1"
+                          <textarea
+                            rows={3}
+                            className="w-full rounded-xl border border-[#BAE6FD] bg-white px-3.5 py-2.5 text-[13px] sm:text-[14px] text-[#0F172A] placeholder:text-[#94A3B8] font-medium focus:border-[#0284C7] focus:outline-none focus:ring-2 focus:ring-[#E0F2FE] transition-all col-span-7 min-w-0 min-h-[72px] resize-y"
                             disabled={!canEdit}
+                            name={`spec_val_${idx}`}
                             value={spec.value}
-                            placeholder="Giá trị (VD: 2 Tòa 29 tầng)"
+                            placeholder="Giá trị (VD: 2 Tòa 29 tầng...)"
                             onChange={(e) => {
                               const newSpecs = [...contentJson.overview.specs];
                               newSpecs[idx].value = e.target.value;
@@ -789,7 +883,8 @@ export default function ProjectWebsiteCmsPage() {
                                 const newSpecs = contentJson.overview.specs.filter((_: any, i: number) => i !== idx);
                                 setContentJson({ ...contentJson, overview: { ...contentJson.overview, specs: newSpecs } });
                               }}
-                              className="text-red-500 font-bold px-2 hover:bg-red-50 rounded"
+                              className="col-span-1 flex justify-center text-red-500 font-bold px-2 py-2 hover:bg-red-50 rounded cursor-pointer"
+                              title="Xóa thông số này"
                             >
                               ✕
                             </button>
