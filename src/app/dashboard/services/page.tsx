@@ -114,7 +114,7 @@ export default function DashboardServicesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
-            <span>🏨</span>
+            {/* <span>🏨</span> */}
             <span>Quản Lý Đặt Phòng & Dịch Vụ Visa</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -130,32 +130,29 @@ export default function DashboardServicesPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setTab("ALL")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                tab === "ALL"
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${tab === "ALL"
                   ? "bg-slate-900 text-white shadow-xs"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
+                }`}
             >
               Tất cả ({inquiries.length})
             </button>
             <button
               onClick={() => setTab("BOOKING")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                tab === "BOOKING"
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === "BOOKING"
                   ? "bg-blue-600 text-white shadow-xs"
                   : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-              }`}
+                }`}
             >
               <span>🏨</span>
               <span>Đặt phòng / Book phòng</span>
             </button>
             <button
               onClick={() => setTab("VISA")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                tab === "VISA"
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === "VISA"
                   ? "bg-indigo-600 text-white shadow-xs"
                   : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-              }`}
+                }`}
             >
               <span>🛂</span>
               <span>Dịch vụ Visa</span>

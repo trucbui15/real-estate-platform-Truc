@@ -87,9 +87,9 @@ export default function Footer() {
       <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-blue-600 to-amber-500" />
 
       <div className="container-page py-16">
-        <div className="grid gap-12 lg:grid-cols-12 items-start">
+        <div className="grid gap-10 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 items-start">
           {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU & DOANH NGHIỆP (4 cols) */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="sm:col-span-2 lg:col-span-4 space-y-6">
             <div>
               <Link href="/" className="inline-flex items-center gap-3 group">
                 <img
@@ -106,7 +106,7 @@ export default function Footer() {
                   </div>
                 </div>
               </Link>
-              <div className="mt-3 text-xs font-semibold text-slate-500">
+              <div className="mt-3 text-xs font-semibold text-slate-600">
                 {CONTACT_CONFIG.companyName}
               </div>
             </div>
@@ -150,81 +150,153 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* CỘT 2: DỊCH VỤ CHÍNH (4 cols) */}
-          <div className="lg:col-span-3 space-y-4">
+          {/* CỘT 2: DỊCH VỤ NỔI BẬT (2 cols) */}
+          <div className="sm:col-span-1 lg:col-span-2 space-y-4">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-900 border-b border-slate-200 pb-3">
               Dịch vụ nổi bật
             </h3>
-            <ul className="space-y-3 text-xs text-slate-600">
+            <ul className="space-y-2.5 text-xs text-slate-600">
               <li>
                 <Link
                   href="/listings?transactionType=SALE"
-                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
-                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
-                  <span>Mua bán căn hộ Quy Nhơn</span>
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Mua bán căn hộ</span>
                 </Link>
               </li>
               <li>
                 <Link
                   href="/ky-gui"
-                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
-                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
-                  <span>Ký gửi bất động sản chính chủ</span>
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Ký gửi bất động sản</span>
                 </Link>
               </li>
               <li>
                 <Link
                   href="/listings?transactionType=RENT"
-                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
-                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
-                  <span>Cho thuê căn hộ du lịch & dài hạn</span>
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Cho thuê căn hộ</span>
                 </Link>
               </li>
               <li>
                 <Link
                   href="/projects"
-                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
-                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
-                  <span>Dự án Simona Heights, Altara, TMS...</span>
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Dự án BĐS Quy Nhơn</span>
                 </Link>
               </li>
               <li>
                 <Link
                   href="/listings"
-                  className="group flex items-center gap-2 hover:text-blue-600 font-medium transition"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
-                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">➔</span>
-                  <span>Tra cứu giỏ hàng theo ngân sách</span>
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Tra cứu giỏ hàng</span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* CỘT 3: THẺ FORM TƯ VẤN SANG TRỌNG (5 cols) */}
-          <div className="lg:col-span-5">
-            <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/60 rounded-2xl p-6 relative">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          {/* CỘT 3: CHÍNH SÁCH & PHÁP LÝ (3 cols) */}
+          <div className="sm:col-span-1 lg:col-span-3 space-y-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-900 border-b border-slate-200 pb-3">
+              Chính sách & Quy định
+            </h3>
+            <ul className="space-y-2.5 text-xs text-slate-600">
+              <li>
+                <Link
+                  href="/dieu-khoan"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Điều khoản sử dụng</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/chinh-sach"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Chính sách bảo mật thông tin</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/chinh-sach-gia"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Chính sách giá cả & Phí dịch vụ</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/chinh-sach-thanh-toan"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Chính sách thanh toán</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/phuong-thuc-cung-cap-dich-vu"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Phương thức cung cấp dịch vụ</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dieu-kien-han-che"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Điều kiện hạn chế dịch vụ</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/tiep-nhan-khieu-nai"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Tiếp nhận & Giải quyết khiếu nại</span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* CỘT 4: THẺ FORM TƯ VẤN SANG TRỌNG (3 cols) */}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <div className="bg-white border border-slate-200/90 shadow-lg shadow-slate-200/50 rounded-2xl p-5 relative">
+              <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Nhận tư vấn & Báo giá trực tiếp
+                  <h3 className="text-xs font-bold text-slate-900">
+                    Nhận tư vấn & Báo giá
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Để lại thông tin, chuyên viên sẽ liên hệ trong 5 phút.
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Chuyên viên liên hệ trong 5 phút.
                   </p>
                 </div>
-                <span className="px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                <span className="px-2 py-0.5 text-[9px] font-extrabold tracking-wide uppercase bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
                   Miễn phí
                 </span>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-2.5">
                 {message && (
                   <div
-                    className={`rounded-xl p-3 text-xs font-medium ${
+                    className={`rounded-lg p-2 text-[11px] font-medium ${
                       message.type === "success"
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         : "bg-rose-50 text-rose-800 border border-rose-200"
@@ -245,47 +317,45 @@ export default function Footer() {
                     required
                     value={form.fullName}
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="footer-phone" className="sr-only">
-                      Số điện thoại
-                    </label>
-                    <input
-                      id="footer-phone"
-                      type="tel"
-                      placeholder="Số điện thoại *"
-                      required
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="footer-phone" className="sr-only">
+                    Số điện thoại
+                  </label>
+                  <input
+                    id="footer-phone"
+                    type="tel"
+                    placeholder="Số điện thoại *"
+                    required
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                  />
+                </div>
 
-                  <div>
-                    <label htmlFor="footer-email" className="sr-only">
-                      Email
-                    </label>
-                    <input
-                      id="footer-email"
-                      type="email"
-                      placeholder="Email (không bắt buộc)"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="footer-email" className="sr-only">
+                    Email
+                  </label>
+                  <input
+                    id="footer-email"
+                    type="email"
+                    placeholder="Email (không bắt buộc)"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                  />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-1 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl py-3 text-xs shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.99] transition-all"
+                  className="w-full mt-1 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg py-2.5 text-xs shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.99] transition-all"
                 >
-                  {loading ? "Đang gửi thông tin..." : "Nhận Tư Vấn Ngay ➔"}
+                  {loading ? "Đang gửi..." : "Nhận Tư Vấn Ngay ➔"}
                 </button>
               </form>
             </div>
@@ -293,8 +363,8 @@ export default function Footer() {
         </div>
 
         {/* PHẦN DƯỚI FOOTER: DIVIDER + LINKS + COPYRIGHT */}
-        <div className="mt-14 border-t border-slate-200/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex flex-wrap items-center gap-4 font-semibold text-slate-600">
+        <div className="mt-12 border-t border-slate-200/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-4 font-semibold text-slate-600">
             <Link href="/gioi-thieu" className="hover:text-blue-600 transition">
               Giới thiệu
             </Link>
@@ -303,12 +373,8 @@ export default function Footer() {
               Liên hệ
             </Link>
             <span className="text-slate-300">·</span>
-            <Link href="/dieu-khoan" className="hover:text-blue-600 transition">
-              Điều khoản sử dụng
-            </Link>
-            <span className="text-slate-300">·</span>
-            <Link href="/chinh-sach" className="hover:text-blue-600 transition">
-              Chính sách bảo mật
+            <Link href="/ky-gui" className="hover:text-blue-600 transition">
+              Ký gửi BĐS
             </Link>
           </div>
 
