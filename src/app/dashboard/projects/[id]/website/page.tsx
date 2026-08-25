@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { canManageProjectsAndNews, isBackofficeRole } from "@/lib/permissions";
+import { compressImage, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
 
 // Danh mục mặc định 13 Sections chuẩn CMS
 const DEFAULT_SECTIONS = [
@@ -205,22 +206,26 @@ export default function ProjectWebsiteCmsPage() {
     loadData();
   }, [projectId]);
 
-  // Upload Ảnh Reusable via /api/upload
-  async function handleFileUpload(file: File, onSuccess: (url: string) => void) {
+  // Upload Ảnh Reusable via /api/upload với Tối ưu hóa preset
+  async function handleFileUpload(file: File, onSuccess: (url: string) => void, preset: ImagePreset = "DEFAULT") {
     if (!file) return;
     setUploadingField("file");
     setError("");
     try {
+      const optResult = await compressImage(file, preset);
+      const optimizedFile = optResult.file;
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", optimizedFile);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Tải ảnh thất bại");
       }
       onSuccess(data.url);
-      setSuccess("Upload ảnh thành công!");
-      setTimeout(() => setSuccess(""), 3000);
+      setSuccess(`Upload ảnh thành công! (${optResult.formattedOriginalSize} → ${optResult.formattedOptimizedSize}, Giảm ${optResult.reductionPercent}%)`);
+      revokePreviewUrl(optResult.previewUrl);
+      setTimeout(() => setSuccess(""), 4000);
     } catch (err: any) {
       setError(err.message || "Không thể upload ảnh");
     } finally {
@@ -774,8 +779,10 @@ export default function ProjectWebsiteCmsPage() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                handleFileUpload(file, (url) =>
-                                  setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgImage: url } })
+                                handleFileUpload(
+                                  file,
+                                  (url) => setContentJson({ ...contentJson, hero: { ...contentJson.hero, bgImage: url } }),
+                                  "HERO"
                                 );
                               }
                             }}
@@ -954,8 +961,10 @@ export default function ProjectWebsiteCmsPage() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                handleFileUpload(file, (url) =>
-                                  setContentJson({ ...contentJson, location: { ...contentJson.location, mapImage: url } })
+                                handleFileUpload(
+                                  file,
+                                  (url) => setContentJson({ ...contentJson, location: { ...contentJson.location, mapImage: url } }),
+                                  "FLOOR_PLAN"
                                 );
                               }
                             }}
@@ -1139,8 +1148,10 @@ export default function ProjectWebsiteCmsPage() {
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          handleFileUpload(file, (url) =>
-                            setContentJson({ ...contentJson, seo: { ...contentJson.seo, ogImage: url } })
+                          handleFileUpload(
+                            file,
+                            (url) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, ogImage: url } }),
+                            "THUMBNAIL"
                           );
                         }
                       }}
@@ -1150,10 +1161,50 @@ export default function ProjectWebsiteCmsPage() {
               </div>
             </div>
 
+            {/* TRACKING & ANALYTICS SECTION */}
+            <div className="pt-4 border-t border-slate-200 space-y-3">
+              <h3 className="text-sm font-bold text-slate-800">📊 Đo Lường & Mã Tracking Quảng Cáo</h3>
+
+              <div>
+                <label className="label">Mã Google Analytics 4 (GA4 ID)</label>
+                <input
+                  className="input font-mono"
+                  disabled={!canEdit}
+                  value={contentJson.seo?.gaId || ""}
+                  onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, gaId: e.target.value } })}
+                  placeholder="VD: G-XXXXXXXXXX"
+                />
+                <span className="text-[10px] text-slate-400">Đo lường lượt truy cập, khu vực địa lý, thời gian ở lại trang.</span>
+              </div>
+
+              <div>
+                <label className="label">Mã Facebook Pixel ID (Meta Pixel)</label>
+                <input
+                  className="input font-mono"
+                  disabled={!canEdit}
+                  value={contentJson.seo?.fbPixelId || ""}
+                  onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, fbPixelId: e.target.value } })}
+                  placeholder="VD: 123456789012345"
+                />
+                <span className="text-[10px] text-slate-400">Đo lường chuyển đổi từ quảng cáo Facebook Ads khi khách bấm Đăng ký.</span>
+              </div>
+
+              <div>
+                <label className="label">Mã Google Tag Manager (GTM ID)</label>
+                <input
+                  className="input font-mono"
+                  disabled={!canEdit}
+                  value={contentJson.seo?.gtmId || ""}
+                  onChange={(e) => setContentJson({ ...contentJson, seo: { ...contentJson.seo, gtmId: e.target.value } })}
+                  placeholder="VD: GTM-XXXXXXX"
+                />
+              </div>
+            </div>
+
             {canEdit && (
               <div className="pt-3">
                 <button type="button" onClick={handleSaveDraft} className="btn-primary">
-                  Lưu cấu hình SEO
+                  💾 Lưu cấu hình SEO & Tracking
                 </button>
               </div>
             )}

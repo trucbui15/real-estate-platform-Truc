@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { isBackofficeRole } from "@/lib/permissions";
 import ListingCard from "@/components/ListingCard";
@@ -328,11 +329,59 @@ export default function ProjectMicrositeRenderer({
   }
 
   // Sale & Rent Listings
-  const saleListings = useMemo(() => listings.filter((l) => l.transactionType === "SALE"), [listings]);
-  const rentListings = useMemo(() => listings.filter((l) => l.transactionType === "RENT"), [listings]);
+  const saleListings = useMemo(() => (listings || []).filter((l: any) => l.transactionType === "SALE"), [listings]);
+  const rentListings = useMemo(() => (listings || []).filter((l: any) => l.transactionType === "RENT"), [listings]);
+
+  // Dynamic Tracking IDs
+  const projectGaId = contentJson?.seo?.gaId;
+  const projectFbPixelId = contentJson?.seo?.fbPixelId;
+  const projectGtmId = contentJson?.seo?.gtmId;
 
   return (
     <div className="w-full overflow-x-hidden min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-400 selection:text-slate-950 pb-28 sm:pb-16 relative">
+      {/* DYNAMIC PROJECT TRACKING SCRIPTS */}
+      {projectGaId && (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${projectGaId}`} strategy="afterInteractive" />
+          <Script id={`ga-project-${projectId}`} strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${projectGaId}');
+            `}
+          </Script>
+        </>
+      )}
+
+      {projectFbPixelId && (
+        <Script id={`fb-pixel-${projectId}`} strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${projectFbPixelId}');
+            fbq('track', 'PageView');
+          `}
+        </Script>
+      )}
+
+      {projectGtmId && (
+        <Script id={`gtm-${projectId}`} strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${projectGtmId}');
+          `}
+        </Script>
+      )}
       {/* 1. MỎNG & GỌN: BANNER DRAFT PREVIEW NỘI BỘ */}
       {isPreview && (
         <div className="bg-amber-500/90 backdrop-blur-md text-slate-950 px-4 py-1 text-[11px] font-bold sticky top-0 z-50 shadow-xs flex items-center justify-between">

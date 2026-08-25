@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LABELS, formatVNDText } from "@/lib/utils";
 import ProjectSelect from "@/components/ProjectSelect";
+import { compressImagesInBatch, revokePreviewUrl } from "@/lib/imageCompression";
 
 const initial = {
   productCode: "",
@@ -72,16 +73,35 @@ export default function ListingForm({
     set("imagesText", urls.join("\n"));
   }
 
+  const [uploadStatusText, setUploadStatusText] = useState("");
+
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
     setError("");
+    setUploadStatusText("Đang tối ưu ảnh...");
     try {
+      const fileArray = Array.from(files);
+      // Batch compression with concurrency limit of 3 & error isolation
+      const compressedResults = await compressImagesInBatch(
+        fileArray,
+        "DEFAULT",
+        3,
+        (idx, total, res) => {
+          setUploadStatusText(
+            `Đang tối ưu ảnh ${idx + 1}/${total}... (${res.formattedOriginalSize} → ${res.formattedOptimizedSize}, Giảm ${res.reductionPercent}%)`
+          );
+        }
+      );
+
       const uploaded: string[] = [];
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
 
-      for (const file of Array.from(files)) {
+      setUploadStatusText("Đang tải ảnh lên máy chủ...");
+
+      for (const item of compressedResults) {
+        const file = item.file;
         let imageUrl = "";
 
         // 1. Thử upload trực tiếp từ trình duyệt lên Cloudinary (Bỏ qua rào cản server VPS)
@@ -117,6 +137,7 @@ export default function ListingForm({
 
           if (!res.ok) {
             setError(data.error || `Upload "${file.name}" thất bại (Lỗi ${res.status})`);
+            revokePreviewUrl(item.previewUrl);
             continue;
           }
           if (data.url) {
@@ -127,6 +148,7 @@ export default function ListingForm({
         if (imageUrl) {
           uploaded.push(imageUrl);
         }
+        revokePreviewUrl(item.previewUrl);
       }
 
       if (uploaded.length) {
@@ -136,6 +158,7 @@ export default function ListingForm({
       setError(err.message || "Lỗi kết nối khi tải ảnh lên server.");
     } finally {
       setUploading(false);
+      setUploadStatusText("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -422,7 +445,11 @@ export default function ListingForm({
           onChange={(e) => handleUpload(e.target.files)}
           className="input cursor-pointer"
         />
-        {uploading && <p className="mt-1 text-xs text-brand-500 font-bold">Đang tải ảnh lên...</p>}
+        {uploading && (
+          <p className="mt-1 text-xs text-sky-600 font-bold animate-pulse">
+            ⏳ {uploadStatusText || "Đang xử lý & tải ảnh lên..."}
+          </p>
+        )}
         <p className="mt-1 text-xs text-brand-300">Tối đa 15MB/ảnh, chấp nhận tất cả định dạng ảnh (JPG/PNG/WEBP/HEIC/AVIF/JFIF...). Hoặc dán URL ảnh ngoài bên dưới (mỗi dòng 1 URL):</p>
         <textarea className="input mt-1" rows={2} placeholder="https://..." value={form.imagesText} onChange={(e) => set("imagesText", e.target.value)} />
       </div>

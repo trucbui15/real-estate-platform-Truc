@@ -5,6 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import ImageExtension from "@tiptap/extension-image";
 import { useEffect, useRef, useState } from "react";
+import { compressImagesInBatch, revokePreviewUrl } from "@/lib/imageCompression";
 
 interface NewsTiptapEditorProps {
   value: string;
@@ -75,8 +76,11 @@ export default function NewsTiptapEditor({
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const fileArray = Array.from(files);
+      const compressedResults = await compressImagesInBatch(fileArray, "DEFAULT", 3);
+
+      for (const item of compressedResults) {
+        const file = item.file;
         let fileUrl = "";
 
         // 1. Direct Cloudinary Upload
@@ -110,6 +114,7 @@ export default function NewsTiptapEditor({
         if (fileUrl) {
           editor?.chain().focus().setImage({ src: fileUrl, alt: file.name }).run();
         }
+        revokePreviewUrl(item.previewUrl);
       }
     } catch (err) {
       alert("Tải ảnh chèn vào bài viết thất bại");

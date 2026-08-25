@@ -55,8 +55,9 @@ export async function POST(req: Request) {
   }
 
   // 1. Ưu tiên Cloudinary nếu có cấu hình biến môi trường (Lưu vĩnh viễn trên Cloud)
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  
   if (cloudName && uploadPreset) {
     try {
       const cloudinaryData = new FormData();
@@ -78,7 +79,19 @@ export async function POST(req: Request) {
     }
   }
 
-  // 2. Lưu ổ đĩa local (dùng cho môi trường dev local hoặc chạy VPS)
+  // 2. Nếu đang chạy trên Vercel production mà Cloudinary không khả dụng -> Báo lỗi rõ ràng
+  const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+  if (isVercel) {
+    return NextResponse.json(
+      {
+        error:
+          "Dịch vụ lưu trữ Cloudinary chưa được cấu hình thành công trên Vercel Production. Vui lòng kiểm tra biến môi trường CLOUDINARY_CLOUD_NAME & CLOUDINARY_UPLOAD_PRESET.",
+      },
+      { status: 500 }
+    );
+  }
+
+  // 3. Lưu ổ đĩa local (Chỉ dùng cho môi trường dev local hoặc VPS có hệ thống tệp ghi được)
   try {
     await mkdir(UPLOAD_DIR, { recursive: true });
 

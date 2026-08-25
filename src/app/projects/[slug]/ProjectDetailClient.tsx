@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ListingCard from "@/components/ListingCard";
+import { compressImagesInBatch, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
 
 const unitStatusLabel: Record<string, { label: string; style: string; badgeStyle: string }> = {
   DANG_BAN: {
@@ -352,8 +353,8 @@ export default function ProjectDetailClient({
     return "Thỏa thuận";
   }
 
-  // Upload handler hỗ trợ Direct Cloudinary & Fallback /api/upload
-  async function handleFileUpload(files: FileList | null, isEdit: boolean) {
+  // Upload handler hỗ trợ Direct Cloudinary & Fallback /api/upload với Tối ưu hóa ảnh
+  async function handleFileUpload(files: FileList | null, isEdit: boolean, preset: ImagePreset = "DEFAULT") {
     if (!files || files.length === 0) return;
 
     if (isEdit) {
@@ -366,20 +367,19 @@ export default function ProjectDetailClient({
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
-    const MAX_SIZE = 15 * 1024 * 1024;
     const uploadedUrls: string[] = [];
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const fileArray = Array.from(files);
+      // Auto-detect floor plan files or use passed preset
+      const compressedResults = await compressImagesInBatch(
+        fileArray,
+        preset,
+        3
+      );
 
-        if (file.size > MAX_SIZE) {
-          const msg = `Tệp "${file.name}" vượt quá dung lượng cho phép (tối đa 15MB)`;
-          if (isEdit) setEditError(msg);
-          else setAddError(msg);
-          continue;
-        }
-
+      for (const item of compressedResults) {
+        const file = item.file;
         let fileUrl = "";
 
         // 1. Thử upload trực tiếp Cloudinary từ Client
@@ -433,6 +433,7 @@ export default function ProjectDetailClient({
         if (fileUrl) {
           uploadedUrls.push(fileUrl);
         }
+        revokePreviewUrl(item.previewUrl);
       }
 
       if (uploadedUrls.length > 0) {

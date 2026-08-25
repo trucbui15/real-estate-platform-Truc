@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { slugify } from "@/lib/utils";
 import NewsTiptapEditor from "@/components/NewsTiptapEditor";
 import NewsPreviewModal from "@/components/NewsPreviewModal";
+import { compressImage, revokePreviewUrl } from "@/lib/imageCompression";
 
 const DEFAULT_CATEGORIES = [
   "Quy hoạch",
@@ -71,17 +72,27 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
     }
   }, [title, isEdit, editingSlug]);
 
+  const [uploadStatusText, setUploadStatusText] = useState("");
+
   async function handleThumbnailUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploadingThumbnail(true);
     setError("");
-
-    const file = files[0];
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
-    let fileUrl = "";
+    setUploadStatusText("Đang tối ưu ảnh đại diện...");
 
     try {
+      const rawFile = files[0];
+      const optResult = await compressImage(rawFile, "THUMBNAIL");
+      const file = optResult.file;
+
+      setUploadStatusText(
+        `Đang tải ảnh (${optResult.formattedOriginalSize} → ${optResult.formattedOptimizedSize}, Giảm ${optResult.reductionPercent}%)...`
+      );
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
+      let fileUrl = "";
+
       // 1. Direct Cloudinary Upload
       try {
         const cloudFd = new FormData();
@@ -114,10 +125,12 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
       if (fileUrl) {
         setThumbnail(fileUrl);
       }
+      revokePreviewUrl(optResult.previewUrl);
     } catch (e: any) {
       setError(e.message || "Lỗi kết nối khi tải ảnh");
     } finally {
       setUploadingThumbnail(false);
+      setUploadStatusText("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -335,7 +348,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
                 className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <span>📤</span>
-                <span>{uploadingThumbnail ? "Đang tải ảnh..." : "Chọn ảnh từ máy"}</span>
+                <span>{uploadingThumbnail ? (uploadStatusText || "Đang tải ảnh...") : "Chọn ảnh từ máy"}</span>
               </button>
               <input
                 ref={fileInputRef}

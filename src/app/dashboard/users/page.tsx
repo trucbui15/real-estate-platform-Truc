@@ -49,20 +49,28 @@ export default function UsersPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const res = await fetch("/api/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Có lỗi xảy ra");
-      return;
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (err) {}
+
+      if (!res.ok) {
+        setError(data.error || `Tạo tài khoản thất bại (Mã lỗi: ${res.status})`);
+        return;
+      }
+      setSuccess("Tạo tài khoản mới thành công!");
+      setShowCreateModal(false);
+      setForm({ name: "", email: "", phone: "", password: "", role: "STAFF", referralCode: "" });
+      load();
+    } catch (err: any) {
+      setError(err.message || "Lỗi kết nối máy chủ khi tạo tài khoản.");
     }
-    setSuccess("Tạo tài khoản mới thành công!");
-    setShowCreateModal(false);
-    setForm({ name: "", email: "", phone: "", password: "", role: "STAFF", referralCode: "" });
-    load();
   }
 
   async function toggleActive(id: string, active: boolean) {

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { compressImage, revokePreviewUrl } from "@/lib/imageCompression";
 
 interface ProjectItem {
   id: string;
@@ -69,21 +70,32 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
     });
   }
 
+  const [uploadStatusText, setUploadStatusText] = useState("");
+
   async function handleFileUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const file = files[0];
+    const rawFile = files[0];
 
-    if (file.size > 15 * 1024 * 1024) {
+    if (rawFile.size > 15 * 1024 * 1024) {
       alert("Dung lượng ảnh vượt quá 15MB. Vui lòng chọn tệp nhỏ hơn.");
       return;
     }
 
     setIsUploading(true);
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
-    let uploadedUrl = "";
+    setUploadStatusText("Đang tối ưu ảnh bìa...");
 
     try {
+      const optResult = await compressImage(rawFile, "HERO");
+      const file = optResult.file;
+
+      setUploadStatusText(
+        `Đang tải ảnh (${optResult.formattedOriginalSize} → ${optResult.formattedOptimizedSize}, Giảm ${optResult.reductionPercent}%)...`
+      );
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
+      let uploadedUrl = "";
+
       // 1. Direct Cloudinary Browser Upload
       try {
         const cloudFd = new FormData();
@@ -121,10 +133,12 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
       if (uploadedUrl) {
         setEditForm((prev) => ({ ...prev, thumbnail: uploadedUrl }));
       }
+      revokePreviewUrl(optResult.previewUrl);
     } catch (err: any) {
       alert(err.message || "Tải ảnh thất bại. Vui lòng thử lại!");
     } finally {
       setIsUploading(false);
+      setUploadStatusText("");
     }
   }
 
@@ -440,7 +454,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                     </label>
                     {isUploading && (
                       <span className="text-xs text-blue-600 font-bold animate-pulse">
-                        Đang tải ảnh...
+                        ⏳ {uploadStatusText || "Đang tải ảnh..."}
                       </span>
                     )}
                   </div>

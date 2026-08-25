@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { compressImage, revokePreviewUrl } from "@/lib/imageCompression";
 
 interface ProjectImageEditorModalProps {
   project: {
@@ -37,66 +38,82 @@ export default function ProjectImageEditorModal({
 
   if (!isOpen || !project) return null;
 
+  const [uploadStatusText, setUploadStatusText] = useState("");
+
   async function handleFileSelect(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
     setError("");
+    setUploadStatusText("Đang tối ưu ảnh đại diện...");
 
-    const file = files[0];
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
-
-    let uploadedUrl = "";
-
-    // 1. Upload trực tiếp từ Trình duyệt sang Cloudinary
     try {
-      const cloudFd = new FormData();
-      cloudFd.append("file", file);
-      cloudFd.append("upload_preset", uploadPreset);
+      const rawFile = files[0];
+      const optResult = await compressImage(rawFile, "THUMBNAIL");
+      const file = optResult.file;
 
-      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: cloudFd,
-      });
+      setUploadStatusText(
+        `Đang tải ảnh (${optResult.formattedOriginalSize} → ${optResult.formattedOptimizedSize}, Giảm ${optResult.reductionPercent}%)...`
+      );
 
-      if (cloudRes.ok) {
-        const cloudData = await cloudRes.json();
-        if (cloudData.secure_url) {
-          uploadedUrl = cloudData.secure_url;
-        }
-      }
-    } catch (e) {
-      console.warn("Lỗi upload trực tiếp Cloudinary, fallback sang /api/upload", e);
-    }
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
 
-    // 2. Fallback sang /api/upload
-    if (!uploadedUrl) {
+      let uploadedUrl = "";
+
+      // 1. Upload trực tiếp từ Trình duyệt sang Cloudinary
       try {
-        const fd = new FormData();
-        fd.append("file", file);
+        const cloudFd = new FormData();
+        cloudFd.append("file", file);
+        cloudFd.append("upload_preset", uploadPreset);
 
-        const res = await fetch("/api/upload", {
+        const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
           method: "POST",
-          body: fd,
+          body: cloudFd,
         });
 
-        const data = await res.json();
-        if (res.ok && data.url) {
-          uploadedUrl = data.url;
-        } else {
-          setError(data.error || `Tải ảnh "${file.name}" thất bại (Mã lỗi: ${res.status})`);
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (cloudData.secure_url) {
+            uploadedUrl = cloudData.secure_url;
+          }
         }
-      } catch (err: any) {
-        setError(err.message || "Lỗi kết nối khi tải ảnh lên server.");
+      } catch (e) {
+        console.warn("Lỗi upload trực tiếp Cloudinary, fallback sang /api/upload", e);
       }
-    }
 
-    if (uploadedUrl) {
-      setImageUrl(uploadedUrl);
-    }
+      // 2. Fallback sang /api/upload
+      if (!uploadedUrl) {
+        try {
+          const fd = new FormData();
+          fd.append("file", file);
 
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: fd,
+          });
+
+          const data = await res.json();
+          if (res.ok && data.url) {
+            uploadedUrl = data.url;
+          } else {
+            setError(data.error || `Tải ảnh "${file.name}" thất bại (Mã lỗi: ${res.status})`);
+          }
+        } catch (err: any) {
+          setError(err.message || "Lỗi kết nối khi tải ảnh lên server.");
+        }
+      }
+
+      if (uploadedUrl) {
+        setImageUrl(uploadedUrl);
+      }
+      revokePreviewUrl(optResult.previewUrl);
+    } catch (err: any) {
+      setError(err.message || "Lỗi tối ưu ảnh.");
+    } finally {
+      setUploading(false);
+      setUploadStatusText("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -200,7 +217,11 @@ export default function ProjectImageEditorModal({
               onChange={(e) => handleFileSelect(e.target.files)}
               className="input text-xs cursor-pointer"
             />
-            {uploading && <p className="text-xs text-sky-600 font-bold mt-1">⏳ Đang tải ảnh lên...</p>}
+            {uploading && (
+              <p className="text-xs text-sky-600 font-bold mt-1 animate-pulse">
+                ⏳ {uploadStatusText || "Đang tải ảnh lên..."}
+              </p>
+            )}
           </div>
 
           {/* HOẶC DÁN URL */}
