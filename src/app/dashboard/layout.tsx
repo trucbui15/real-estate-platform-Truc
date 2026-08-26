@@ -29,7 +29,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8 py-6 md:py-8 grid gap-6 md:grid-cols-[220px_1fr]">
+    <div
+      className="notranslate mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8 py-6 md:py-8 grid gap-6 md:grid-cols-[220px_1fr]"
+      translate="no"
+    >
       <aside className="md:sticky md:top-20 md:h-fit space-y-3">
         <div className="card p-3.5 flex items-center justify-between md:block">
           <div className="text-xs font-medium text-slate-500">Vai trò của bạn:</div>

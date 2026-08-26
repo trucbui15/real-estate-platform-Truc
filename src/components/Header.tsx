@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -25,13 +26,13 @@ export default function Header() {
       <div className="container-page flex h-full items-center justify-between">
         {/* LEFT: BRAND LOGO */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg md:text-xl text-slate-900">
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg md:text-xl text-slate-900 notranslate" translate="no">
             <img
               src="/logo.png"
               alt="Minh Dũng Land Logo"
               className="h-9 w-9 object-contain rounded-lg shadow-xs"
             />
-            <span className="font-extrabold tracking-tight text-slate-900">Minh Dũng Land</span>
+            <span className="font-extrabold tracking-tight text-slate-900 notranslate" translate="no">Minh Dũng Land</span>
           </Link>
         </div>
 
@@ -158,10 +159,10 @@ export default function Header() {
           </Link>
         </nav>
 
-        {/* RIGHT: AUTH / USER ACTIONS */}
+        {/* RIGHT: AUTH / USER ACTIONS + LANGUAGE SWITCHER */}
         <div className="hidden md:flex items-center gap-3">
           {session ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {isBackoffice && (
                 <Link
                   href="/dashboard"
@@ -192,22 +193,31 @@ export default function Header() {
               Đăng nhập
             </Link>
           )}
+
+          {/* DIVIDER */}
+          <div className="h-5 w-px bg-slate-200/90" aria-hidden="true" />
+
+          {/* FAR RIGHT LANGUAGE SWITCHER */}
+          <LanguageSwitcher />
         </div>
 
-        {/* MOBILE MENU TOGGLE BUTTON */}
-        <button
-          className="lg:hidden p-2 text-slate-600 hover:text-slate-900 focus:outline-none"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+        {/* MOBILE ACTIONS */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageSwitcher />
+          <button
+            className="p-2 text-slate-600 hover:text-slate-900 focus:outline-none cursor-pointer"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* MOBILE DRAWER */}
@@ -346,6 +356,12 @@ export default function Header() {
               >
                 Tin tức
               </Link>
+
+              {/* MOBILE LANGUAGE ROW */}
+              <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-100 mt-1">
+                <span className="text-xs font-bold text-slate-600">Ngôn ngữ / Language:</span>
+                <LanguageSwitcher />
+              </div>
             </nav>
 
             <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">

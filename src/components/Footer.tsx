@@ -91,14 +91,14 @@ export default function Footer() {
           {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU & DOANH NGHIỆP (4 cols) */}
           <div className="sm:col-span-2 lg:col-span-4 space-y-6">
             <div>
-              <Link href="/" className="inline-flex items-center gap-3 group">
+              <Link href="/" className="inline-flex items-center gap-3 group notranslate" translate="no">
                 <img
                   src="/logo.png"
                   alt="Minh Dũng Land Logo"
                   className="h-12 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
                 />
                 <div>
-                  <div className="font-display text-xl font-extrabold tracking-tight text-slate-900">
+                  <div className="font-display text-xl font-extrabold tracking-tight text-slate-900 notranslate" translate="no">
                     MINH DŨNG LAND
                   </div>
                   <div className="text-[11px] font-bold text-amber-600 tracking-wider uppercase">
@@ -106,7 +106,7 @@ export default function Footer() {
                   </div>
                 </div>
               </Link>
-              <div className="mt-3 text-xs font-semibold text-slate-600">
+              <div className="mt-3 text-xs font-semibold text-slate-600 notranslate" translate="no">
                 {CONTACT_CONFIG.companyName}
               </div>
             </div>

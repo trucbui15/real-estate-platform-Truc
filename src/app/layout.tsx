@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ReferralTracker from "@/components/ReferralTracker";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import GoogleTranslateManager from "@/components/GoogleTranslateManager";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         <AuthProvider>
           <ReferralTracker />
+          <GoogleTranslateManager />
           <Header />
           <main className="min-h-[70vh]">{children}</main>
           <Footer />
