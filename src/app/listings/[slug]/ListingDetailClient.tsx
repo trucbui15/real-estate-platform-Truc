@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { formatVND, parseImages, LABELS } from "@/lib/utils";
 import ListingCard from "@/components/ListingCard";
+import ListingGallery from "@/components/ListingGallery";
 import { CONTACT_CONFIG } from "@/config/contact";
 
 interface ListingDetailClientProps {
@@ -23,9 +24,6 @@ export default function ListingDetailClient({
   if (images.length === 0 && listing.project?.images) {
     images = parseImages(listing.project.images);
   }
-  const [activeImgIndex, setActiveImgIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
   // Consultation form state
   const [fullName, setFullName] = useState(session?.user?.name || "");
@@ -200,29 +198,11 @@ export default function ListingDetailClient({
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] items-start">
         <main className="space-y-6 min-w-0">
           {/* 1. GALLERY IMAGE */}
-          <div className="space-y-2.5">
-            <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
-              {images.length > 0 ? (
-                <img
-                  src={images[activeImgIndex] || images[0]}
-                  alt={listing.title}
-                  onClick={() => {
-                    setLightboxImg(images[activeImgIndex] || images[0]);
-                    setLightboxOpen(true);
-                  }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/logo.png";
-                  }}
-                  className="h-full w-full object-cover cursor-pointer hover:scale-102 transition duration-300"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-slate-400 text-[14px]">
-                  Chưa có hình ảnh
-                </div>
-              )}
-
-              {/* BADGES */}
-              <div className="absolute left-3 top-3 flex items-center gap-2 z-10">
+          <ListingGallery
+            images={images}
+            title={listing.title}
+            badges={
+              <>
                 <span className="rounded-md bg-slate-900/80 backdrop-blur px-2.5 py-1 text-[11px] font-bold text-white">
                   {LABELS.transactionType[listing.transactionType as "SALE" | "RENT"]}
                 </span>
@@ -231,41 +211,9 @@ export default function ListingDetailClient({
                     Đã xác minh
                   </span>
                 )}
-              </div>
-
-              {images.length > 0 && (
-                <div className="absolute right-3 bottom-3 rounded-md bg-black/60 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-white">
-                  {activeImgIndex + 1} / {images.length}
-                </div>
-              )}
-            </div>
-
-            {/* THUMBNAIL STRIP */}
-            {images.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {images.map((img: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImgIndex(idx)}
-                    className={`relative w-18 h-14 shrink-0 rounded-lg overflow-hidden border transition ${
-                      activeImgIndex === idx
-                        ? "border-[#0284C7] ring-2 ring-blue-100"
-                        : "border-transparent opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/logo.png";
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              </>
+            }
+          />
 
           {/* 2. TITLE & PRICE HEADER */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
@@ -635,25 +583,6 @@ export default function ListingDetailClient({
         </div>
       )}
 
-      {/* LIGHTBOX PREVIEW MODAL */}
-      {lightboxOpen && lightboxImg && (
-        <div
-          onClick={() => setLightboxOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 cursor-pointer"
-        >
-          <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 text-white text-2xl font-bold z-50"
-          >
-            ✕
-          </button>
-          <img
-            src={lightboxImg}
-            alt=""
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
-          />
-        </div>
-      )}
     </div>
   );
 }
