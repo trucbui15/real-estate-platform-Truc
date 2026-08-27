@@ -98,8 +98,8 @@ export async function POST(req: Request) {
     const safeExt = extName || (file.type ? file.type.split("/")[1] : "jpg") || "jpg";
     const finalExt = safeExt === "jpeg" ? "jpg" : safeExt;
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${finalExt}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+    const bytes = await file.arrayBuffer();
+    await writeFile(path.join(UPLOAD_DIR, filename), new Uint8Array(bytes));
 
     return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
   } catch (err: any) {
