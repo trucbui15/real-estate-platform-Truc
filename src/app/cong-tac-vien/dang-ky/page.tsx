@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 export default function CTVRegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -26,7 +27,16 @@ export default function CTVRegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!fullName || !phone || !email || !password || !referralCode) {
+    if (!fullName.trim()) {
+      setErrorMsg("Vui lòng nhập họ và tên.");
+      return;
+    }
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      setErrorMsg(phoneError);
+      return;
+    }
+    if (!email.trim() || !password || !referralCode.trim()) {
       setErrorMsg("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
       return;
     }
@@ -142,12 +152,20 @@ export default function CTVRegisterPage() {
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
-                    placeholder="0901234567"
+                    placeholder="VD: 0912345678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="input"
+                    onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+                    className={`input ${phone && validatePhone(phone) ? "!border-rose-500 !ring-rose-200 bg-rose-50/20" : ""}`}
                   />
+                  {phone && validatePhone(phone) && (
+                    <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(phone)}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

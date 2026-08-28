@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 export default function BookingFormClient() {
   const { data: session } = useSession();
@@ -17,8 +18,13 @@ export default function BookingFormClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!fullName.trim() || !phone.trim()) {
-      setErrorMsg("Vui lòng điền Họ và tên cùng Số điện thoại liên hệ.");
+    if (!fullName.trim()) {
+      setErrorMsg("Vui lòng nhập họ và tên.");
+      return;
+    }
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      setErrorMsg(phoneError);
       return;
     }
 
@@ -105,12 +111,24 @@ export default function BookingFormClient() {
             </label>
             <input
               type="tel"
+              inputMode="numeric"
+              maxLength={10}
               required
-              placeholder="0901234567"
+              placeholder="VD: 0912345678"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none bg-slate-50 focus:bg-white"
+              onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+              className={`w-full rounded-xl border p-2.5 text-xs text-slate-900 focus:outline-none transition ${
+                phone && validatePhone(phone)
+                  ? "border-rose-400 focus:border-rose-500 bg-rose-50/20"
+                  : "border-slate-200 focus:border-blue-600 bg-slate-50 focus:bg-white"
+              }`}
             />
+            {phone && validatePhone(phone) && (
+              <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                <span>⚠️</span>
+                <span>{validatePhone(phone)}</span>
+              </p>
+            )}
           </div>
 
           <div>

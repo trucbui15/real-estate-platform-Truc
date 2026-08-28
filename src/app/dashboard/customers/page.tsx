@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { LABELS } from "@/lib/utils";
+import { LABELS, validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 const statusColor: Record<string, string> = {
   MOI: "bg-blue-100 text-blue-700",
@@ -117,8 +117,13 @@ export default function CustomersPage() {
 
   async function handleCreateCustomer(e: React.FormEvent) {
     e.preventDefault();
-    if (!newForm.fullName.trim() || !newForm.phone.trim()) {
-      alert("Vui lòng nhập Họ tên và Số điện thoại khách hàng!");
+    if (!newForm.fullName.trim()) {
+      alert("Vui lòng nhập họ và tên khách hàng!");
+      return;
+    }
+    const phoneError = validatePhone(newForm.phone);
+    if (phoneError) {
+      alert(phoneError);
       return;
     }
     setCreating(true);
@@ -434,13 +439,21 @@ export default function CustomersPage() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Số điện thoại *</label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
-                    placeholder="0912345678"
-                    className="input w-full text-xs"
+                    placeholder="VD: 0912345678"
+                    className={`input w-full text-xs ${newForm.phone && validatePhone(newForm.phone) ? "!border-rose-500 !ring-rose-200 bg-rose-50/20" : ""}`}
                     value={newForm.phone}
-                    onChange={(e) => setNewForm({ ...newForm, phone: e.target.value })}
+                    onChange={(e) => setNewForm({ ...newForm, phone: sanitizePhoneInput(e.target.value) })}
                   />
+                  {newForm.phone && validatePhone(newForm.phone) && (
+                    <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(newForm.phone)}</span>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Email</label>

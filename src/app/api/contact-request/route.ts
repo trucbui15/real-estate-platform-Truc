@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { processPublicLead } from "@/lib/leadService";
+import { validatePhone } from "@/lib/utils";
 
 // API tiếp nhận Yêu cầu tư vấn từ chi tiết tin đăng (Listing Detail) hoặc các nút CTA Public
 // KHÔNG bắt buộc đăng nhập. Tự động liên kết context tin đăng, dự án & referral token CTV.
@@ -21,10 +22,11 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     if (!body.fullName || !body.fullName.trim()) {
-      return NextResponse.json({ error: "Vui lòng nhập họ và tên của bạn" }, { status: 400 });
+      return NextResponse.json({ error: "Vui lòng nhập họ và tên." }, { status: 400 });
     }
-    if (!body.phone || !body.phone.trim()) {
-      return NextResponse.json({ error: "Vui lòng nhập số điện thoại liên hệ" }, { status: 400 });
+    const phoneError = validatePhone(body.phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
     }
 
     let listing = null;

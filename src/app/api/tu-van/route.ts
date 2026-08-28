@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rateLimit";
 import { processPublicLead } from "@/lib/leadService";
+import { validatePhone } from "@/lib/utils";
 
 // API tiếp nhận đăng ký nhận tư vấn từ Footer / Form công khai
 export async function POST(req: Request) {
@@ -15,10 +16,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     if (!body.fullName || !body.fullName.trim()) {
-      return NextResponse.json({ error: "Vui lòng nhập họ và tên" }, { status: 400 });
+      return NextResponse.json({ error: "Vui lòng nhập họ và tên." }, { status: 400 });
     }
-    if (!body.phone || !body.phone.trim()) {
-      return NextResponse.json({ error: "Vui lòng nhập số điện thoại liên hệ" }, { status: 400 });
+    const phoneError = validatePhone(body.phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
     }
 
     const result = await processPublicLead({

@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { DemandType, LeadSource } from "@prisma/client";
 import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
+import { normalizePhone, validatePhone, isValidPhone } from "@/lib/utils";
+
+export { normalizePhone, validatePhone, isValidPhone };
 
 export interface ProcessLeadInput {
   fullName: string;
@@ -20,27 +23,20 @@ export interface ProcessLeadInput {
 }
 
 /**
- * Chuẩn hóa số điện thoại (xoá khoảng trắng, ký tự đặc biệt)
- */
-export function normalizePhone(phone: string): string {
-  if (!phone) return "";
-  let p = phone.trim().replace(/[^\d+]/g, "");
-  if (p.startsWith("+84")) {
-    p = "0" + p.slice(3);
-  }
-  return p;
-}
-
-/**
  * Service xử lý Lead & Inquiry tập trung cho toàn bộ Form Public (Listing, Project, Footer, Contact, KyGui)
  */
 export async function processPublicLead(input: ProcessLeadInput) {
   const cleanName = input.fullName?.trim();
-  const cleanPhone = normalizePhone(input.phone);
-
-  if (!cleanName || !cleanPhone) {
-    throw new Error("Họ tên và số điện thoại là bắt buộc");
+  if (!cleanName) {
+    throw new Error("Vui lòng nhập họ và tên.");
   }
+
+  const phoneError = validatePhone(input.phone);
+  if (phoneError) {
+    throw new Error(phoneError);
+  }
+
+  const cleanPhone = normalizePhone(input.phone);
 
   // 1. Kiểm tra referral token của CTV (nếu có)
   let collaboratorId: string | null = null;

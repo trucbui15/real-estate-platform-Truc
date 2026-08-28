@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 interface UserProfileManagerProps {
   initialName: string;
@@ -46,8 +47,16 @@ export default function UserProfileManager({
     setInfoMsg(null);
 
     if (!name.trim()) {
-      setInfoMsg({ type: "error", text: "Vui lòng nhập họ và tên" });
+      setInfoMsg({ type: "error", text: "Vui lòng nhập họ và tên." });
       return;
+    }
+
+    if (phone && phone.trim()) {
+      const phoneError = validatePhone(phone);
+      if (phoneError) {
+        setInfoMsg({ type: "error", text: phoneError });
+        return;
+      }
     }
 
     setInfoLoading(true);
@@ -189,11 +198,23 @@ export default function UserProfileManager({
               </label>
               <input
                 type="tel"
-                placeholder="Nhập số điện thoại"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="VD: 0912345678"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition font-medium"
+                onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+                className={`w-full rounded-xl border bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none transition font-medium ${
+                  phone && validatePhone(phone)
+                    ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
+                    : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                }`}
               />
+              {phone && validatePhone(phone) && (
+                <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>{validatePhone(phone)}</span>
+                </p>
+              )}
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageUsers, canManageCustomers } from "@/lib/permissions";
+import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // ADMIN, MANAGER và STAFF được xem danh sách nhân sự để phân công / hiển thị khách hàng
 export async function GET(req: Request) {
@@ -43,6 +44,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Vai trò không hợp lệ" }, { status: 400 });
     }
 
+    let cleanPhone: string | null = null;
+    if (body.phone && String(body.phone).trim() !== "") {
+      const phoneError = validatePhone(body.phone);
+      if (phoneError) {
+        return NextResponse.json({ error: phoneError }, { status: 400 });
+      }
+      cleanPhone = normalizePhone(body.phone);
+    }
+
     const existing = await prisma.user.findUnique({ where: { email: body.email.trim().toLowerCase() } });
     if (existing) return NextResponse.json({ error: "Email này đã tồn tại trên hệ thống" }, { status: 409 });
 
@@ -74,7 +84,7 @@ export async function POST(req: Request) {
       data: {
         name: body.name.trim(),
         email: body.email.trim().toLowerCase(),
-        phone: body.phone ? body.phone.trim() : null,
+        phone: cleanPhone,
         passwordHash,
         role: body.role,
         referralCode,

@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageCustomers, canManageAllListings } from "@/lib/permissions";
 import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
+import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // GET /api/customers?status=..&keyword=..&assignee=..
 // STAFF: thấy khách được giao cho mình + khách giao cho CTV do mình giới thiệu
@@ -82,9 +83,18 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  if (!body.fullName || !body.phone || !body.demandType) {
-    return NextResponse.json({ error: "Thiếu trường bắt buộc (họ tên, sđt, nhu cầu)" }, { status: 400 });
+  if (!body.fullName || !body.fullName.trim()) {
+    return NextResponse.json({ error: "Vui lòng nhập họ và tên." }, { status: 400 });
   }
+  const phoneError = validatePhone(body.phone);
+  if (phoneError) {
+    return NextResponse.json({ error: phoneError }, { status: 400 });
+  }
+  if (!body.demandType) {
+    return NextResponse.json({ error: "Vui lòng chọn nhu cầu của khách hàng." }, { status: 400 });
+  }
+
+  const cleanPhone = normalizePhone(body.phone);
 
   let assignedToId: string | null = session.user.id;
   let assignedCollaboratorId: string | null = null;
@@ -110,8 +120,8 @@ export async function POST(req: Request) {
 
   const customer = await prisma.customer.create({
     data: {
-      fullName: body.fullName,
-      phone: body.phone,
+      fullName: body.fullName.trim(),
+      phone: cleanPhone,
       email: body.email || null,
       source: body.source || "WEBSITE",
       demandType: body.demandType,

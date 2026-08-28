@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { LABELS } from "@/lib/utils";
+import { LABELS, validatePhone, sanitizePhoneInput } from "@/lib/utils";
 import ProjectSelect from "@/components/ProjectSelect";
 
 function KyGuiContent() {
@@ -78,6 +78,17 @@ function KyGuiContent() {
     setError("");
     setProjectError("");
 
+    if (!form.fullName.trim()) {
+      setError("Vui lòng nhập họ và tên.");
+      return;
+    }
+
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) {
+      setError(phoneError);
+      return;
+    }
+
     if (isApartment && (!form.projectId || form.projectId === "NONE")) {
       setProjectError("Vui lòng chọn dự án đối với loại hình căn hộ/chung cư.");
       return;
@@ -123,10 +134,25 @@ function KyGuiContent() {
               <label className="label">Họ và tên *</label>
               <input className="input" required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="label">Số điện thoại *</label>
-                <input className="input" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="VD: 0912345678"
+                  className={`input ${form.phone && validatePhone(form.phone) ? "!border-rose-500 !ring-rose-200 bg-rose-50/20" : ""}`}
+                  required
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: sanitizePhoneInput(e.target.value) })}
+                />
+                {form.phone && validatePhone(form.phone) && (
+                  <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>{validatePhone(form.phone)}</span>
+                  </p>
+                )}
               </div>
               <div>
                 <label className="label">Email</label>

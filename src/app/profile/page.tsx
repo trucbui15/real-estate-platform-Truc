@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import UserProfileManager from "@/components/UserProfileManager";
 import CollaboratorTokenCard from "@/components/CollaboratorTokenCard";
+import { normalizePhone } from "@/lib/utils";
 
 
 
@@ -38,7 +39,7 @@ export default async function ProfilePage() {
   const isBackoffice = dbUser && ["ADMIN", "MANAGER", "STAFF"].includes(dbUser.role);
 
   // Clean phone number for precise matching
-  const userCleanPhone = dbUser?.phone ? dbUser.phone.replace(/\D/g, "") : "";
+  const userCleanPhone = dbUser?.phone ? normalizePhone(dbUser.phone) : "";
   const userEmail = dbUser?.email ? dbUser.email.trim().toLowerCase() : "";
 
   // 1. Query Customer records matching clean phone, raw phone, or email

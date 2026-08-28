@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { processPublicLead } from "@/lib/leadService";
+import { validatePhone } from "@/lib/utils";
 
 // Khách gửi yêu cầu Ký gửi BĐS (bán hoặc cho thuê hộ)
 // Cho phép cả Khách vãng lai và User đã đăng nhập gửi form.
@@ -20,8 +21,17 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     const body = await req.json();
 
-    if (!body.propertyTypeInterest || !body.demandType || !body.phone || !body.fullName) {
-      return NextResponse.json({ error: "Thiếu thông tin bắt buộc" }, { status: 400 });
+    if (!body.fullName || !body.fullName.trim()) {
+      return NextResponse.json({ error: "Vui lòng nhập họ và tên." }, { status: 400 });
+    }
+
+    const phoneError = validatePhone(body.phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
+    }
+
+    if (!body.propertyTypeInterest || !body.demandType) {
+      return NextResponse.json({ error: "Thiếu thông tin bắt buộc." }, { status: 400 });
     }
 
     const apartmentTypes = ["CAN_HO", "OFFICETEL", "CONDOTEL", "PENTHOUSE", "DUPLEX", "SHOPHOUSE_KHOI_DE", "DAT_NEN_DU_AN"];

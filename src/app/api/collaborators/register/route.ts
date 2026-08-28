@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
-import { normalizePhone } from "@/lib/leadService";
+import { normalizePhone, validatePhone } from "@/lib/utils";
 
 function generatePublicToken(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -26,14 +26,18 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const fullName = body.fullName?.trim();
+    const phoneError = validatePhone(body.phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
+    }
     const phone = normalizePhone(body.phone);
     const email = body.email?.trim().toLowerCase();
     const password = body.password;
     const referralCode = body.referralCode?.trim().toUpperCase();
 
-    if (!fullName || !phone || !email || !password || !referralCode) {
+    if (!fullName || !email || !password || !referralCode) {
       return NextResponse.json(
-        { error: "Vui lòng điền đầy đủ Họ tên, Số điện thoại, Email, Mật khẩu và Mã giới thiệu" },
+        { error: "Vui lòng điền đầy đủ Họ tên, Email, Mật khẩu và Mã giới thiệu" },
         { status: 400 }
       );
     }

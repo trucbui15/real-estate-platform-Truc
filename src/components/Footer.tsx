@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 import { CONTACT_CONFIG } from "@/config/contact";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 export default function Footer() {
   const { data: session } = useSession();
@@ -42,11 +43,12 @@ export default function Footer() {
     setMessage(null);
 
     if (!form.fullName.trim()) {
-      setMessage({ type: "error", text: "Vui lòng nhập họ và tên" });
+      setMessage({ type: "error", text: "Vui lòng nhập họ và tên." });
       return;
     }
-    if (!form.phone.trim()) {
-      setMessage({ type: "error", text: "Vui lòng nhập số điện thoại" });
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) {
+      setMessage({ type: "error", text: phoneError });
       return;
     }
 
@@ -328,12 +330,24 @@ export default function Footer() {
                   <input
                     id="footer-phone"
                     type="tel"
-                    placeholder="Số điện thoại *"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="Số điện thoại (VD: 0912345678) *"
                     required
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+                    onChange={(e) => setForm({ ...form, phone: sanitizePhoneInput(e.target.value) })}
+                    className={`w-full rounded-lg border bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition ${
+                      form.phone && validatePhone(form.phone)
+                        ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
+                        : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    }`}
                   />
+                  {form.phone && validatePhone(form.phone) && (
+                    <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(form.phone)}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

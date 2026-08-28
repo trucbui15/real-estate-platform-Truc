@@ -33,6 +33,74 @@ export function formatVNDText(value?: number | string | null): string {
   return parts.join(" ") + " VNĐ";
 }
 
+/**
+ * Chuẩn hóa số điện thoại:
+ * - trim khoảng trắng
+ * - loại bỏ space, dấu chấm '.', dấu gạch ngang '-'
+ * - hỗ trợ chuyển đổi đầu số quốc tế +84 hoặc 84 sang 0
+ */
+export function normalizePhone(phone?: string | null): string {
+  if (!phone) return "";
+  let p = phone.trim().replace(/[\s.-]/g, "");
+  if (p.startsWith("+84")) {
+    p = "0" + p.slice(3);
+  } else if (p.startsWith("84") && p.length === 11) {
+    p = "0" + p.slice(2);
+  }
+  return p;
+}
+
+/**
+ * Regex kiểm tra số điện thoại Việt Nam chuẩn:
+ * - Đúng 10 chữ số
+ * - Bắt đầu bằng chữ số 0
+ */
+export const VIETNAM_PHONE_REGEX = /^0\d{9}$/;
+
+export const PHONE_ERROR_REQUIRED = "Vui lòng nhập số điện thoại.";
+export const PHONE_ERROR_INVALID = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
+
+/**
+ * Kiểm tra tính hợp lệ của số điện thoại Việt Nam (sau khi normalize)
+ */
+export function isValidPhone(phone?: string | null): boolean {
+  if (!phone) return false;
+  const normalized = normalizePhone(phone);
+  return VIETNAM_PHONE_REGEX.test(normalized);
+}
+
+/**
+ * Validate số điện thoại và trả về thông báo lỗi chuẩn nếu không hợp lệ
+ * @returns string thông báo lỗi nếu có, hoặc null nếu hợp lệ
+ */
+export function validatePhone(phone?: string | null): string | null {
+  if (!phone || !phone.trim()) {
+    return PHONE_ERROR_REQUIRED;
+  }
+  const normalized = normalizePhone(phone);
+  if (!VIETNAM_PHONE_REGEX.test(normalized)) {
+    return PHONE_ERROR_INVALID;
+  }
+  return null;
+}
+
+/**
+ * Ràng buộc nhập số điện thoại trên UI:
+ * - Chỉ cho phép nhập chữ số 0-9
+ * - Tự động chuyển đổi +84 thành 0 nếu dán vào
+ * - Giới hạn tối đa 10 chữ số
+ */
+export function sanitizePhoneInput(val: string): string {
+  if (!val) return "";
+  let digits = val.trim();
+  if (digits.startsWith("+84")) {
+    digits = "0" + digits.slice(3);
+  } else if (digits.startsWith("84") && digits.length === 11) {
+    digits = "0" + digits.slice(2);
+  }
+  return digits.replace(/\D/g, "").slice(0, 10);
+}
+
 export function slugify(str: string) {
   const map: Record<string, string> = {
     à: "a", á: "a", ạ: "a", ả: "a", ã: "a", â: "a", ầ: "a", ấ: "a", ậ: "a", ẩ: "a", ẫ: "a",

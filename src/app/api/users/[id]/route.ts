@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageUsers } from "@/lib/permissions";
+import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // Sửa vai trò / khoá-mở / reset mật khẩu tài khoản
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
@@ -15,7 +16,17 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   const updateData: any = {};
   if (body.name !== undefined) updateData.name = body.name;
-  if (body.phone !== undefined) updateData.phone = body.phone;
+  if (body.phone !== undefined) {
+    if (body.phone && String(body.phone).trim() !== "") {
+      const phoneError = validatePhone(body.phone);
+      if (phoneError) {
+        return NextResponse.json({ error: phoneError }, { status: 400 });
+      }
+      updateData.phone = normalizePhone(body.phone);
+    } else {
+      updateData.phone = null;
+    }
+  }
   if (body.role !== undefined) updateData.role = body.role;
   if (body.active !== undefined) updateData.active = body.active;
   if (body.password && body.password.trim().length >= 6) {

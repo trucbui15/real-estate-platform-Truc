@@ -5,6 +5,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { isBackofficeRole } from "@/lib/permissions";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 import ListingCard from "@/components/ListingCard";
 
 interface ProjectMicrositeRendererProps {
@@ -135,7 +136,43 @@ export default function ProjectMicrositeRenderer({
   isPreview = false,
 }: ProjectMicrositeRendererProps) {
   const { data: session } = useSession();
-  const isBackoffice = session?.user && isBackofficeRole((session.user as any).role);
+  const isBackoffice = session && isBackofficeRole((session.user as any)?.role);
+
+  // Track active navigation section on scroll
+  const [activeSection, setActiveSection] = useState<string>("overview");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = document.querySelectorAll("section[id]");
+      const scrollPosition = window.scrollY + 100;
+
+      sections.forEach((section) => {
+        const top = (section as HTMLElement).offsetTop;
+        const height = (section as HTMLElement).offsetHeight;
+        const id = section.getAttribute("id");
+
+        if (scrollPosition >= top && scrollPosition < top + height && id) {
+          setActiveSection(id);
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Hash Navigation Fix (Load URL #section smoothly)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const targetId = window.location.hash.replace("#", "");
+      setTimeout(() => {
+        const elem = document.getElementById(targetId);
+        if (elem) {
+          elem.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 300);
+    }
+  }, []);
 
   // Referral Token CTV/Staff
   const [ctvToken, setCtvToken] = useState<string | null>(null);
@@ -293,9 +330,20 @@ export default function ProjectMicrositeRenderer({
   // Handle Lead Submit
   async function handleLeadSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmittingLead(true);
     setLeadError("");
     setLeadSuccess(false);
+
+    if (!leadForm.fullName.trim()) {
+      setLeadError("Vui lòng nhập họ và tên.");
+      return;
+    }
+    const phoneError = validatePhone(leadForm.phone);
+    if (phoneError) {
+      setLeadError(phoneError);
+      return;
+    }
+
+    setSubmittingLead(true);
 
     try {
       const pageUrl = typeof window !== "undefined" ? window.location.href : `/du-an/${projectSlug}`;
@@ -1259,11 +1307,25 @@ export default function ProjectMicrositeRenderer({
                 <div>
                   <label className="text-slate-700 block mb-1 font-bold">Số điện thoại *</label>
                   <input
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="VD: 0912345678"
+                    className={`w-full px-3 py-2.5 rounded-xl border font-mono transition ${
+                      leadForm.phone && validatePhone(leadForm.phone)
+                        ? "border-rose-400 focus:border-rose-500 bg-rose-50/20 text-slate-900"
+                        : "border-slate-200 bg-slate-50 text-slate-900"
+                    }`}
                     required
                     value={leadForm.phone}
-                    onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
+                    onChange={(e) => setLeadForm({ ...leadForm, phone: sanitizePhoneInput(e.target.value) })}
                   />
+                  {leadForm.phone && validatePhone(leadForm.phone) && (
+                    <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(leadForm.phone)}</span>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-slate-700 block mb-1 font-bold">Nhu cầu *</label>

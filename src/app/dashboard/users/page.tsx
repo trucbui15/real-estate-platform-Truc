@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 
 const roleLabel: Record<string, string> = {
   ADMIN: "Quản trị hệ thống",
@@ -49,6 +50,15 @@ export default function UsersPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (form.phone && form.phone.trim()) {
+      const phoneError = validatePhone(form.phone);
+      if (phoneError) {
+        setError(phoneError);
+        return;
+      }
+    }
+
     try {
       const res = await fetch("/api/users", {
         method: "POST",
@@ -309,7 +319,21 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="label">Số điện thoại</label>
-                <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="VD: 0912345678" />
+                <input
+                  className={`input ${form.phone && validatePhone(form.phone) ? "!border-rose-500 !ring-rose-200 bg-rose-50/20" : ""}`}
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: sanitizePhoneInput(e.target.value) })}
+                  placeholder="VD: 0912345678"
+                />
+                {form.phone && validatePhone(form.phone) && (
+                  <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>{validatePhone(form.phone)}</span>
+                  </p>
+                )}
               </div>
               <div>
                 <label className="label">Mật khẩu khởi tạo *</label>

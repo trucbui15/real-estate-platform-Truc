@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { formatVND, parseImages, LABELS } from "@/lib/utils";
+import { formatVND, parseImages, LABELS, validatePhone, sanitizePhoneInput } from "@/lib/utils";
 import ListingCard from "@/components/ListingCard";
 import ListingGallery from "@/components/ListingGallery";
 import { CONTACT_CONFIG } from "@/config/contact";
@@ -65,8 +65,13 @@ export default function ListingDetailClient({
 
   async function handleConsultSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!fullName.trim() || !phone.trim()) {
-      setErrorMsg("Vui lòng điền Họ tên và Số điện thoại liên hệ.");
+    if (!fullName.trim()) {
+      setErrorMsg("Vui lòng nhập họ và tên.");
+      return;
+    }
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      setErrorMsg(phoneError);
       return;
     }
 
@@ -376,12 +381,24 @@ export default function ListingDetailClient({
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
-                    placeholder="0901234567"
+                    placeholder="VD: 0912345678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none transition"
+                    onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+                    className={`w-full rounded-xl border px-3 py-2 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:outline-none transition ${
+                      phone && validatePhone(phone)
+                        ? "border-rose-400 focus:border-rose-500 bg-rose-50/20"
+                        : "border-slate-200 focus:border-[#0284C7]"
+                    }`}
                   />
+                  {phone && validatePhone(phone) && (
+                    <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(phone)}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -538,12 +555,24 @@ export default function ListingDetailClient({
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
-                    placeholder="0901234567"
+                    placeholder="VD: 0912345678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:border-[#0284C7] focus:outline-none"
+                    onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+                    className={`w-full rounded-xl border p-2.5 text-[13px] text-slate-900 bg-slate-50 focus:bg-white focus:outline-none transition ${
+                      phone && validatePhone(phone)
+                        ? "border-rose-400 focus:border-rose-500 bg-rose-50/20"
+                        : "border-slate-200 focus:border-[#0284C7]"
+                    }`}
                   />
+                  {phone && validatePhone(phone) && (
+                    <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <span>⚠️</span>
+                      <span>{validatePhone(phone)}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
