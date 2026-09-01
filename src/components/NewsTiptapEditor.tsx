@@ -146,33 +146,30 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().setParagraph().run()}
-            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("paragraph")
+            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("paragraph")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
           >
             Đoạn văn (P)
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("heading", { level: 2 })
+            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("heading", { level: 2 })
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
           >
             Tiêu đề H2
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("heading", { level: 3 })
+            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("heading", { level: 3 })
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
           >
             Tiêu đề H3
           </button>
@@ -183,11 +180,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`h-7 w-7 rounded-lg font-extrabold text-xs transition cursor-pointer border flex items-center justify-center ${
-              editor.isActive("bold")
+            className={`h-7 w-7 rounded-lg font-extrabold text-xs transition cursor-pointer border flex items-center justify-center ${editor.isActive("bold")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-800 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
             title="In đậm (Ctrl+B)"
           >
             B
@@ -195,11 +191,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`h-7 w-7 rounded-lg font-extrabold italic text-xs transition cursor-pointer border flex items-center justify-center ${
-              editor.isActive("italic")
+            className={`h-7 w-7 rounded-lg font-extrabold italic text-xs transition cursor-pointer border flex items-center justify-center ${editor.isActive("italic")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-800 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
             title="In nghiêng (Ctrl+I)"
           >
             I
@@ -211,11 +206,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("bulletList")
+            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("bulletList")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
             title="Danh sách chấm"
           >
             • Danh sách
@@ -223,11 +217,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("orderedList")
+            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("orderedList")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
             title="Danh sách số"
           >
             1. Danh sách
@@ -237,11 +230,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${
-              editor.isActive("blockquote")
+            className={`px-2 py-1 text-xs rounded-lg font-bold transition cursor-pointer border ${editor.isActive("blockquote")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-            }`}
+              }`}
             title="Trích dẫn"
           >
             ❝ Quote
@@ -253,11 +245,10 @@ export default function NewsTiptapEditor({
           <button
             type="button"
             onClick={setLink}
-            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border flex items-center gap-1 ${
-              editor.isActive("link")
+            className={`px-2.5 py-1 text-xs rounded-lg font-bold transition cursor-pointer border flex items-center gap-1 ${editor.isActive("link")
                 ? "bg-sky-600 text-white border-sky-600"
                 : "bg-white text-sky-700 border-slate-200 hover:bg-sky-50"
-            }`}
+              }`}
             title="Chèn liên kết"
           >
             🔗 Link

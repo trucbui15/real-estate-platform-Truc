@@ -45,7 +45,78 @@ export default function DashboardListingsPage() {
         <Link href="/dashboard/listings/new" className="btn-primary text-xs sm:text-sm self-start sm:self-auto">+ Đăng tin mới</Link>
       </div>
 
-      <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
+      {/* MOBILE LISTINGS CARDS (Dành cho điện thoại < md) */}
+      <div className="space-y-3 md:hidden">
+        {loading ? (
+          <div className="card p-8 text-center text-xs text-slate-400 bg-white">Đang tải danh sách tin...</div>
+        ) : items.length === 0 ? (
+          <div className="card p-8 text-center text-xs text-slate-400 bg-white">Chưa có tin đăng nào</div>
+        ) : (
+          items.map((l) => (
+            <div key={`m-${l.id}`} className="card p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3">
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-sky-700 font-mono">
+                    {l.productCode ? `Mã SP: ${l.productCode}` : `Mã căn: ${l.unitCode}`}
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2">{l.title}</h3>
+                  {l.project && (
+                    <div className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">🏢 {l.project.name}</div>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 border border-slate-200">
+                  {LABELS.unitStatus[l.unitStatus as keyof typeof LABELS.unitStatus] || l.unitStatus}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Giá giao dịch</div>
+                  <div className="font-bold text-sky-700 text-sm mt-0.5">
+                    {formatVND(l.transactionType === "RENT" ? l.rentPrice : l.salePrice)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Người đăng</div>
+                  <div className="font-semibold text-slate-800 truncate mt-0.5">👤 {l.author?.name || "Hệ thống"}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <div className="text-[11px] text-slate-400 font-mono">
+                  {new Date(l.updatedAt).toLocaleDateString("vi-VN")}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/listings/${l.id}/edit`}
+                    className="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold border border-sky-200 transition min-h-[36px] flex items-center"
+                  >
+                    ✏️ Sửa
+                  </Link>
+                  {canApprove && l.unitStatus === "CHO_DUYET" && (
+                    <button
+                      onClick={() => setStatus(l.id, l.transactionType === "RENT" ? "DANG_CHO_THUE" : "DANG_BAN")}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold border border-emerald-200 transition min-h-[36px] flex items-center cursor-pointer"
+                    >
+                      ✓ Duyệt
+                    </button>
+                  )}
+                  <button
+                    onClick={() => remove(l.id)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center cursor-pointer"
+                    title="Xóa vĩnh viễn tin đăng"
+                  >
+                    🗑️ Xóa
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW (Hidden on mobile) */}
+      <div className="hidden md:block overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>

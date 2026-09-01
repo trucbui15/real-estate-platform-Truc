@@ -283,8 +283,131 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* UNIFIED DATA TABLE FOR ALL DEVICES */}
-      <div className="mt-4 w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+      {/* MOBILE CARD VIEW (Dành riêng cho điện thoại < md) */}
+      <div className="mt-4 space-y-3 md:hidden">
+        {loading ? (
+          <div className="card p-8 text-center text-xs text-slate-400 bg-white">Đang tải danh sách khách hàng...</div>
+        ) : items.length === 0 ? (
+          <div className="card p-8 text-center text-xs text-slate-400 bg-white">Chưa có khách hàng nào</div>
+        ) : (
+          items.map((c) => {
+            const selectValue = c.assignedToId
+              ? `user:${c.assignedToId}`
+              : c.assignedCollaboratorId
+                ? `collaborator:${c.assignedCollaboratorId}`
+                : "UNASSIGNED";
+
+            return (
+              <div key={`m-${c.id}`} className="card p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3">
+                {/* Header: Name, Phone & Status */}
+                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="min-w-0">
+                    <Link href={`/dashboard/customers/${c.id}`} className="font-bold text-slate-900 text-sm hover:text-sky-600 block truncate">
+                      {c.fullName}
+                    </Link>
+                    <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1 text-xs text-sky-700 font-mono font-bold mt-0.5 hover:underline">
+                      <span>📞</span>
+                      <span>{c.phone}</span>
+                    </a>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${statusColor[c.status] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+                    {LABELS.leadStatus[c.status as keyof typeof LABELS.leadStatus] || c.status}
+                  </span>
+                </div>
+
+                {/* Info details */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-50 p-2 rounded-xl">
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Nhu cầu</div>
+                    <div className="font-semibold text-slate-800 mt-0.5">{LABELS.demandType[c.demandType as keyof typeof LABELS.demandType] || c.demandType}</div>
+                    {c.project && <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5">🏢 {c.project.name}</div>}
+                  </div>
+
+                  <div className="bg-slate-50 p-2 rounded-xl">
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Nguồn</div>
+                    <div className="font-semibold text-slate-800 mt-0.5">{LABELS.leadSource[c.source as keyof typeof LABELS.leadSource] || c.source}</div>
+                    {c.inquiries?.[0]?.collaborator && (
+                      <div className="text-[10px] font-bold text-emerald-800 truncate mt-0.5">
+                        🤝 {c.inquiries[0].collaborator.fullName}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Assignee / Quick Assign on mobile */}
+                <div className="pt-1">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Người phụ trách:</div>
+                  {isManagerUp ? (
+                    <select
+                      value={selectValue}
+                      disabled={updatingId === c.id}
+                      onChange={(e) => handleQuickAssign(c.id, e.target.value)}
+                      className={`w-full rounded-xl border px-3 py-2 text-xs font-bold transition outline-none cursor-pointer min-h-[38px] ${
+                        selectValue === "UNASSIGNED"
+                          ? "bg-amber-50 border-amber-300 text-amber-900"
+                          : selectValue.startsWith("collaborator:")
+                            ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                            : "bg-white border-slate-300 text-slate-900"
+                      }`}
+                    >
+                      <option value="UNASSIGNED">⚠️ Chưa phân công</option>
+                      <optgroup label="NHÂN SỰ NỘI BỘ">
+                        {users
+                          .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                          .map((u) => (
+                            <option key={`m-user:${u.id}`} value={`user:${u.id}`}>
+                              👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                            </option>
+                          ))}
+                      </optgroup>
+                      <optgroup label="CỘNG TÁC VIÊN (CTV)">
+                        {collaborators
+                          .filter((col) => col.status === "ACTIVE")
+                          .map((col) => (
+                            <option key={`m-col:${col.id}`} value={`collaborator:${col.id}`}>
+                              🤝 CTV {col.fullName} ({col.publicReferralToken})
+                            </option>
+                          ))}
+                      </optgroup>
+                    </select>
+                  ) : (
+                    <div className="text-xs font-semibold text-slate-800">
+                      {c.assignedTo?.name ? `👤 ${c.assignedTo.name}` : c.assignedCollaborator?.fullName ? `🤝 CTV ${c.assignedCollaborator.fullName}` : "⚠️ Chưa phân công"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Action buttons on mobile */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    {new Date(c.updatedAt).toLocaleDateString("vi-VN")}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/dashboard/customers/${c.id}`}
+                      className="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold border border-sky-200 transition min-h-[36px] flex items-center"
+                    >
+                      👁️ Chi tiết
+                    </Link>
+                    {isManagerUp && (
+                      <button
+                        onClick={() => handleDeleteCustomer(c.id, c.fullName)}
+                        disabled={updatingId === c.id}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center"
+                      >
+                        🗑️ Xóa
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* UNIFIED DATA TABLE FOR DESKTOP (Hidden on mobile) */}
+      <div className="mt-4 hidden md:block w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs custom-scrollbar">
         <table className="w-full min-w-[1050px] text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-600 border-b border-slate-200">
             <tr>
@@ -410,13 +533,13 @@ export default function CustomersPage() {
 
       {/* MODAL THÊM KHÁCH HÀNG MỚI */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="font-display text-lg font-bold text-slate-900">➕ Thêm khách hàng mới</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg p-5 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100 sticky top-0 bg-white z-10">
+              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">➕ Thêm khách hàng mới</h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold"
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100"
               >
                 ✕
               </button>
