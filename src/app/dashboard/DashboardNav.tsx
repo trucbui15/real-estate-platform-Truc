@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface DashboardNavProps {
   links: {
@@ -15,9 +15,34 @@ interface DashboardNavProps {
 
 export default function DashboardNav({ links }: DashboardNavProps) {
   const pathname = usePathname();
-  const navRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
+  // Check scroll position to show/hide left & right assist buttons
+  const checkScroll = () => {
+    if (navRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = navRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const nav = navRef.current;
+    if (nav) {
+      nav.addEventListener("scroll", checkScroll, { passive: true });
+      window.addEventListener("resize", checkScroll);
+      return () => {
+        nav.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("resize", checkScroll);
+      };
+    }
+  }, []);
+
+  // Auto-scroll active tab into center on page change
   useEffect(() => {
     if (activeLinkRef.current && navRef.current) {
       const nav = navRef.current;
@@ -25,7 +50,6 @@ export default function DashboardNav({ links }: DashboardNavProps) {
       const navRect = nav.getBoundingClientRect();
       const activeRect = activeEl.getBoundingClientRect();
 
-      // If active tab is out of view horizontally on mobile, smoothly scroll it into center
       if (activeRect.left < navRect.left || activeRect.right > navRect.right) {
         nav.scrollTo({
           left: activeEl.offsetLeft - nav.offsetWidth / 2 + activeEl.offsetWidth / 2,
@@ -35,16 +59,48 @@ export default function DashboardNav({ links }: DashboardNavProps) {
     }
   }, [pathname]);
 
+  const scrollNav = (direction: "left" | "right") => {
+    if (navRef.current) {
+      navRef.current.scrollBy({
+        left: direction === "left" ? -180 : 180,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const visibleLinks = links.filter((l) => l.show);
 
   return (
-    <div className="relative group">
-      {/* Visual edge gradient on mobile to show scrollability */}
-      <div className="md:hidden pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-100/90 to-transparent z-10 rounded-r-2xl" />
+    <div className="relative w-full min-w-0 max-w-full">
+      {/* Left Scroll Arrow (Mobile only) */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scrollNav("left")}
+          className="md:hidden absolute -left-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 bg-white/95 text-slate-700 shadow-md border border-slate-200 rounded-full flex items-center justify-center text-xs font-black active:scale-90 transition cursor-pointer"
+          aria-label="Cuộn sang trái"
+        >
+          ‹
+        </button>
+      )}
 
+      {/* Right Scroll Arrow (Mobile only) */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scrollNav("right")}
+          className="md:hidden absolute -right-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 bg-white/95 text-slate-700 shadow-md border border-slate-200 rounded-full flex items-center justify-center text-xs font-black active:scale-90 transition cursor-pointer"
+          aria-label="Cuộn sang phải"
+        >
+          ›
+        </button>
+      )}
+
+      {/* Navigation list */}
       <nav
         ref={navRef}
-        className="card p-1.5 md:p-2 flex md:flex-col overflow-x-auto custom-scrollbar gap-1.5 shrink-0 scroll-smooth touch-pan-x"
+        className="card p-1.5 md:p-2 flex md:flex-col overflow-x-auto custom-scrollbar gap-1.5 w-full min-w-0 max-w-full scroll-smooth touch-pan-x select-none"
+        style={{ WebkitOverflowScrolling: "touch" }}
         aria-label="Dashboard Navigation"
       >
         {visibleLinks.map((l) => {

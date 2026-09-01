@@ -35,7 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       className="notranslate mx-auto w-full max-w-[1500px] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8 grid gap-4 sm:gap-6 md:grid-cols-[230px_1fr]"
       translate="no"
     >
-      <aside className="md:sticky md:top-20 md:h-fit space-y-2.5">
+      <aside className="w-full min-w-0 max-w-full md:sticky md:top-20 md:h-fit space-y-2.5">
         <div className="card p-3 sm:p-3.5 flex items-center justify-between md:block bg-white shadow-xs">
           <div className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Vai trò của bạn:</div>
           <div className="font-bold text-xs sm:text-sm md:text-base text-sky-700 mt-0.5">{roleLabel}</div>
