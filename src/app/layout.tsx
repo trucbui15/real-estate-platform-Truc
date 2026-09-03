@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Minh Dũng Land — Nền tảng bất động sản Quy Nhơn",
+  title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
   description:
     "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
   icons: {
