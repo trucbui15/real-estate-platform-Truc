@@ -95,7 +95,7 @@ export default function ListingForm({
       );
 
       const uploaded: string[] = [];
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "rp8nsv0a";
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
 
       setUploadStatusText("Đang tải ảnh lên máy chủ...");

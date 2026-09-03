@@ -1,5 +1,7 @@
 "use client";
 
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
+
 interface NewsPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -95,8 +97,9 @@ export default function NewsPreviewModal({
             <div className="overflow-hidden rounded-2xl border border-slate-200 aspect-[16/9] w-full bg-slate-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={article.thumbnail}
+                src={getOptimizedCloudinaryUrl(article.thumbnail, "GALLERY")}
                 alt={article.title}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>

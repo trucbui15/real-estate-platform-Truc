@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { parseImages, getProjectCoverImage } from "@/lib/utils";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ProjectImageEditorModal from "@/components/ProjectImageEditorModal";
 
 interface Tour360ClientProps {
@@ -126,8 +127,11 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
                     {imageCover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={imageCover}
+                        src={getOptimizedCloudinaryUrl(imageCover, "CARD")}
+                        srcSet={`${getOptimizedCloudinaryUrl(imageCover, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(imageCover, "CARD")} 600w`}
+                        sizes="(max-width: 768px) 100vw, 360px"
                         alt={project.name}
+                        loading="lazy"
                         className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = "/logo.png";

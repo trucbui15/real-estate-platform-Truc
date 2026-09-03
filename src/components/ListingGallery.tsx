@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface ListingGalleryProps {
   images: string[];
@@ -231,10 +232,12 @@ export default function ListingGallery({
         >
           <img
             key={currentImage}
-            src={currentImage}
+            src={getOptimizedCloudinaryUrl(currentImage, "GALLERY")}
+            srcSet={`${getOptimizedCloudinaryUrl(currentImage, "MOBILE")} 800w, ${getOptimizedCloudinaryUrl(currentImage, "GALLERY")} 1200w`}
+            sizes="(max-width: 768px) 100vw, 1200px"
             alt={title}
             loading={activeIndex === 0 ? "eager" : "lazy"}
-            decoding="async"
+            decoding={activeIndex === 0 ? "sync" : "async"}
             onClick={() => setLightboxOpen(true)}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/logo.png";
@@ -335,7 +338,7 @@ export default function ListingGallery({
                 }`}
               >
                 <img
-                  src={img}
+                  src={getOptimizedCloudinaryUrl(img, "THUMBNAIL")}
                   alt=""
                   loading="lazy"
                   onError={(e) => {
@@ -401,7 +404,9 @@ export default function ListingGallery({
             >
               <img
                 key={currentImage}
-                src={currentImage}
+                src={getOptimizedCloudinaryUrl(currentImage, "NEWS_HERO")}
+                srcSet={`${getOptimizedCloudinaryUrl(currentImage, "GALLERY")} 1200w, ${getOptimizedCloudinaryUrl(currentImage, "NEWS_HERO")} 1600w, ${getOptimizedCloudinaryUrl(currentImage, "HERO")} 1920w`}
+                sizes="100vw"
                 alt={title}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/logo.png";
@@ -465,7 +470,7 @@ export default function ListingGallery({
                     }`}
                   >
                     <img
-                      src={img}
+                      src={getOptimizedCloudinaryUrl(img, "THUMBNAIL")}
                       alt=""
                       loading="lazy"
                       onError={(e) => {

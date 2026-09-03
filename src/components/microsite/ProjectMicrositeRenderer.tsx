@@ -6,6 +6,7 @@ import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { isBackofficeRole } from "@/lib/permissions";
 import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ListingCard from "@/components/ListingCard";
 
 interface ProjectMicrositeRendererProps {
@@ -460,7 +461,9 @@ export default function ProjectMicrositeRenderer({
                     {hero.bgImage ? (
                       <div className="absolute inset-0 z-0">
                         <img
-                          src={hero.bgImage}
+                          src={getOptimizedCloudinaryUrl(hero.bgImage, "HERO")}
+                          srcSet={`${getOptimizedCloudinaryUrl(hero.bgImage, "MOBILE")} 800w, ${getOptimizedCloudinaryUrl(hero.bgImage, "GALLERY")} 1200w, ${getOptimizedCloudinaryUrl(hero.bgImage, "HERO")} 1920w`}
+                          sizes="100vw"
                           alt={hero.title || projectName}
                           loading="eager"
                           style={{
@@ -658,7 +661,7 @@ export default function ProjectMicrositeRenderer({
                       </div>
                     ) : location.mapImage ? (
                       <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-md aspect-[16/10]">
-                        <img src={location.mapImage} alt="Sơ đồ vị trí" loading="lazy" className="w-full h-full object-cover" />
+                        <img src={getOptimizedCloudinaryUrl(location.mapImage, "GALLERY")} alt="Sơ đồ vị trí" loading="lazy" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="rounded-3xl bg-slate-100 border border-slate-200 p-8 text-center text-xs text-slate-500 h-[240px] flex items-center justify-center">
@@ -704,7 +707,7 @@ export default function ProjectMicrositeRenderer({
                       <div key={idx} className="rounded-3xl bg-white border border-slate-200/80 overflow-hidden shadow-sm hover:border-amber-400 hover:shadow-md transition group space-y-3 p-4">
                         {item.image ? (
                           <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-slate-100">
-                            <img src={item.image} alt={item.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                            <img src={getOptimizedCloudinaryUrl(item.image, "CARD")} alt={item.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                           </div>
                         ) : (
                           <div className="aspect-[16/10] bg-slate-100 rounded-2xl flex items-center justify-center text-2xl">🏊</div>
@@ -748,7 +751,7 @@ export default function ProjectMicrositeRenderer({
                       <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-6 flex flex-col items-center shadow-sm space-y-4">
                         {floorPlans.blocks[activeFloorBlock]?.image ? (
                           <img
-                            src={floorPlans.blocks[activeFloorBlock].image}
+                            src={getOptimizedCloudinaryUrl(floorPlans.blocks[activeFloorBlock].image, "FLOOR_PLAN")}
                             alt={floorPlans.blocks[activeFloorBlock].name}
                             loading="lazy"
                             className="max-h-[480px] w-auto object-contain rounded-xl cursor-pointer"
@@ -1036,7 +1039,7 @@ export default function ProjectMicrositeRenderer({
                           <div key={idx} className="rounded-3xl bg-white border border-slate-200/80 p-5 space-y-4 shadow-sm hover:shadow-md transition">
                             {unit.image && (
                               <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100">
-                                <img src={unit.image} alt={unit.name} loading="lazy" className="w-full h-full object-cover" />
+                                <img src={getOptimizedCloudinaryUrl(unit.image, "CARD")} alt={unit.name} loading="lazy" className="w-full h-full object-cover" />
                               </div>
                             )}
                             <div>
@@ -1073,7 +1076,14 @@ export default function ProjectMicrositeRenderer({
                     {(gallery.images || []).map((img: any, idx: number) => (
                       <div key={idx} className="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3] group relative bg-slate-100 cursor-pointer" onClick={() => setPreviewImage(img.url)}>
                         {img.url ? (
-                          <img src={img.url} alt={img.caption || "Gallery image"} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                          <img
+                            src={getOptimizedCloudinaryUrl(img.url, "CARD")}
+                            srcSet={`${getOptimizedCloudinaryUrl(img.url, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(img.url, "CARD")} 600w`}
+                            sizes="(max-width: 640px) 50vw, 33vw"
+                            alt={img.caption || "Gallery image"}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
                         )}
@@ -1147,7 +1157,7 @@ export default function ProjectMicrositeRenderer({
                   <div className="space-y-4">
                     {(progress.items || []).map((p: any, idx: number) => (
                       <div key={idx} className="bg-white border border-slate-200/80 rounded-3xl p-5 flex flex-col sm:flex-row gap-4 items-start shadow-sm">
-                        {p.image && <img src={p.image} alt={p.title} loading="lazy" className="w-full sm:w-48 aspect-[16/10] object-cover rounded-2xl" />}
+                        {p.image && <img src={getOptimizedCloudinaryUrl(p.image, "CARD")} alt={p.title} loading="lazy" className="w-full sm:w-48 aspect-[16/10] object-cover rounded-2xl" />}
                         <div className="space-y-1.5">
                           {p.date && <span className="text-xs font-bold text-amber-600">{p.date}</span>}
                           <h3 className="font-bold text-base text-slate-900">{p.title}</h3>
@@ -1270,7 +1280,7 @@ export default function ProjectMicrositeRenderer({
             >
               ✕ Đóng
             </button>
-            <img src={previewImage} alt="Preview" className="max-h-[85vh] w-auto object-contain rounded-xl shadow-2xl" />
+            <img src={getOptimizedCloudinaryUrl(previewImage, "NEWS_HERO")} alt="Preview" className="max-h-[85vh] w-auto object-contain rounded-xl shadow-2xl" />
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { parseImages, getProjectCoverImage } from "@/lib/utils";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ProjectImageEditorModal from "@/components/ProjectImageEditorModal";
 
 interface ProjectOverviewListClientProps {
@@ -54,8 +55,11 @@ export default function ProjectOverviewListClient({
                   {imageCover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={imageCover}
+                      src={getOptimizedCloudinaryUrl(imageCover, "CARD")}
+                      srcSet={`${getOptimizedCloudinaryUrl(imageCover, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(imageCover, "CARD")} 600w`}
+                      sizes="(max-width: 768px) 100vw, 300px"
                       alt={project.name}
+                      loading="lazy"
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "/logo.png";

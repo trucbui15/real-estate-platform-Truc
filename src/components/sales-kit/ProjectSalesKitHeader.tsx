@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface ProjectSalesKitHeaderProps {
   name: string;
@@ -55,8 +56,11 @@ export function ProjectSalesKitHeader({
             {coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={coverImage}
+                src={getOptimizedCloudinaryUrl(coverImage, "MOBILE")}
+                srcSet={`${getOptimizedCloudinaryUrl(coverImage, "CARD")} 600w, ${getOptimizedCloudinaryUrl(coverImage, "MOBILE")} 800w, ${getOptimizedCloudinaryUrl(coverImage, "GALLERY")} 1200w`}
+                sizes="(max-width: 1024px) 100vw, 400px"
                 alt={name}
+                loading="lazy"
                 className="h-full w-full object-cover"
               />
             ) : (

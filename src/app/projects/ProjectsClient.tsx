@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { compressImage, revokePreviewUrl } from "@/lib/imageCompression";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface ProjectItem {
   id: string;
@@ -92,7 +93,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
         `Đang tải ảnh (${optResult.formattedOriginalSize} → ${optResult.formattedOptimizedSize}, Giảm ${optResult.reductionPercent}%)...`
       );
 
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "rp8nsv0a";
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
       let uploadedUrl = "";
 
@@ -266,8 +267,11 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                   <div className="relative w-full h-52 bg-slate-950 overflow-hidden">
                     {photoUrl ? (
                       <img
-                        src={photoUrl}
+                        src={getOptimizedCloudinaryUrl(photoUrl, "CARD")}
+                        srcSet={`${getOptimizedCloudinaryUrl(photoUrl, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(photoUrl, "CARD")} 600w, ${getOptimizedCloudinaryUrl(photoUrl, "MOBILE")} 800w`}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                         alt={p.name}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = "/logo.png";

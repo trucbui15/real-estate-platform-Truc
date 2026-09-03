@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface ProjectItem {
   id: string;
@@ -87,7 +88,9 @@ export default function WebsiteListClient({ projects }: WebsiteListClientProps) 
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
                   {project.thumbnail ? (
                     <img
-                      src={project.thumbnail}
+                      src={getOptimizedCloudinaryUrl(project.thumbnail, "CARD")}
+                      srcSet={`${getOptimizedCloudinaryUrl(project.thumbnail, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(project.thumbnail, "CARD")} 600w`}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
                       alt={project.name}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"

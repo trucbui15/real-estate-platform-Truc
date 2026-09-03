@@ -1,4 +1,5 @@
 import React from "react";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface ProjectImageGalleryProps {
   projectName: string;
@@ -29,15 +30,18 @@ export function ProjectImageGallery({ projectName, images }: ProjectImageGallery
         {images.map((imgUrl, idx) => (
           <a
             key={idx}
-            href={imgUrl}
+            href={getOptimizedCloudinaryUrl(imgUrl, "NEWS_HERO")}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 border border-gray-100 shadow-sm"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={imgUrl}
+              src={getOptimizedCloudinaryUrl(imgUrl, "CARD")}
+              srcSet={`${getOptimizedCloudinaryUrl(imgUrl, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(imgUrl, "CARD")} 600w`}
+              sizes="(max-width: 768px) 50vw, 25vw"
               alt={`${projectName} - ${idx + 1}`}
+              loading="lazy"
               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 text-white text-[11px] font-bold">

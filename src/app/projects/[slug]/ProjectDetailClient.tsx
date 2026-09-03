@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ListingCard from "@/components/ListingCard";
 import { compressImagesInBatch, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 const unitStatusLabel: Record<string, { label: string; style: string; badgeStyle: string }> = {
   DANG_BAN: {
@@ -365,7 +366,7 @@ export default function ProjectDetailClient({
       setAddError("");
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "h8s6hyxc";
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "rp8nsv0a";
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
     const uploadedUrls: string[] = [];
 
@@ -1220,8 +1221,9 @@ export default function ProjectDetailClient({
                         className="relative w-full h-[140px] rounded-xl border border-slate-100 overflow-hidden bg-slate-50 cursor-pointer group/img"
                       >
                         <img
-                          src={primaryImg}
+                          src={getOptimizedCloudinaryUrl(primaryImg, "FLOOR_PLAN_THUMB")}
                           alt={`Sơ đồ căn ${unit.unitCode}`}
+                          loading="lazy"
                           className="w-full h-full object-contain p-1 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
                         />
                         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white font-bold text-[11px] gap-1 backdrop-blur-[1px]">
@@ -1453,7 +1455,7 @@ export default function ProjectDetailClient({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150 cursor-pointer"
         >
           <div className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl p-2">
-            <img src={previewImage} alt="Mặt bằng căn" className="max-h-[85vh] w-auto object-contain rounded-xl" />
+            <img src={getOptimizedCloudinaryUrl(previewImage, "FLOOR_PLAN")} alt="Mặt bằng căn" className="max-h-[85vh] w-auto object-contain rounded-xl" />
             <button
               onClick={() => setPreviewImage(null)}
               className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center text-sm"

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await prisma.news.findUnique({ where: { slug: params.slug } });
@@ -70,7 +71,14 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
         {/* THUMBNAIL */}
         {article.thumbnail && (
           <div className="overflow-hidden rounded-2xl border border-slate-200 aspect-[16/9] w-full bg-slate-100">
-            <img src={article.thumbnail} alt={article.title} className="w-full h-full object-cover" />
+            <img
+              src={getOptimizedCloudinaryUrl(article.thumbnail, "NEWS_HERO")}
+              srcSet={`${getOptimizedCloudinaryUrl(article.thumbnail, "MOBILE")} 800w, ${getOptimizedCloudinaryUrl(article.thumbnail, "GALLERY")} 1200w, ${getOptimizedCloudinaryUrl(article.thumbnail, "NEWS_HERO")} 1600w`}
+              sizes="(max-width: 768px) 100vw, 800px"
+              alt={article.title}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
 

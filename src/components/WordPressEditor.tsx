@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 interface WordPressEditorProps {
   value: string;
@@ -68,7 +69,8 @@ export default function WordPressEditor({
         const res = await fetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
         if (res.ok && data.url) {
-          const imgHtml = `<p><img src="${data.url}" alt="${file.name}" class="my-4 rounded-xl max-w-full h-auto shadow-sm mx-auto block" /></p><p><br/></p>`;
+          const optimizedSrc = getOptimizedCloudinaryUrl(data.url, "GALLERY");
+          const imgHtml = `<p><img src="${optimizedSrc}" alt="${file.name}" class="my-4 rounded-xl max-w-full h-auto shadow-sm mx-auto block" /></p><p><br/></p>`;
           execCmd("insertHTML", imgHtml);
         }
       }

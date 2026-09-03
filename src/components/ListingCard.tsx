@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatVND, parseImages, LABELS, optimizeCloudinaryUrl } from "@/lib/utils";
+import { formatVND, parseImages, LABELS } from "@/lib/utils";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 export default function ListingCard({ listing }: { listing: any }) {
   const router = useRouter();
   const images = parseImages(listing.images);
-  const coverImage = images[0] ? optimizeCloudinaryUrl(images[0], 600) : null;
+  const rawCover = images[0] || null;
+  const coverImage = rawCover ? getOptimizedCloudinaryUrl(rawCover, "CARD") : null;
   const price = listing.transactionType === "RENT" ? listing.rentPrice : listing.salePrice;
 
   function handleProjectClick(e: React.MouseEvent) {
@@ -27,6 +29,8 @@ export default function ListingCard({ listing }: { listing: any }) {
         {coverImage ? (
           <img
             src={coverImage}
+            srcSet={`${getOptimizedCloudinaryUrl(rawCover, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(rawCover, "CARD")} 600w`}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
             alt={listing.title}
             loading="lazy"
             decoding="async"

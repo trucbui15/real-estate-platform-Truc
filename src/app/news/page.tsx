@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,11 @@ export default async function NewsPage() {
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
                   {n.thumbnail ? (
                     <img
-                      src={n.thumbnail}
+                      src={getOptimizedCloudinaryUrl(n.thumbnail, "CARD")}
+                      srcSet={`${getOptimizedCloudinaryUrl(n.thumbnail, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(n.thumbnail, "CARD")} 600w`}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
                       alt={n.title}
+                      loading="lazy"
                       className="h-full w-full object-cover group-hover:scale-103 transition duration-300"
                     />
                   ) : (
