@@ -106,7 +106,7 @@ export default function DashboardListingsPage() {
                     className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center cursor-pointer"
                     title="Xóa vĩnh viễn tin đăng"
                   >
-                    🗑️ Xóa
+                    Xóa
                   </button>
                 </div>
               </div>
@@ -185,7 +185,7 @@ export default function DashboardListingsPage() {
                         className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg hover:bg-rose-100 transition cursor-pointer"
                         title="Xóa vĩnh viễn tin đăng"
                       >
-                        🗑️ Xóa
+                        Xóa
                       </button>
                     </div>
                   </td>

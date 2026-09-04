@@ -395,7 +395,7 @@ export default function CustomersPage() {
                         disabled={updatingId === c.id}
                         className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center"
                       >
-                        🗑️ Xóa
+                        Xóa
                       </button>
                     )}
                   </div>
@@ -519,7 +519,7 @@ export default function CustomersPage() {
                           className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200"
                           title="Xóa vĩnh viễn khách hàng này"
                         >
-                          🗑️ Xóa
+                          Xóa
                         </button>
                       </td>
                     )}

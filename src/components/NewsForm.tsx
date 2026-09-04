@@ -335,7 +335,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
                   onClick={() => setThumbnail("")}
                   className="absolute top-2 right-2 bg-slate-900/80 hover:bg-rose-600 text-white text-xs font-bold px-2.5 py-1 rounded-xl transition cursor-pointer shadow-md"
                 >
-                  ✕ Xóa ảnh
+                  Xóa ảnh
                 </button>
               )}
             </div>

@@ -356,7 +356,7 @@ export default function WordPressEditor({
                 className="h-7 px-2 bg-white hover:bg-slate-200 border border-slate-300 rounded font-semibold text-slate-700 cursor-pointer"
                 title="Xóa định dạng"
               >
-                🧹 Xóa định dạng
+                Xóa định dạng
               </button>
 
               {/* UNDO / REDO */}

@@ -153,7 +153,7 @@ export default function CustomerDetailPage() {
             onClick={handleDeleteCustomer}
             className="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200 flex items-center gap-1"
           >
-            <span>🗑️</span> Xóa khách hàng
+            Xóa khách hàng
           </button>
         )}
       </div>

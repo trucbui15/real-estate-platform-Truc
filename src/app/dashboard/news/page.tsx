@@ -295,7 +295,7 @@ export default function DashboardNewsListPage() {
                           className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 cursor-pointer disabled:opacity-50"
                           title="Xóa bài viết"
                         >
-                          ✕ Xóa
+                          Xóa
                         </button>
                       </div>
                     </td>
