@@ -19,7 +19,7 @@ function LoginForm() {
     if (status === "authenticated" && session?.user) {
       const role = (session.user as any).role;
       const callback = params.get("callbackUrl");
-      if (["ADMIN", "MANAGER", "STAFF"].includes(role)) {
+      if (["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(role)) {
         router.replace(callback && callback !== "/" ? callback : "/dashboard");
       } else {
         router.replace(callback && callback !== "/" && !callback.includes("/dashboard") ? callback : "/");

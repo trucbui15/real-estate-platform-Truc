@@ -318,6 +318,7 @@ enum Role {
   ADMIN
   MANAGER
   STAFF
+  COLLABORATOR_PRO
   CUSTOMER
 }
 

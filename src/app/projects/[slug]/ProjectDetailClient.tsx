@@ -852,7 +852,7 @@ export default function ProjectDetailClient({
               <div className="relative flex-1 min-w-[160px] max-w-xs">
                 <input
                   type="text"
-                  placeholder="Tìm mã căn (VD: H.11, S.12A)..."
+                  placeholder={role === "COLLABORATOR_PRO" ? "Tìm theo tầng, diện tích..." : "Tìm mã căn (VD: H.11, S.12A)..."}
                   value={searchUnitCode}
                   onChange={(e) => setSearchUnitCode(e.target.value)}
                   className="w-full pl-7 pr-3 py-1 text-[12px] rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
@@ -1063,7 +1063,7 @@ export default function ProjectDetailClient({
                         {/* 1. MÃ CĂN */}
                         <td className="px-3.5 py-3.5 align-middle">
                           <code className="font-black text-[13px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg inline-block">
-                            {unit.unitCode}
+                            {unit.unitCode || "••••"}
                           </code>
                         </td>
 
@@ -1205,7 +1205,7 @@ export default function ProjectDetailClient({
                           />
                         )}
                         <span className="font-extrabold text-[14px] text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg">
-                          {unit.unitCode}
+                          {unit.unitCode || "••••"}
                         </span>
                       </div>
 
@@ -1222,7 +1222,7 @@ export default function ProjectDetailClient({
                       >
                         <img
                           src={getOptimizedCloudinaryUrl(primaryImg, "FLOOR_PLAN_THUMB")}
-                          alt={`Sơ đồ căn ${unit.unitCode}`}
+                          alt={unit.unitCode ? `Sơ đồ căn ${unit.unitCode}` : "Sơ đồ căn hộ"}
                           loading="lazy"
                           className="w-full h-full object-contain p-1 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
                         />

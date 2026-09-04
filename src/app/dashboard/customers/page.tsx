@@ -253,10 +253,10 @@ export default function CustomersPage() {
               <option value="UNASSIGNED">⚠️ Chưa phân công</option>
               <optgroup label="NHÂN SỰ NỘI BỘ">
                 {users
-                  .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                  .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role))
                   .map((u) => (
                     <option key={`filter-user:${u.id}`} value={`user:${u.id}`}>
-                      👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                      👤 {u.name} ({u.role === "COLLABORATOR_PRO" ? "CTV Pro" : u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
                     </option>
                   ))}
               </optgroup>
@@ -353,10 +353,10 @@ export default function CustomersPage() {
                       <option value="UNASSIGNED">⚠️ Chưa phân công</option>
                       <optgroup label="NHÂN SỰ NỘI BỘ">
                         {users
-                          .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                          .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role))
                           .map((u) => (
                             <option key={`m-user:${u.id}`} value={`user:${u.id}`}>
-                              👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                              👤 {u.name} ({u.role === "COLLABORATOR_PRO" ? "CTV Pro" : u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
                             </option>
                           ))}
                       </optgroup>
@@ -479,10 +479,10 @@ export default function CustomersPage() {
                           <option value="UNASSIGNED">-- Chưa phân công --</option>
                           <optgroup label="NHÂN SỰ NỘI BỘ">
                             {users
-                              .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                              .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role))
                               .map((u) => (
                                 <option key={`user:${u.id}`} value={`user:${u.id}`}>
-                                  👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                                  👤 {u.name} ({u.role === "COLLABORATOR_PRO" ? "CTV Pro" : u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
                                 </option>
                               ))}
                           </optgroup>
@@ -635,10 +635,10 @@ export default function CustomersPage() {
                   <option value="UNASSIGNED">-- Chưa phân công --</option>
                   <optgroup label="NHÂN SỰ NỘI BỘ">
                     {users
-                      .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF"].includes(u.role))
+                      .filter((u) => u.active && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role))
                       .map((u) => (
                         <option key={`modal-user:${u.id}`} value={`user:${u.id}`}>
-                          👤 {u.name} ({u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
+                          👤 {u.name} ({u.role === "COLLABORATOR_PRO" ? "CTV Pro" : u.role === "STAFF" ? "Nhân viên" : u.role === "MANAGER" ? "Quản lý" : "Admin"})
                         </option>
                       ))}
                   </optgroup>

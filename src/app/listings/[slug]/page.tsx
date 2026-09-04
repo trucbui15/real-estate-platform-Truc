@@ -2,12 +2,12 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isBackofficeRole } from "@/lib/permissions";
+import { canViewInternalUnitCode } from "@/lib/permissions";
 import ListingDetailClient from "./ListingDetailClient";
 
 export default async function ListingDetailPage({ params }: { params: { slug: string } }) {
   const session = await getServerSession(authOptions);
-  const isBackoffice = isBackofficeRole(session?.user?.role);
+  const canSeeUnitCode = canViewInternalUnitCode(session?.user?.role);
 
   const rawSlug = params.slug;
   let decodedSlug = rawSlug;
@@ -36,8 +36,8 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
   if (!rawListing) return notFound();
 
-  // Ẩn mã căn thực tế & tòa tầng với tài khoản CTV / Khách hàng công khai
-  const listing = isBackoffice
+  // Ẩn mã căn thực tế & tòa tầng với tài khoản CTV Pro / CTV / Khách hàng công khai
+  const listing = canSeeUnitCode
     ? rawListing
     : {
         ...rawListing,

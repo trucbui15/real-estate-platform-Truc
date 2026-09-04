@@ -1,8 +1,14 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { authOptions } from "@/lib/auth";
-import { isBackofficeRole, canManageUsers, canManageProjectsAndNews } from "@/lib/permissions";
+import {
+  isBackofficeRole,
+  canManageUsers,
+  canManageProjectsAndNews,
+  canManageCollaborators,
+  canAccessCRM,
+  ROLE_LABELS,
+} from "@/lib/permissions";
 
 import DashboardNav from "./DashboardNav";
 
@@ -17,17 +23,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const role = session.user.role;
-  const roleLabel = { ADMIN: "Quản trị viên", MANAGER: "Quản lý", STAFF: "Nhân viên" }[role];
+  const roleLabel = ROLE_LABELS[role] || "Thành viên";
 
   const links = [
-    { href: "/dashboard", label: "Tổng quan", icon: "📊", show: true },
-    { href: "/dashboard/listings", label: "Tin đăng BĐS", icon: "🏢", show: true },
-    { href: "/dashboard/customers", label: "Khách hàng (CRM)", icon: "👥", show: true },
-    { href: "/dashboard/services", label: "Đặt phòng & Visa", icon: "🧳", show: true },
-    { href: "/dashboard/collaborators", label: "Cộng tác viên (CTV)", icon: "🤝", show: true },
-    { href: "/dashboard/projects", label: "Dự án", icon: "🏗️", show: canManageProjectsAndNews(role) },
-    { href: "/dashboard/news", label: "Tin tức", icon: "📰", show: canManageProjectsAndNews(role) },
-    { href: "/dashboard/users", label: "Tài khoản nội bộ", icon: "👤", show: canManageUsers(role) },
+    { href: "/dashboard", label: "Tổng quan", show: true },
+    { href: "/dashboard/listings", label: "Tin đăng BĐS", show: true },
+    { href: "/dashboard/customers", label: "Khách hàng (CRM)", show: canAccessCRM(role) },
+    { href: "/dashboard/services", label: "Đặt phòng & Visa", show: true },
+    { href: "/dashboard/collaborators", label: "Cộng tác viên (CTV)", show: canManageCollaborators(role) },
+    { href: "/dashboard/projects", label: "Dự án", show: canManageProjectsAndNews(role) },
+    { href: "/dashboard/news", label: "Tin tức", show: canManageProjectsAndNews(role) },
+    { href: "/dashboard/users", label: "Tài khoản nội bộ", show: canManageUsers(role) },
   ];
 
   return (

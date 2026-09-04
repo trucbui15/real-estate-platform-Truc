@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBackofficeRole } from "@/lib/permissions";
 import ProjectOverviewListClient from "./ProjectOverviewListClient";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export default async function TongThongTinDuAnIndexPage() {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  const isInternalUser = userRole === "STAFF" || userRole === "MANAGER" || userRole === "ADMIN";
+  const isInternalUser = isBackofficeRole(userRole);
 
   // Lấy toàn bộ danh sách dự án
   const projects = await prisma.project.findMany({

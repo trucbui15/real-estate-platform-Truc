@@ -4,16 +4,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageCustomers, canManageAllListings } from "@/lib/permissions";
+import { canAccessCRM, canManageAllCustomers, canAssignCustomers } from "@/lib/permissions";
 import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
 import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // GET /api/customers?status=..&keyword=..&assignee=..
-// STAFF: thấy khách được giao cho mình + khách giao cho CTV do mình giới thiệu
-// MANAGER/ADMIN: thấy toàn bộ khách hàng
+// STAFF & COLLABORATOR_PRO: Chỉ thấy khách được giao cho mình (assignedToId = session.user.id)
+// MANAGER / ADMIN: Thấy toàn bộ khách hàng
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !canManageCustomers(session.user.role)) {
+  if (!session || !canAccessCRM(session.user.role)) {
     return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
   }
 
@@ -35,15 +35,17 @@ export async function GET(req: Request) {
     assigneeCondition = { assignedCollaboratorId: assignee.replace("collaborator:", "") };
   }
 
-  const isManagerUp = canManageAllListings(session.user.role);
+  const isManagerUp = canManageAllCustomers(session.user.role);
   const permissionCondition = isManagerUp
     ? {}
-    : {
-        OR: [
-          { assignedToId: session.user.id },
-          { assignedCollaborator: { referredByUserId: session.user.id } },
-        ],
-      };
+    : session.user.role === "COLLABORATOR_PRO"
+      ? { assignedToId: session.user.id } // CTV Pro chỉ thấy khách hàng được phân công cho chính mình
+      : {
+          OR: [
+            { assignedToId: session.user.id },
+            { assignedCollaborator: { referredByUserId: session.user.id } },
+          ],
+        };
 
   const where: any = {
     ...(status ? { status } : {}),
@@ -75,10 +77,10 @@ export async function GET(req: Request) {
   return NextResponse.json(customers);
 }
 
-// POST /api/customers — Nhân viên/Quản lý/Admin nhập tay 1 khách hàng mới
+// POST /api/customers — Nhập tay 1 khách hàng mới
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !canManageCustomers(session.user.role)) {
+  if (!session || !canAccessCRM(session.user.role)) {
     return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
   }
 
@@ -100,22 +102,25 @@ export async function POST(req: Request) {
   let assignedCollaboratorId: string | null = null;
   let assignedAt: Date | null = new Date();
 
-  if (body.assigneeType === "COLLABORATOR" && body.assigneeId) {
-    assignedToId = null;
-    assignedCollaboratorId = body.assigneeId;
-  } else if (body.assigneeType === "USER" && body.assigneeId) {
-    assignedToId = body.assigneeId;
-    assignedCollaboratorId = null;
-  } else if (body.assigneeType === "UNASSIGNED") {
-    assignedToId = null;
-    assignedCollaboratorId = null;
-    assignedAt = null;
-  } else if (body.assignedCollaboratorId) {
-    assignedToId = null;
-    assignedCollaboratorId = body.assignedCollaboratorId;
-  } else if (body.assignedToId) {
-    assignedToId = body.assignedToId;
-    assignedCollaboratorId = null;
+  // Chỉ Admin / Manager mới được chỉ định người phụ trách khác
+  if (canAssignCustomers(session.user.role)) {
+    if (body.assigneeType === "COLLABORATOR" && body.assigneeId) {
+      assignedToId = null;
+      assignedCollaboratorId = body.assigneeId;
+    } else if (body.assigneeType === "USER" && body.assigneeId) {
+      assignedToId = body.assigneeId;
+      assignedCollaboratorId = null;
+    } else if (body.assigneeType === "UNASSIGNED") {
+      assignedToId = null;
+      assignedCollaboratorId = null;
+      assignedAt = null;
+    } else if (body.assignedCollaboratorId) {
+      assignedToId = null;
+      assignedCollaboratorId = body.assignedCollaboratorId;
+    } else if (body.assignedToId) {
+      assignedToId = body.assignedToId;
+      assignedCollaboratorId = null;
+    }
   }
 
   const customer = await prisma.customer.create({

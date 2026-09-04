@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canEditListing, canManageAllListings, isBackofficeRole } from "@/lib/permissions";
+import { canEditListing, canManageAllListings, canViewInternalUnitCode } from "@/lib/permissions";
 import { slugify } from "@/lib/utils";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  const isBackoffice = isBackofficeRole(session?.user?.role);
+  const canSeeUnitCode = canViewInternalUnitCode(session?.user?.role);
 
   const listing = await prisma.listing.findUnique({
     where: { id: params.id },
@@ -17,10 +17,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
   if (!listing) return NextResponse.json({ error: "Không tìm thấy tin" }, { status: 404 });
 
-  if (!isBackoffice) {
+  if (!canSeeUnitCode) {
     return NextResponse.json({
       ...listing,
-      unitCode: listing.productCode || listing.unitCode, // Ẩn mã căn thực tế với CTV và Khách
+      unitCode: listing.productCode || listing.unitCode, // Ẩn mã căn thực tế với CTV Pro, CTV và Khách
     });
   }
 
@@ -59,8 +59,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const newTitle = body.title ?? existing.title;
   const newSlug = slugify(newTitle) + "-" + slugify(newProductCode || existing.unitCode);
 
+  const isStaffOrPro = session.user.role === "STAFF" || session.user.role === "COLLABORATOR_PRO";
   const unitStatus =
-    session.user.role === "STAFF" && body.unitStatus !== existing.unitStatus
+    isStaffOrPro && body.unitStatus !== existing.unitStatus
       ? "CHO_DUYET"
       : body.unitStatus ?? existing.unitStatus;
 

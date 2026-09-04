@@ -36,7 +36,7 @@ export default async function ProfilePage() {
     select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true },
   });
 
-  const isBackoffice = dbUser && ["ADMIN", "MANAGER", "STAFF"].includes(dbUser.role);
+  const isBackoffice = dbUser && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(dbUser.role);
 
   // Clean phone number for precise matching
   const userCleanPhone = dbUser?.phone ? normalizePhone(dbUser.phone) : "";
@@ -85,7 +85,7 @@ export default async function ProfilePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
-              {dbUser?.role === "CUSTOMER" ? "TÀI KHOẢN CTV / KHÁCH HÀNG" : `${dbUser?.role} ACCOUNT`}
+              {dbUser?.role === "CUSTOMER" ? "TÀI KHOẢN KHÁCH HÀNG" : dbUser?.role === "COLLABORATOR_PRO" ? "TÀI KHOẢN CTV PRO" : `${dbUser?.role} ACCOUNT`}
             </span>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
               Xin chào, {dbUser?.name}

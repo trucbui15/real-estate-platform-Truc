@@ -855,7 +855,7 @@ export default function ProjectMicrositeRenderer({
                           <div className="relative flex-1 min-w-[160px] max-w-xs">
                             <input
                               type="text"
-                              placeholder="Tìm mã căn (VD: A.05, B.12)..."
+                              placeholder={(session?.user as any)?.role === "COLLABORATOR_PRO" ? "Tìm theo tầng, diện tích..." : "Tìm mã căn (VD: A.05, B.12)..."}
                               value={searchUnitCode}
                               onChange={(e) => setSearchUnitCode(e.target.value)}
                               className="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
@@ -932,7 +932,7 @@ export default function ProjectMicrositeRenderer({
                                   return (
                                     <tr key={unit.id} className="hover:bg-amber-50/40 transition">
                                       <td className="py-3 px-4 font-black text-slate-900 flex items-center gap-2">
-                                        <span>{unit.unitCode}</span>
+                                        <span>{unit.unitCode || "••••"}</span>
                                         {images.length > 0 && (
                                           <button
                                             type="button"
@@ -960,7 +960,9 @@ export default function ProjectMicrositeRenderer({
                                           onClick={() => {
                                             setLeadForm((prev) => ({
                                               ...prev,
-                                              note: `Tư vấn báo giá căn ${unit.unitCode} (${unit.area}m2) dự án ${projectName}`,
+                                              note: unit.unitCode
+                                                ? `Tư vấn báo giá căn ${unit.unitCode} (${unit.area}m2) dự án ${projectName}`
+                                                : `Tư vấn báo giá căn (${unit.area}m2) dự án ${projectName}`,
                                             }));
                                             setShowInquiryModal(true);
                                           }}

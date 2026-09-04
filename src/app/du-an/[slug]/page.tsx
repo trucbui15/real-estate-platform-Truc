@@ -61,9 +61,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isDeniedUnitCode } from "@/lib/permissions";
+
 // 2. PUBLIC MICROSITE PAGE COMPONENT
 export default async function PublicProjectWebsitePage({ params }: Props) {
   const { slug } = params;
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const isDenied = isDeniedUnitCode(userRole);
 
   const project = await prisma.project.findUnique({
     where: { slug },
@@ -212,7 +219,7 @@ export default async function PublicProjectWebsitePage({ params }: Props) {
       address={project.address}
       sectionsConfig={sectionsConfig}
       contentJson={contentJson}
-      inventories={project.inventories}
+      inventories={isDenied ? project.inventories.map((u) => ({ ...u, unitCode: null })) : project.inventories}
       listings={project.listings}
       resources={project.resources}
       metaTitle={website?.publishedMetaTitle || undefined}

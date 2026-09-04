@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isBackofficeRole } from "@/lib/permissions";
+import { isBackofficeRole, isDeniedUnitCode } from "@/lib/permissions";
 import ProjectMicrositeRenderer from "@/components/microsite/ProjectMicrositeRenderer";
 
 interface Props {
@@ -18,9 +18,10 @@ export const metadata: Metadata = {
 export default async function DraftPreviewProjectWebsitePage({ params }: Props) {
   const { slug } = params;
 
-  // 1. KIỂM TRA PHÂN QUYỀN NỘI BỘ (ADMIN / MANAGER / STAFF)
+  // 1. KIỂM TRA PHÂN QUYỀN NỘI BỘ (ADMIN / MANAGER / STAFF / COLLABORATOR_PRO)
   const session = await getServerSession(authOptions);
-  if (!session || !isBackofficeRole((session.user as any)?.role)) {
+  const userRole = (session?.user as any)?.role;
+  if (!session || !isBackofficeRole(userRole)) {
     redirect(`/login?callbackUrl=/du-an/${slug}/preview`);
   }
 
@@ -71,6 +72,8 @@ export default async function DraftPreviewProjectWebsitePage({ params }: Props) 
     console.error("Lỗi parse draftContentJson:", e);
   }
 
+  const isDenied = isDeniedUnitCode(userRole);
+
   return (
     <ProjectMicrositeRenderer
       projectId={project.id}
@@ -80,7 +83,7 @@ export default async function DraftPreviewProjectWebsitePage({ params }: Props) 
       address={project.address}
       sectionsConfig={sectionsConfig}
       contentJson={contentJson}
-      inventories={project.inventories}
+      inventories={isDenied ? (project.inventories || []).map((u: any) => ({ ...u, unitCode: null })) : project.inventories}
       listings={project.listings}
       resources={project.resources}
       metaTitle={website.draftMetaTitle || undefined}

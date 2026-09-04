@@ -12,10 +12,12 @@ export const metadata: Metadata = {
   description: "Trải nghiệm thực tế ảo 360 degree căn hộ mẫu, toàn cảnh thành phố Quy Nhơn và sa bàn các dự án bất động sản.",
 };
 
+import { canManageProjectResources } from "@/lib/permissions";
+
 export default async function Tour360Page() {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  const canEdit = userRole === "ADMIN" || userRole === "MANAGER" || userRole === "STAFF";
+  const canEdit = canManageProjectResources(userRole);
 
   let cityResource: any = null;
   let projects: any[] = [];

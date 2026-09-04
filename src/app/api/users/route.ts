@@ -5,13 +5,13 @@ import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageUsers, canManageCustomers } from "@/lib/permissions";
+import { canManageUsers, canAccessCRM } from "@/lib/permissions";
 import { normalizePhone, validatePhone } from "@/lib/utils";
 
-// ADMIN, MANAGER và STAFF được xem danh sách nhân sự để phân công / hiển thị khách hàng
+// ADMIN, MANAGER và STAFF/CTV PRO được xem danh sách nhân sự để phân công / hiển thị khách hàng
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !canManageCustomers(session.user.role)) {
+  if (!session || !canAccessCRM(session.user.role)) {
     return NextResponse.json({ error: "Không có quyền xem danh sách nhân sự" }, { status: 403 });
   }
   const { searchParams } = new URL(req.url);
@@ -20,14 +20,13 @@ export async function GET(req: Request) {
   const users = await prisma.user.findMany({
     where: {
       active: true,
-      role: role ? (role as any) : { in: ["ADMIN", "MANAGER", "STAFF"] },
+      role: role ? (role as any) : { in: ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"] },
     },
     select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true, active: true, createdAt: true },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
   return NextResponse.json(users);
 }
-
 
 export async function POST(req: Request) {
   try {
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
     if (!body.name || !body.email || !body.password || !body.role) {
       return NextResponse.json({ error: "Thiếu trường bắt buộc (Tên, Email, Mật khẩu, Vai trò)" }, { status: 400 });
     }
-    if (!["ADMIN", "MANAGER", "STAFF"].includes(body.role)) {
+    if (!["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(body.role)) {
       return NextResponse.json({ error: "Vai trò không hợp lệ" }, { status: 400 });
     }
 

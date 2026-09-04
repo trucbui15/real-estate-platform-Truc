@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
+import { ROLE_LABELS } from "@/lib/permissions";
 
 const roleLabel: Record<string, string> = {
-  ADMIN: "Quản trị hệ thống",
-  MANAGER: "Quản lý kinh doanh",
-  STAFF: "Chuyên viên kinh doanh",
+  ADMIN: "Quản trị",
+  MANAGER: "Quản lý",
+  STAFF: "Nhân viên",
+  COLLABORATOR_PRO: "CTV Pro",
   CUSTOMER: "Khách hàng",
 };
 
@@ -198,9 +200,10 @@ export default function UsersPage() {
             className="h-[42px] px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#0F172A] outline-none"
           >
             <option value="">Tất cả vai trò</option>
-            <option value="ADMIN">Quản trị hệ thống</option>
-            <option value="MANAGER">Quản lý kinh doanh</option>
-            <option value="STAFF">Chuyên viên kinh doanh</option>
+            <option value="ADMIN">Quản trị</option>
+            <option value="MANAGER">Quản lý</option>
+            <option value="STAFF">Nhân viên</option>
+            <option value="COLLABORATOR_PRO">CTV Pro</option>
             <option value="CUSTOMER">Khách hàng</option>
           </select>
 
@@ -252,9 +255,10 @@ export default function UsersPage() {
                       onChange={(e) => updateRole(u.id, e.target.value)}
                       className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#0F172A] outline-none focus:border-[#4F46E5] cursor-pointer shadow-sm"
                     >
-                      <option value="ADMIN">Quản trị hệ thống</option>
-                      <option value="MANAGER">Quản lý kinh doanh</option>
-                      <option value="STAFF">Chuyên viên kinh doanh</option>
+                      <option value="ADMIN">Quản trị</option>
+                      <option value="MANAGER">Quản lý</option>
+                      <option value="STAFF">Nhân viên</option>
+                      <option value="COLLABORATOR_PRO">CTV Pro</option>
                       <option value="CUSTOMER">Khách hàng</option>
                     </select>
                   </td>
@@ -346,9 +350,10 @@ export default function UsersPage() {
               <div>
                 <label className="label">Vai trò hệ thống *</label>
                 <select className="input font-medium cursor-pointer" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                  <option value="STAFF">Chuyên viên kinh doanh (STAFF)</option>
-                  <option value="MANAGER">Quản lý kinh doanh (MANAGER)</option>
-                  <option value="ADMIN">Quản trị hệ thống (ADMIN)</option>
+                  <option value="STAFF">Nhân viên (STAFF)</option>
+                  <option value="COLLABORATOR_PRO">CTV Pro (COLLABORATOR_PRO)</option>
+                  <option value="MANAGER">Quản lý (MANAGER)</option>
+                  <option value="ADMIN">Quản trị (ADMIN)</option>
                 </select>
               </div>
 
@@ -456,6 +461,3 @@ export default function UsersPage() {
     </div>
   );
 }
-
-
-

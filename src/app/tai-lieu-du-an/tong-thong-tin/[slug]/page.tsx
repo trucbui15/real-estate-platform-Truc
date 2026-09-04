@@ -34,10 +34,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+import { isBackofficeRole } from "@/lib/permissions";
+
 export default async function ProjectNativeDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  const isInternalUser = userRole === "STAFF" || userRole === "MANAGER" || userRole === "ADMIN";
+  const isInternalUser = isBackofficeRole(userRole);
 
   // Tìm dự án theo slug hoặc slug ngắn
   let project = await prisma.project.findFirst({

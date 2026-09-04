@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isBackofficeRole } from "@/lib/permissions";
+import { canManageInventory } from "@/lib/permissions";
 
-// PUT /api/project-inventory/[id] — Sửa căn trong Bảng Hàng
+// PUT /api/project-inventory/[id] — Sửa căn trong Bảng Hàng (Chỉ Admin / Manager / Staff)
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !isBackofficeRole(session.user.role)) {
+  if (!session || !canManageInventory(session.user.role)) {
     return NextResponse.json({ error: "Bạn không có quyền thực hiện thao tác này" }, { status: 403 });
   }
 
@@ -16,7 +16,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   });
 
   if (!existing) {
-    return NextResponse.json({ error: "Sản phẩm không tồn tại" }, { status: 444 });
+    return NextResponse.json({ error: "Sản phẩm không tồn tại" }, { status: 404 });
   }
 
   const body = await req.json();
@@ -43,10 +43,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   return NextResponse.json(updatedItem);
 }
 
-// DELETE /api/project-inventory/[id] — Xóa căn khỏi Bảng Hàng
+// DELETE /api/project-inventory/[id] — Xóa căn khỏi Bảng Hàng (Chỉ Admin / Manager / Staff)
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !isBackofficeRole(session.user.role)) {
+  if (!session || !canManageInventory(session.user.role)) {
     return NextResponse.json({ error: "Bạn không có quyền thực hiện thao tác này" }, { status: 403 });
   }
 
@@ -55,7 +55,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   });
 
   if (!existing) {
-    return NextResponse.json({ error: "Sản phẩm không tồn tại" }, { status: 444 });
+    return NextResponse.json({ error: "Sản phẩm không tồn tại" }, { status: 404 });
   }
 
   await prisma.projectInventory.delete({

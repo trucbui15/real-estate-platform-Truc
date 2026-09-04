@@ -12,7 +12,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<"listings" | "projects" | "services" | null>("projects");
 
-  const isBackoffice = session && ["ADMIN", "MANAGER", "STAFF"].includes((session.user as any).role);
+  const isBackoffice = session && ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes((session.user as any).role);
 
   // Active state checks
   const isListingsActive = pathname.startsWith("/listings");

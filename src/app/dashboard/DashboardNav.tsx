@@ -8,7 +8,7 @@ interface DashboardNavProps {
   links: {
     href: string;
     label: string;
-    icon: string;
+    icon?: string;
     show: boolean;
   }[];
 }
@@ -120,7 +120,7 @@ export default function DashboardNav({ links }: DashboardNavProps) {
                   : "text-slate-700 hover:bg-slate-100/80 hover:text-sky-700 active:scale-95"
               }`}
             >
-              <span className="text-sm md:text-base">{l.icon}</span>
+              {l.icon && <span className="text-sm md:text-base">{l.icon}</span>}
               <span>{l.label}</span>
             </Link>
           );

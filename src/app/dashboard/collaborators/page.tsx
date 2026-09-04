@@ -108,7 +108,6 @@ export default function CollaboratorsDashboardPage() {
             }}
             className="btn-primary text-xs font-bold px-3.5 py-2 self-start sm:self-auto flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 border-none shadow-xs"
           >
-            <span>🔗</span>
             <span>Sao chép Link Tuyển dụng CTV</span>
           </button>
 
@@ -155,7 +154,7 @@ export default function CollaboratorsDashboardPage() {
                   <td className="px-4 py-3.5 min-w-[160px]">
                     <div className="font-bold text-slate-900">{c.fullName}</div>
                     <div className="text-xs text-slate-500 font-mono">
-                      📞 {c.phone} {c.email ? `· ✉️ ${c.email}` : ""}
+                      {c.phone} {c.email ? `· ${c.email}` : ""}
                     </div>
                   </td>
 
@@ -173,14 +172,14 @@ export default function CollaboratorsDashboardPage() {
                         }}
                         className="text-[11px] font-semibold text-slate-600 hover:text-blue-700 px-1.5 py-0.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded transition cursor-pointer"
                       >
-                        📋 Copy
+                        Copy
                       </button>
                     </div>
                   </td>
 
                   <td className="px-4 py-3.5 text-xs min-w-[150px]">
                     <span className="font-semibold text-slate-800">
-                      👤 {c.referredByUser?.name || "Hệ thống"}
+                      {c.referredByUser?.name || "Hệ thống"}
                     </span>
                     <span className="text-[11px] text-slate-400 block font-mono">
                       ({c.referredByUser?.role})
@@ -198,7 +197,7 @@ export default function CollaboratorsDashboardPage() {
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                        🔒 Đã khóa
+                        Đã khóa
                       </span>
                     )}
                   </td>
@@ -218,7 +217,7 @@ export default function CollaboratorsDashboardPage() {
                             : "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                         }`}
                       >
-                        {c.status === "ACTIVE" ? "🔒 Khóa" : "🔓 Mở khóa"}
+                        {c.status === "ACTIVE" ? "Khóa" : "Mở khóa"}
                       </button>
 
                       <button
@@ -226,7 +225,7 @@ export default function CollaboratorsDashboardPage() {
                         onClick={() => deleteCollaborator(c.id, c.fullName)}
                         className="text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
                       >
-                        🗑️ Xóa
+                        Xóa
                       </button>
                     </div>
                   </td>

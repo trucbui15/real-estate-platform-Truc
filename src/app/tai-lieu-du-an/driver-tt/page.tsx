@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBackofficeRole } from "@/lib/permissions";
 
 export const metadata: Metadata = {
   title: "Driver thông tin các Dự án | Minh Dũng Land",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default async function DriverTTPage() {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  const isInternalUser = userRole === "STAFF" || userRole === "MANAGER" || userRole === "ADMIN";
+  const isInternalUser = isBackofficeRole(userRole);
 
   const projects = await prisma.project.findMany({
     where: { isActive: true },

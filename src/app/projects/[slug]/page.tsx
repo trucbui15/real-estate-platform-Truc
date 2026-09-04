@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isDeniedUnitCode } from "@/lib/permissions";
 import ProjectDetailClient from "./ProjectDetailClient";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
@@ -16,6 +19,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ProjectDetailPage({ params }: { params: { slug: string } }) {
+  const session = await getServerSession(authOptions);
+  const userRole = session?.user?.role;
+
   const project = await prisma.project.findUnique({
     where: { slug: params.slug },
     include: {
@@ -29,12 +35,18 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
   if (!project) return notFound();
 
   // Query Bảng Hàng (Project Inventory Units)
-  const inventoryUnits = await prisma.projectInventory.findMany({
+  const rawInventoryUnits = await prisma.projectInventory.findMany({
     where: {
       projectId: project.id,
     },
     orderBy: [{ unitCode: "asc" }, { createdAt: "desc" }],
   });
+
+  // Server-Side Security Boundary:
+  // Nếu là CTV Pro (isDeniedUnitCode = true), server sanitize gán unitCode: null trước khi serialize props
+  const inventoryUnits = isDeniedUnitCode(userRole)
+    ? rawInventoryUnits.map((u) => ({ ...u, unitCode: null }))
+    : rawInventoryUnits;
 
   // Query Căn Đang Bán (Public Sale Listings)
   const saleListings = await prisma.listing.findMany({
@@ -67,4 +79,3 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
     />
   );
 }
-

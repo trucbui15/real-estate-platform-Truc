@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
-import { canCreateListing, isBackofficeRole } from "@/lib/permissions";
+import { canCreateListing, isBackofficeRole, canViewInternalUnitCode } from "@/lib/permissions";
 
 // GET /api/listings
 export async function GET(req: Request) {
@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const furnitureStatus = searchParams.get("furnitureStatus") || undefined;
   const keyword = searchParams.get("keyword") || undefined;
   const isBackoffice = isBackofficeRole(session?.user?.role);
+  const canSeeUnitCode = canViewInternalUnitCode(session?.user?.role);
   const showAll = searchParams.get("all") === "1" && isBackoffice;
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const pageSize = 12;
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
           OR: [
             { title: { contains: keyword, mode: "insensitive" } },
             { productCode: { contains: keyword, mode: "insensitive" } },
-            ...(isBackoffice ? [{ unitCode: { contains: keyword, mode: "insensitive" } }] : []),
+            ...(canSeeUnitCode ? [{ unitCode: { contains: keyword, mode: "insensitive" } }] : []),
             { project: { name: { contains: keyword, mode: "insensitive" } } },
           ],
         }
@@ -93,10 +94,10 @@ export async function GET(req: Request) {
   ]);
 
   const sanitizedItems = items.map((l) => {
-    if (!isBackoffice) {
+    if (!canSeeUnitCode) {
       return {
         ...l,
-        unitCode: l.productCode || l.unitCode, // Ẩn mã căn thật đối với CTV và Khách hàng
+        unitCode: l.productCode || l.unitCode, // Ẩn mã căn thật đối với CTV Pro, CTV và Khách hàng
       };
     }
     return l;
@@ -105,7 +106,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ items: sanitizedItems, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
 }
 
-// POST /api/listings — Nhân viên trở lên mới được đăng tin
+// POST /api/listings — Nhân viên và CTV Pro trở lên mới được đăng tin
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !canCreateListing(session.user.role)) {
@@ -144,7 +145,9 @@ export async function POST(req: Request) {
   // Đường dẫn link chia sẻ (slug) tạo từ Mã Sản Phẩm thay vì Mã Căn để tránh lộ thông tin căn
   const baseSlug = slugify(body.title) + "-" + slugify(productCode);
   const initialStatus =
-    session.user.role === "STAFF" ? "CHO_DUYET" : body.unitStatus || "DANG_BAN";
+    session.user.role === "STAFF" || session.user.role === "COLLABORATOR_PRO"
+      ? "CHO_DUYET"
+      : body.unitStatus || "DANG_BAN";
 
   try {
     const listing = await prisma.listing.create({
@@ -182,4 +185,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Mã sản phẩm hoặc mã căn đã tồn tại hoặc dữ liệu không hợp lệ" }, { status: 400 });
   }
 }
-

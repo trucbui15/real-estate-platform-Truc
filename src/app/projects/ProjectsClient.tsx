@@ -29,10 +29,12 @@ function getCoverPhoto(project: ProjectItem): string | null {
   return null;
 }
 
+import { canManageProjectContent } from "@/lib/permissions";
+
 export default function ProjectsClient({ projects: initialProjects }: ProjectsClientProps) {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
-  const canEdit = role === "ADMIN" || role === "MANAGER" || role === "STAFF";
+  const canEdit = canManageProjectContent(role);
 
   const [projectsList, setProjectsList] = useState<ProjectItem[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState("");
