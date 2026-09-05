@@ -18,7 +18,7 @@ export function ProjectListingsStrip({
         <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-amber-400">
           ⚡ GIỎ HÀNG THỰC TẾ
         </span>
-        <h3 className="font-display text-xl md:text-2xl font-extrabold tracking-tight">
+        <h3 className="font-display text-xl md:text-2xl font-extrabold tracking-tight text-white">
           Danh sách BĐS đang rao bán tại {projectName}
         </h3>
         <p className="text-xs text-slate-300 leading-relaxed font-medium">

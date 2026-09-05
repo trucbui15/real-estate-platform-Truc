@@ -1423,7 +1423,7 @@ export default function ProjectDetailClient({
         {/* 7. SECTION KÝ GỬI CTA */}
         <section className="rounded-2xl bg-slate-900 p-6 text-white space-y-3 shadow-md">
           <div className="max-w-2xl space-y-1">
-            <h3 className="text-[20px] font-bold">
+            <h3 className="text-[20px] font-bold text-white">
               Bạn có căn tại {project.name}?
             </h3>
             <p className="text-[13px] text-slate-300">

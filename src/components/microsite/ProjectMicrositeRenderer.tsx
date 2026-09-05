@@ -1117,7 +1117,7 @@ export default function ProjectMicrositeRenderer({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="space-y-1">
                             <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Virtual Tour 360°</span>
-                            <h3 className="text-lg font-black">Khám phá không gian căn hộ 360° thực tế</h3>
+                            <h3 className="text-lg font-black text-white">Khám phá không gian căn hộ 360° thực tế</h3>
                             <p className="text-xs text-slate-300">Trải nghiệm góc nhìn toàn cảnh không giới hạn trực tiếp từ điện thoại & máy tính.</p>
                           </div>
                           <a
