@@ -27,7 +27,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       updateData.phone = null;
     }
   }
-  if (body.role !== undefined) updateData.role = body.role;
+  if (body.role !== undefined) {
+    if (!["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO", "CUSTOMER"].includes(body.role)) {
+      return NextResponse.json({ error: "Vai trò không hợp lệ" }, { status: 400 });
+    }
+    updateData.role = body.role;
+  }
   if (body.active !== undefined) updateData.active = body.active;
   if (body.password && body.password.trim().length >= 6) {
     updateData.passwordHash = await bcrypt.hash(body.password, 10);
@@ -36,7 +41,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const updated = await prisma.user.update({
     where: { id: params.id },
     data: updateData,
-    select: { id: true, name: true, email: true, phone: true, role: true, active: true, createdAt: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true, active: true, createdAt: true },
   });
   return NextResponse.json(updated);
 }

@@ -8,21 +8,64 @@ import { prisma } from "@/lib/prisma";
 import { canManageUsers, canAccessCRM } from "@/lib/permissions";
 import { normalizePhone, validatePhone } from "@/lib/utils";
 
-// ADMIN, MANAGER và STAFF/CTV PRO được xem danh sách nhân sự để phân công / hiển thị khách hàng
+// ADMIN, MANAGER và STAFF/CTV PRO được xem danh sách người dùng / nhân sự
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền xem danh sách nhân sự" }, { status: 403 });
+    return NextResponse.json({ error: "Không có quyền xem danh sách người dùng" }, { status: 403 });
   }
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role") || undefined;
+  const allParam = searchParams.get("all") === "true";
+  const forAssign = searchParams.get("forAssign") === "true";
+  const searchParam = searchParams.get("search")?.trim() || undefined;
+
+  const where: any = {};
+
+  // If forAssign is true -> internal active users only
+  if (forAssign) {
+    where.active = true;
+    where.role = { in: ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"] };
+  } else if (role && role !== "ALL") {
+    if (role === "INTERNAL") {
+      where.role = { in: ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"] };
+    } else {
+      where.role = role;
+    }
+    if (!allParam && !canManageUsers(session.user.role)) {
+      where.active = true;
+    }
+  } else if (allParam || canManageUsers(session.user.role)) {
+    // Admin user management or explicit all=true: include all roles (ADMIN, MANAGER, STAFF, COLLABORATOR_PRO, CUSTOMER)
+    // and both active/inactive
+  } else {
+    // Default for non-admin CRM helpers: active internal staff
+    where.active = true;
+    where.role = { in: ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"] };
+  }
+
+  if (searchParam) {
+    where.OR = [
+      { name: { contains: searchParam, mode: "insensitive" } },
+      { email: { contains: searchParam, mode: "insensitive" } },
+      { phone: { contains: searchParam, mode: "insensitive" } },
+      { referralCode: { contains: searchParam, mode: "insensitive" } },
+    ];
+  }
 
   const users = await prisma.user.findMany({
-    where: {
+    where,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      referralCode: true,
       active: true,
-      role: role ? (role as any) : { in: ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"] },
+      createdAt: true,
+      updatedAt: true,
     },
-    select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true, active: true, createdAt: true },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
   return NextResponse.json(users);
@@ -32,14 +75,14 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !canManageUsers(session.user.role)) {
-      return NextResponse.json({ error: "Chỉ Admin mới có quyền tạo tài khoản nội bộ" }, { status: 403 });
+      return NextResponse.json({ error: "Chỉ Admin mới có quyền tạo tài khoản người dùng" }, { status: 403 });
     }
 
     const body = await req.json();
     if (!body.name || !body.email || !body.password || !body.role) {
       return NextResponse.json({ error: "Thiếu trường bắt buộc (Tên, Email, Mật khẩu, Vai trò)" }, { status: 400 });
     }
-    if (!["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(body.role)) {
+    if (!["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO", "CUSTOMER"].includes(body.role)) {
       return NextResponse.json({ error: "Vai trò không hợp lệ" }, { status: 400 });
     }
 

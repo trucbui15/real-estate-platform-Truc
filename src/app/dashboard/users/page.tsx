@@ -39,8 +39,12 @@ export default function UsersPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/users");
-    if (res.ok) setItems(await res.json());
+    try {
+      const res = await fetch("/api/users?all=true", { cache: "no-store" });
+      if (res.ok) setItems(await res.json());
+    } catch (e) {
+      console.error("Lỗi khi tải danh sách người dùng", e);
+    }
     setLoading(false);
   }
 
@@ -86,21 +90,43 @@ export default function UsersPage() {
   }
 
   async function toggleActive(id: string, active: boolean) {
-    await fetch(`/api/users/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ active: !active }),
-    });
-    load();
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !active }),
+      });
+      if (res.ok) {
+        setSuccess(`Đã ${!active ? "mở khóa" : "khóa"} tài khoản.`);
+        load();
+      }
+    } catch (e: any) {
+      setError(e.message || "Lỗi khi cập nhật trạng thái");
+    }
   }
 
   async function updateRole(id: string, newRole: string) {
-    await fetch(`/api/users/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: newRole }),
-    });
-    load();
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Không thể cập nhật vai trò");
+        return;
+      }
+      const label = roleLabel[newRole] || newRole;
+      setSuccess(`Đã cập nhật vai trò tài khoản thành công sang "${label}"!`);
+      load();
+    } catch (err: any) {
+      setError(err.message || "Lỗi khi cập nhật vai trò");
+    }
   }
 
   async function handleResetPassword(e: React.FormEvent) {
@@ -135,12 +161,26 @@ export default function UsersPage() {
     }
   }
 
+  // Counts for quick stats
+  const totalCount = items.length;
+  const internalCount = items.filter((u) => ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role)).length;
+  const customerCount = items.filter((u) => u.role === "CUSTOMER").length;
+
   const filteredItems = items.filter((u) => {
+    const q = search.toLowerCase().trim();
     const matchesSearch =
-      u.name.toLowerCase().includes(search.toLowerCase().trim()) ||
-      u.email.toLowerCase().includes(search.toLowerCase().trim()) ||
-      (u.phone && u.phone.includes(search.trim()));
-    const matchesRole = !roleFilter || u.role === roleFilter;
+      !q ||
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      (u.phone && u.phone.includes(q)) ||
+      (u.referralCode && u.referralCode.toLowerCase().includes(q));
+
+    let matchesRole = true;
+    if (roleFilter === "INTERNAL") {
+      matchesRole = ["ADMIN", "MANAGER", "STAFF", "COLLABORATOR_PRO"].includes(u.role);
+    } else if (roleFilter && roleFilter !== "ALL") {
+      matchesRole = u.role === roleFilter;
+    }
     return matchesSearch && matchesRole;
   });
 
@@ -155,7 +195,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-[22px] font-bold text-[#0F172A]">Quản lý Tài khoản Hệ thống</h1>
           <p className="mt-1 text-[14px] text-[#64748B]">
-            Quản lý danh sách, tạo mới, phân quyền vai trò và bảo mật tài khoản.
+            Quản lý danh sách, tạo mới, phân quyền vai trò và bảo mật tài khoản cho toàn bộ người dùng & nhân sự.
           </p>
         </div>
 
@@ -171,12 +211,55 @@ export default function UsersPage() {
       </div>
 
       {/* NOTIFICATION NOTICES */}
+      {error && (
+        <div className="rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] p-4 text-[14px] font-medium text-[#991B1B] flex justify-between items-center shadow-sm">
+          <span>⚠️ {error}</span>
+          <button onClick={() => setError("")} className="text-[#991B1B] hover:underline font-bold">✕</button>
+        </div>
+      )}
       {success && (
         <div className="rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 text-[14px] font-medium text-[#065F46] flex justify-between items-center shadow-sm">
           <span>✓ {success}</span>
           <button onClick={() => setSuccess("")} className="text-[#065F46] hover:underline font-bold">✕</button>
         </div>
       )}
+
+      {/* STATS & QUICK FILTER TABS */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setRoleFilter("")}
+          className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition border ${
+            roleFilter === "" || roleFilter === "ALL"
+              ? "bg-[#0F172A] text-white border-[#0F172A] shadow-sm"
+              : "bg-white text-[#64748B] border-[#E2E8F0] hover:bg-[#F8FAFC]"
+          }`}
+        >
+          Tất cả tài khoản ({totalCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setRoleFilter("INTERNAL")}
+          className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition border ${
+            roleFilter === "INTERNAL"
+              ? "bg-[#2563EB] text-white border-[#2563EB] shadow-sm"
+              : "bg-white text-[#64748B] border-[#E2E8F0] hover:bg-[#F8FAFC]"
+          }`}
+        >
+          Tài khoản nội bộ ({internalCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setRoleFilter("CUSTOMER")}
+          className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition border ${
+            roleFilter === "CUSTOMER"
+              ? "bg-[#D97706] text-white border-[#D97706] shadow-sm"
+              : "bg-white text-[#64748B] border-[#E2E8F0] hover:bg-[#F8FAFC]"
+          }`}
+        >
+          Khách hàng ({customerCount})
+        </button>
+      </div>
 
       {/* SEARCH AND FILTER CONTROL ROW */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E2E8F0] shadow-sm">
@@ -185,7 +268,7 @@ export default function UsersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên, email hoặc SĐT..."
+            placeholder="Tìm theo tên, email, SĐT hoặc Ref..."
             className="input !h-[42px] pl-9"
           />
           <svg className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,15 +283,16 @@ export default function UsersPage() {
             className="h-[42px] px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#0F172A] outline-none"
           >
             <option value="">Tất cả vai trò</option>
-            <option value="ADMIN">Quản trị</option>
-            <option value="MANAGER">Quản lý</option>
-            <option value="STAFF">Nhân viên</option>
-            <option value="COLLABORATOR_PRO">CTV Pro</option>
-            <option value="CUSTOMER">Khách hàng</option>
+            <option value="INTERNAL">Tài khoản nội bộ (Admin, QL, NV, CTV)</option>
+            <option value="ADMIN">Quản trị (ADMIN)</option>
+            <option value="MANAGER">Quản lý (MANAGER)</option>
+            <option value="STAFF">Nhân viên (STAFF)</option>
+            <option value="COLLABORATOR_PRO">CTV Pro (COLLABORATOR_PRO)</option>
+            <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
           </select>
 
           <span className="text-[13px] font-semibold text-[#64748B] whitespace-nowrap bg-[#F8FAFC] px-3 py-2 rounded-xl border border-[#E2E8F0]">
-            Tổng: {filteredItems.length} tài khoản
+            Hiển thị: {filteredItems.length} tài khoản
           </span>
         </div>
       </div>
@@ -235,9 +319,16 @@ export default function UsersPage() {
             ) : (
               filteredItems.map((u) => (
                 <tr key={u.id} className="hover:bg-[#F8FAFC] transition">
-                  <td className="px-5 py-4 font-bold text-[#0F172A] whitespace-nowrap">{u.name}</td>
+                  <td className="px-5 py-4 font-bold text-[#0F172A] whitespace-nowrap">
+                    <div>{u.name}</div>
+                    {u.role === "CUSTOMER" && (
+                      <span className="inline-block mt-0.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                        Khách hàng
+                      </span>
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-[#64748B] whitespace-nowrap">
-                    <div>{u.email}</div>
+                    <div className="font-medium text-[#1E293B]">{u.email}</div>
                     <div className="text-xs text-slate-400">{u.phone || "—"}</div>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
@@ -253,13 +344,23 @@ export default function UsersPage() {
                     <select
                       value={u.role}
                       onChange={(e) => updateRole(u.id, e.target.value)}
-                      className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#0F172A] outline-none focus:border-[#4F46E5] cursor-pointer shadow-sm"
+                      className={`rounded-xl border px-3 py-1.5 text-[13px] font-semibold outline-none focus:border-[#4F46E5] cursor-pointer shadow-sm ${
+                        u.role === "CUSTOMER"
+                          ? "border-amber-300 bg-amber-50/70 text-amber-900"
+                          : u.role === "ADMIN"
+                          ? "border-purple-200 bg-purple-50 text-purple-900"
+                          : u.role === "MANAGER"
+                          ? "border-indigo-200 bg-indigo-50 text-indigo-900"
+                          : u.role === "COLLABORATOR_PRO"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                          : "border-[#E2E8F0] bg-white text-[#0F172A]"
+                      }`}
                     >
-                      <option value="ADMIN">Quản trị</option>
-                      <option value="MANAGER">Quản lý</option>
-                      <option value="STAFF">Nhân viên</option>
-                      <option value="COLLABORATOR_PRO">CTV Pro</option>
-                      <option value="CUSTOMER">Khách hàng</option>
+                      <option value="ADMIN">Quản trị (ADMIN)</option>
+                      <option value="MANAGER">Quản lý (MANAGER)</option>
+                      <option value="STAFF">Nhân viên (STAFF)</option>
+                      <option value="COLLABORATOR_PRO">CTV Pro (COLLABORATOR_PRO)</option>
+                      <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
                     </select>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
@@ -354,6 +455,7 @@ export default function UsersPage() {
                   <option value="COLLABORATOR_PRO">CTV Pro (COLLABORATOR_PRO)</option>
                   <option value="MANAGER">Quản lý (MANAGER)</option>
                   <option value="ADMIN">Quản trị (ADMIN)</option>
+                  <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
                 </select>
               </div>
 
