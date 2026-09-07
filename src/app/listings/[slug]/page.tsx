@@ -1,9 +1,75 @@
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canViewInternalUnitCode } from "@/lib/permissions";
+import { formatVND } from "@/lib/utils";
 import ListingDetailClient from "./ListingDetailClient";
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const rawSlug = params.slug;
+  let decodedSlug = rawSlug;
+  try {
+    decodedSlug = decodeURIComponent(rawSlug);
+  } catch (e) {}
+
+  const listing = await prisma.listing.findFirst({
+    where: {
+      OR: [
+        { slug: rawSlug },
+        { slug: decodedSlug },
+        { productCode: rawSlug },
+        { productCode: decodedSlug },
+        { unitCode: rawSlug },
+        { unitCode: decodedSlug },
+      ],
+    },
+    select: {
+      title: true,
+      description: true,
+      images: true,
+      transactionType: true,
+      salePrice: true,
+      rentPrice: true,
+    },
+  });
+
+  if (!listing) return { title: "Bất động sản không tồn tại - Minh Dũng Land" };
+
+  let firstImage = "/og-image.jpg";
+  if (listing.images) {
+    try {
+      const parsed = JSON.parse(listing.images);
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+        firstImage = parsed[0];
+      }
+    } catch (e) {
+      if (typeof listing.images === "string" && listing.images.startsWith("http")) {
+        firstImage = listing.images;
+      }
+    }
+  }
+
+  const priceText = formatVND(listing.transactionType === "RENT" ? listing.rentPrice : listing.salePrice);
+  const description = listing.description || `${listing.title} - Giá: ${priceText}. Thông tin chi tiết tại Minh Dũng Land.`;
+
+  return {
+    title: `${listing.title} | Minh Dũng Land`,
+    description,
+    openGraph: {
+      title: `${listing.title} | Minh Dũng Land`,
+      description,
+      images: [{ url: firstImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${listing.title} | Minh Dũng Land`,
+      description,
+      images: [firstImage],
+    },
+  };
+}
 
 export default async function ListingDetailPage({ params }: { params: { slug: string } }) {
   const session = await getServerSession(authOptions);

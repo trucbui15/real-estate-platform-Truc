@@ -27,7 +27,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.minhdungland.com.vn";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
   description:
     "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
@@ -35,6 +38,30 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     shortcut: "/logo.png",
     apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
+    description:
+      "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
+    url: siteUrl,
+    siteName: "Minh Dũng Land",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Minh Dũng Land - Bất động sản Quy Nhơn",
+      },
+    ],
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
+    description:
+      "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
+    images: ["/og-image.jpg"],
   },
 };
 

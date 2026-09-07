@@ -8,13 +8,25 @@ import ProjectDetailClient from "./ProjectDetailClient";
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const project = await prisma.project.findUnique({
     where: { slug: params.slug },
-    select: { name: true, description: true },
+    select: { name: true, description: true, thumbnail: true },
   });
 
   if (!project) return { title: "Dự án không tồn tại - Minh Dũng Land" };
+  const ogImage = project.thumbnail || "/og-image.jpg";
   return {
     title: `${project.name} | Minh Dũng Land`,
     description: project.description || `Bảng hàng, căn hộ bán và cho thuê tại ${project.name}`,
+    openGraph: {
+      title: `${project.name} | Minh Dũng Land`,
+      description: project.description || `Bảng hàng, căn hộ bán và cho thuê tại ${project.name}`,
+      images: [{ url: ogImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${project.name} | Minh Dũng Land`,
+      description: project.description || `Bảng hàng, căn hộ bán và cho thuê tại ${project.name}`,
+      images: [ogImage],
+    },
   };
 }
 
