@@ -98,7 +98,7 @@ export default function DashboardListingsPage() {
                       onClick={() => setStatus(l.id, l.transactionType === "RENT" ? "DANG_CHO_THUE" : "DANG_BAN")}
                       className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold border border-emerald-200 transition min-h-[36px] flex items-center cursor-pointer"
                     >
-                      ✓ Duyệt
+                      Duyệt
                     </button>
                   )}
                   <button
@@ -120,13 +120,13 @@ export default function DashboardListingsPage() {
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3.5 min-w-[130px]">Mã SP / Mã căn</th>
-              <th className="px-4 py-3.5 min-w-[180px]">Tiêu đề BĐS</th>
-              <th className="px-4 py-3.5 min-w-[140px]">Người đăng tin</th>
-              <th className="px-4 py-3.5 min-w-[110px]">Giá</th>
-              <th className="px-4 py-3.5 min-w-[110px]">Trạng thái</th>
-              <th className="px-4 py-3.5 min-w-[100px]">Cập nhật</th>
-              <th className="px-4 py-3.5 text-right min-w-[130px]">Thao tác</th>
+              <th className="px-3.5 py-3.5 min-w-[125px]">Mã SP / Mã căn</th>
+              <th className="px-3.5 py-3.5 min-w-[180px]">Tiêu đề BĐS</th>
+              <th className="px-3.5 py-3.5 min-w-[130px]">Người đăng tin</th>
+              <th className="px-2.5 py-3.5 min-w-[85px] whitespace-nowrap">Giá</th>
+              <th className="px-3 py-3.5 min-w-[135px] whitespace-nowrap">Trạng thái</th>
+              <th className="px-2.5 py-3.5 min-w-[85px] whitespace-nowrap">Cập nhật</th>
+              <th className="px-3.5 py-3.5 text-right min-w-[110px]">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -137,17 +137,17 @@ export default function DashboardListingsPage() {
             ) : (
               items.map((l) => (
                 <tr key={l.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-4 py-3 text-xs min-w-[130px]">
+                  <td className="px-3.5 py-3 text-xs min-w-[125px]">
                     <div className="font-bold text-blue-700 font-mono">Mã SP: {l.productCode || "—"}</div>
                     <div className="font-semibold text-amber-700 font-mono text-[11px]">Mã căn: {l.unitCode}</div>
                   </td>
-                  <td className="px-4 py-3 min-w-[180px]">
+                  <td className="px-3.5 py-3 min-w-[180px]">
                     <div className="font-bold text-slate-900">{l.title}</div>
                     {l.project && (
                       <div className="text-[11px] text-slate-500 font-medium">🏢 {l.project.name}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs min-w-[140px]">
+                  <td className="px-3.5 py-3 text-xs min-w-[130px]">
                     <div className="font-bold text-slate-900">
                       👤 {l.author?.name || "Hệ thống"}
                     </div>
@@ -155,16 +155,16 @@ export default function DashboardListingsPage() {
                       {l.author?.role} {l.author?.referralCode ? `· ${l.author.referralCode}` : ""}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-semibold text-blue-700 min-w-[110px]">
+                  <td className="px-2.5 py-3 font-semibold text-blue-700 min-w-[85px] whitespace-nowrap">
                     {formatVND(l.transactionType === "RENT" ? l.rentPrice : l.salePrice)}
                   </td>
-                  <td className="px-4 py-3 min-w-[110px]">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200">
+                  <td className="px-3 py-3 min-w-[135px] whitespace-nowrap">
+                    <span className="inline-block whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200">
                       {LABELS.unitStatus[l.unitStatus as keyof typeof LABELS.unitStatus] || l.unitStatus}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 min-w-[100px]">{new Date(l.updatedAt).toLocaleDateString("vi-VN")}</td>
-                  <td className="px-4 py-3 text-right min-w-[130px]">
+                  <td className="px-2.5 py-3 text-xs text-slate-500 min-w-[85px] whitespace-nowrap">{new Date(l.updatedAt).toLocaleDateString("vi-VN")}</td>
+                  <td className="px-3.5 py-3 text-right min-w-[110px]">
                     <div className="flex items-center justify-end gap-1.5">
                       <Link
                         href={`/dashboard/listings/${l.id}/edit`}
@@ -177,7 +177,7 @@ export default function DashboardListingsPage() {
                           onClick={() => setStatus(l.id, l.transactionType === "RENT" ? "DANG_CHO_THUE" : "DANG_BAN")}
                           className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg hover:bg-emerald-100 transition cursor-pointer"
                         >
-                          ✓ Duyệt
+                          Duyệt
                         </button>
                       )}
                       <button
