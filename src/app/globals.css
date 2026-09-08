@@ -60,6 +60,130 @@
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #cbd5e1; }
 
+/* ==========================================================================
+   ARTICLE & NEWS CMS CONTENT STYLING (RESPONSIVE & CLEAN SEMANTIC STYLES)
+   ========================================================================== */
+
+/* Tables in Article */
+.prose table {
+  @apply w-full border-collapse my-6 text-sm text-slate-800 bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200;
+}
+.prose table th {
+  @apply bg-slate-100/90 text-slate-900 font-bold p-3 text-left border border-slate-200 text-xs sm:text-sm;
+}
+.prose table td {
+  @apply p-3 border border-slate-200 text-xs sm:text-sm leading-relaxed;
+}
+.prose table tr:nth-child(even) td {
+  @apply bg-slate-50/50;
+}
+
+/* Article Figure & Caption */
+.article-figure {
+  @apply my-6 mx-auto max-w-full block text-center space-y-2;
+}
+.article-figure img, .prose figure img {
+  @apply mx-auto rounded-2xl shadow-sm border border-slate-200 max-h-[560px] object-cover;
+}
+.article-figure[data-align="left"] {
+  @apply text-left;
+}
+.article-figure[data-align="right"] {
+  @apply text-right;
+}
+.article-figure[data-align="center"] {
+  @apply text-center;
+}
+.article-figcaption, .prose figcaption {
+  @apply text-xs sm:text-sm text-slate-500 font-medium italic mt-2 text-center;
+}
+
+/* CTA Box */
+.article-cta-box {
+  @apply my-6 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-sky-500/10 via-sky-600/15 to-blue-600/10 border border-sky-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition shadow-sm;
+}
+.article-cta-box[data-variant="dark"] {
+  @apply bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white border-slate-800 shadow-md;
+}
+.article-cta-box[data-variant="emerald"] {
+  @apply bg-gradient-to-r from-emerald-500/10 via-emerald-600/15 to-teal-600/10 border-emerald-200 text-emerald-950;
+}
+.article-cta-box .article-cta-text {
+  @apply font-bold text-sm sm:text-base text-slate-900;
+}
+.article-cta-box[data-variant="dark"] .article-cta-text {
+  @apply text-white;
+}
+.article-cta-box .article-cta-btn {
+  @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs sm:text-sm transition shrink-0 shadow-sm no-underline cursor-pointer;
+}
+.article-cta-box[data-variant="dark"] .article-cta-btn {
+  @apply bg-amber-400 hover:bg-amber-300 text-slate-950 font-black;
+}
+
+/* Info Box */
+.article-info-box {
+  @apply my-6 p-4 sm:p-5 rounded-2xl border flex flex-col gap-1.5 transition text-xs sm:text-sm;
+}
+.article-info-box.info, .article-info-box[data-variant="info"] {
+  @apply bg-sky-50/80 border-sky-200 text-sky-950;
+}
+.article-info-box.warning, .article-info-box[data-variant="warning"] {
+  @apply bg-amber-50/80 border-amber-200 text-amber-950;
+}
+.article-info-box.alert, .article-info-box[data-variant="alert"] {
+  @apply bg-rose-50/80 border-rose-200 text-rose-950;
+}
+.article-info-box .article-info-title {
+  @apply font-black text-xs sm:text-sm flex items-center gap-1.5 uppercase tracking-wider;
+}
+.article-info-box .article-info-content {
+  @apply font-medium leading-relaxed;
+}
+
+/* Project & Listing Embed Cards */
+.article-project-card, .article-listing-card {
+  @apply my-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition block no-underline text-slate-800;
+}
+.article-project-card:hover, .article-listing-card:hover {
+  @apply border-sky-300;
+}
+.article-embed-badge {
+  @apply inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2;
+}
+
+/* Table of Contents */
+.article-toc {
+  @apply my-6 p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm;
+}
+.article-toc-title {
+  @apply font-extrabold text-xs sm:text-sm text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2;
+}
+.article-toc-list {
+  @apply space-y-1.5 text-xs sm:text-sm list-none pl-0 my-0;
+}
+.article-toc-list li a {
+  @apply text-sky-700 hover:text-sky-900 font-medium hover:underline transition;
+}
+.article-toc-list li.toc-h3 {
+  @apply pl-4 text-xs text-slate-600;
+}
+
+/* Text Alignment in Articles */
+.prose [style*="text-align: center"], .prose [style*="text-align:center"] {
+  text-align: center !important;
+}
+.prose [style*="text-align: right"], .prose [style*="text-align:right"] {
+  text-align: right !important;
+}
+.prose [style*="text-align: justify"], .prose [style*="text-align:justify"] {
+  text-align: justify !important;
+}
+.prose [style*="text-align: left"], .prose [style*="text-align:left"] {
+  text-align: left !important;
+}
+
+
 /* Google Translate Optimization & Total Top Toolbar Suppression */
 html,
 body,

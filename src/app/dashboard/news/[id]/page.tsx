@@ -23,6 +23,7 @@ export default async function EditNewsPage({ params }: { params: { id: string } 
         category: article.category,
         tags: article.tags,
         metaTitle: article.metaTitle,
+        focusKeyword: (article as any).focusKeyword || "",
         ogImage: article.ogImage,
         content: article.content,
         published: article.published,

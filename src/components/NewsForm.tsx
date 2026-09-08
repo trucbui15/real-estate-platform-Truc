@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { slugify } from "@/lib/utils";
@@ -9,10 +9,10 @@ import NewsPreviewModal from "@/components/NewsPreviewModal";
 import { compressImage, revokePreviewUrl } from "@/lib/imageCompression";
 
 const DEFAULT_CATEGORIES = [
+  "Tin thị trường",
   "Quy hoạch",
   "Căn hộ tầng cao",
   "Căn hộ Quy Nhơn",
-  "Tin thị trường",
   "Đầu tư căn hộ",
   "So sánh dự án",
   "Tư vấn BĐS",
@@ -28,6 +28,7 @@ interface NewsFormProps {
     category?: string | null;
     tags?: string | null;
     metaTitle?: string | null;
+    focusKeyword?: string | null;
     ogImage?: string | null;
     content: string;
     published: boolean;
@@ -41,6 +42,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
   const router = useRouter();
   const { data: session } = useSession();
 
+  const [articleId, setArticleId] = useState<string | undefined>(initialData?.id);
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [editingSlug, setEditingSlug] = useState(false);
@@ -50,6 +52,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
   const [customCategory, setCustomCategory] = useState("");
   const [tags, setTags] = useState(initialData?.tags || "");
   const [metaTitle, setMetaTitle] = useState(initialData?.metaTitle || "");
+  const [focusKeyword, setFocusKeyword] = useState(initialData?.focusKeyword || "");
   const [content, setContent] = useState(initialData?.content || "");
   const [published, setPublished] = useState(initialData?.published ?? false);
   const [publishedAt, setPublishedAt] = useState<string | null>(
@@ -57,9 +60,15 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
   );
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadStatusText, setUploadStatusText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Autosave status state
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,10 +79,114 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
       setSlug(generated);
       if (!metaTitle) setMetaTitle(title);
     }
-  }, [title, isEdit, editingSlug]);
+  }, [title, isEdit, editingSlug, metaTitle]);
 
-  const [uploadStatusText, setUploadStatusText] = useState("");
+  // Track unsaved changes
+  useEffect(() => {
+    setHasUnsavedChanges(true);
+  }, [title, slug, thumbnail, summary, category, customCategory, tags, metaTitle, focusKeyword, content]);
 
+  // --- SAVE / PUBLISH FUNCTION ---
+  const saveArticle = useCallback(
+    async (targetPublishedStatus: boolean, isAuto = false) => {
+      if (!title.trim()) {
+        if (!isAuto) setError("Vui lòng nhập tiêu đề bài viết.");
+        return false;
+      }
+      if (!content.trim() || content === "<p></p>") {
+        if (!isAuto) setError("Vui lòng nhập nội dung bài viết.");
+        return false;
+      }
+
+      if (isAuto) {
+        setIsAutoSaving(true);
+      } else {
+        setSaving(true);
+        setError("");
+      }
+
+      const finalCategory = category === "CUSTOM" ? customCategory.trim() : category;
+      const finalSlug = slug.trim() ? slugify(slug) : slugify(title);
+
+      const payload = {
+        title: title.trim(),
+        slug: finalSlug,
+        thumbnail: thumbnail.trim() || null,
+        summary: summary.trim() || null,
+        category: finalCategory || null,
+        tags: tags.trim() || null,
+        metaTitle: metaTitle.trim() || null,
+        focusKeyword: focusKeyword.trim() || null,
+        content,
+        published: targetPublishedStatus,
+      };
+
+      try {
+        const url = articleId ? `/api/news/${articleId}` : "/api/news";
+        const method = articleId ? "PUT" : "POST";
+
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          if (!isAuto) setError(data.error || "Không thể lưu bài viết.");
+          if (isAuto) setIsAutoSaving(false);
+          else setSaving(false);
+          return false;
+        }
+
+        if (data.id && !articleId) {
+          setArticleId(data.id);
+        }
+
+        setPublished(data.published);
+        if (data.publishedAt) {
+          setPublishedAt(new Date(data.publishedAt).toLocaleString("vi-VN"));
+        }
+
+        setHasUnsavedChanges(false);
+        const nowStr = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+        setLastSavedTime(nowStr);
+
+        if (!isAuto) {
+          setSaving(false);
+          router.push("/dashboard/news");
+          router.refresh();
+        } else {
+          setIsAutoSaving(false);
+        }
+        return true;
+      } catch (err: any) {
+        if (!isAuto) {
+          setSaving(false);
+          setError(err.message || "Lỗi kết nối máy chủ.");
+        } else {
+          setIsAutoSaving(false);
+        }
+        return false;
+      }
+    },
+    [articleId, title, content, category, customCategory, slug, thumbnail, summary, tags, metaTitle, focusKeyword, router]
+  );
+
+  // --- AUTOSAVE ENGINE (CORRECTION #4: ONLY FOR DRAFT ARTICLES) ---
+  useEffect(() => {
+    // Only autosave if article is in DRAFT status (published === false)
+    if (published) return;
+    if (!title.trim() || !hasUnsavedChanges || isAutoSaving || saving) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveArticle(false, true);
+    }, 45000); // 45 seconds debounce
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [published, title, hasUnsavedChanges, isAutoSaving, saving, saveArticle]);
+
+  // Image Upload handler
   async function handleThumbnailUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploadingThumbnail(true);
@@ -93,7 +206,6 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
       let fileUrl = "";
 
-      // 1. Direct Cloudinary Upload
       try {
         const cloudFd = new FormData();
         cloudFd.append("file", file);
@@ -112,7 +224,6 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
         console.warn("Cloudinary upload failed, fallback /api/upload", e);
       }
 
-      // 2. Fallback /api/upload
       if (!fileUrl) {
         const fd = new FormData();
         fd.append("file", file);
@@ -135,67 +246,33 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
     }
   }
 
-  async function handleSave(targetPublishedStatus: boolean) {
-    setError("");
-    if (!title.trim()) {
-      setError("Vui lòng nhập tiêu đề bài viết.");
-      return;
-    }
-    if (!content.trim() || content === "<p></p>") {
-      setError("Vui lòng nhập nội dung bài viết.");
-      return;
-    }
+  // --- SEO REAL-TIME CHECKLIST CALCULATIONS ---
+  const seoTitle = metaTitle.trim() || title.trim();
+  const seoDesc = summary.trim();
+  const kw = focusKeyword.trim().toLowerCase();
 
-    setSaving(true);
-    const finalCategory = category === "CUSTOM" ? customCategory.trim() : category;
-    const finalSlug = slug.trim() ? slugify(slug) : slugify(title);
+  const kwInTitle = kw ? seoTitle.toLowerCase().includes(kw) : false;
+  const kwInDesc = kw ? seoDesc.toLowerCase().includes(kw) : false;
 
-    const payload = {
-      title: title.trim(),
-      slug: finalSlug,
-      thumbnail: thumbnail.trim() || null,
-      summary: summary.trim() || null,
-      category: finalCategory || null,
-      tags: tags.trim() || null,
-      metaTitle: metaTitle.trim() || null,
-      content,
-      published: targetPublishedStatus,
-    };
+  // Extract text and first paragraph from content
+  const firstP = content.match(/<p[^>]*>(.*?)<\/p>/i)?.[1]?.replace(/<[^>]*>/g, "") || "";
+  const kwInFirstP = kw && firstP ? firstP.toLowerCase().includes(kw) : false;
 
-    try {
-      const url = isEdit ? `/api/news/${initialData?.id}` : "/api/news";
-      const method = isEdit ? "PUT" : "POST";
+  // Check H2 tags
+  const h2Matches = Array.from(content.matchAll(/<h2[^>]*>(.*?)<\/h2>/gi)).map((m) =>
+    m[1].replace(/<[^>]*>/g, "").toLowerCase()
+  );
+  const kwInH2 = kw ? h2Matches.some((h2) => h2.includes(kw)) : false;
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  // Check images missing ALT
+  const imgMatches = Array.from(content.matchAll(/<img\b([^>]*)>/gi));
+  const imagesWithoutAlt = imgMatches.filter((img) => !/alt=["'][^"']+["']/i.test(img[1]));
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Không thể lưu bài viết.");
-        setSaving(false);
-        return;
-      }
+  // Check H1 in body
+  const bodyHasH1 = /<h1\b/i.test(content);
 
-      setPublished(data.published);
-      if (data.publishedAt) {
-        setPublishedAt(new Date(data.publishedAt).toLocaleString("vi-VN"));
-      }
-
-      setSaving(false);
-      router.push("/dashboard/news");
-      router.refresh();
-    } catch (err: any) {
-      setSaving(false);
-      setError(err.message || "Lỗi kết nối máy chủ.");
-    }
-  }
-
-  // SEO COUNTERS & WARNINGS
-  const seoTitleLen = metaTitle.trim().length || title.trim().length;
-  const seoDescLen = summary.trim().length;
+  const seoTitleLen = seoTitle.length;
+  const seoDescLen = seoDesc.length;
 
   return (
     <div className="space-y-6">
@@ -208,7 +285,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
           slug,
           thumbnail,
           summary,
-          category,
+          category: category === "CUSTOM" ? customCategory : category,
           tags,
           content,
           authorName: session?.user?.name || "Minh Dũng Land",
@@ -220,14 +297,37 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <h1 className="font-extrabold text-xl md:text-2xl text-slate-900">
-            {isEdit ? "✏️ Chỉnh Sửa Bài Viết" : "📝 Viết Bài Tin Tức Mới"}
+            {isEdit ? "✏️ Chỉnh Sửa Bài Viết" : "📝 Viết Bài Tin Tức Chuẩn SEO"}
           </h1>
           <p className="text-xs text-slate-500 font-medium">
-            CMS biên tập tin tức bất động sản theo phong cách Gutenberg / Notion gọn nhẹ
+            Trình soạn thảo bài viết và tin tức bất động sản Minh Dũng Land hỗ trợ SEO, Internal Link & Autosave
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* AUTOSAVE BADGE */}
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600">
+            {isAutoSaving ? (
+              <span className="text-sky-600 font-bold flex items-center gap-1">
+                <span className="animate-spin text-sm">⏳</span> Đang lưu nháp...
+              </span>
+            ) : published ? (
+              <span className="text-slate-500 text-[11px]">
+                🔒 Đã xuất bản (Bấm Cập nhật để lưu)
+              </span>
+            ) : lastSavedTime ? (
+              <span className="text-emerald-700 text-[11px]">
+                💾 Đã lưu nháp lúc {lastSavedTime}
+              </span>
+            ) : hasUnsavedChanges ? (
+              <span className="text-amber-700 text-[11px]">
+                ✏️ Có thay đổi chưa lưu
+              </span>
+            ) : (
+              <span className="text-slate-400 text-[11px]">Sẵn sàng</span>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={() => router.push("/dashboard/news")}
@@ -238,7 +338,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
           <button
             type="button"
             onClick={() => setPreviewOpen(true)}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100 transition flex items-center gap-1 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <span>👁️</span>
             <span>Xem trước</span>
@@ -254,7 +354,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
       )}
 
       {/* MAIN 2-COLUMN DESKTOP LAYOUT (LEFT 70% - RIGHT 30%) */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_340px]">
         {/* LEFT COLUMN (~70% MAIN CONTENT CANVAS) */}
         <div className="space-y-6">
           {/* 1. TITLE (H1 EQUIVALENT FOR ARTICLE) */}
@@ -321,9 +421,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400">
-                  <svg className="w-12 h-12 stroke-slate-300 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v16m14 0h2" />
-                  </svg>
+                  <span className="text-3xl mb-1">🖼️</span>
                   <span className="text-xs font-bold text-slate-600">Chưa có ảnh đại diện</span>
                   <span className="text-[11px] text-slate-400">Khuyên dùng tỷ lệ 16:9 (1200x675px)</span>
                 </div>
@@ -371,11 +469,11 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
           {/* 3. SUMMARY / SAPO TEXTAREA */}
           <div className="card p-5 space-y-2 bg-white">
             <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-              📑 Mô Tả Ngắn / Sa-pô Bài Viết (Summary)
+              📑 Mô Tả Ngắn / Sa-pô Mở Đầu (Summary)
             </label>
             <textarea
               rows={3}
-              placeholder="Tóm tắt ngắn gọn 2-3 câu làm sa-pô mở đầu bài viết..."
+              placeholder="Tóm tắt ngắn gọn 2-3 câu làm sa-pô mở đầu bài viết (cũng sẽ được dùng làm Meta Description Google)..."
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 focus:outline-none focus:border-sky-500 leading-relaxed"
@@ -385,7 +483,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
           {/* 4. TIPTAP RICH TEXT EDITOR */}
           <div className="card p-5 space-y-3 bg-white">
             <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-              ✍️ Nội Dung Chi Tiết (Tiptap Gutenberg Editor)
+              ✍️ Nội Dung Bài Viết Chi Tiết
             </label>
             <NewsTiptapEditor value={content} onChange={setContent} />
           </div>
@@ -420,23 +518,27 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => handleSave(false)}
-                className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                onClick={() => saveArticle(false, false)}
+                className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs transition shadow-2xs disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {saving ? "Đang lưu..." : "💾 Lưu Bản Nháp (Draft)"}
+                <span>💾</span>
+                <span>{saving ? "Đang lưu..." : published ? "Chuyển về Bản Nháp (Unpublish)" : "Lưu Bản Nháp (Draft)"}</span>
               </button>
 
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => handleSave(true)}
-                className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs transition shadow-md disabled:opacity-50 cursor-pointer"
+                onClick={() => saveArticle(true, false)}
+                className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs transition shadow-md disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {saving
-                  ? "Đang lưu..."
-                  : published
-                  ? "🔄 Cập Nhật Bài Viết"
-                  : "🚀 XUẤT BẢN BÀI VIẾT (PUBLISH)"}
+                <span>🚀</span>
+                <span>
+                  {saving
+                    ? "Đang lưu..."
+                    : published
+                    ? "Cập Nhật Bài Viết (Update)"
+                    : "XUẤT BẢN BÀI VIẾT (PUBLISH)"}
+                </span>
               </button>
             </div>
           </div>
@@ -448,7 +550,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
             </span>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Danh mục tin tức</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Danh mục bài viết</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -496,12 +598,122 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
             </div>
           </div>
 
-          {/* PANEL 3: SEO CONFIG & GOOGLE PREVIEW */}
+          {/* PANEL 3: FOCUS KEYWORD & REAL-TIME SEO CHECKLIST */}
           <div className="card p-5 space-y-4 bg-white">
             <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-2">
-              🔍 TỐI ƯU HÓA SEO
+              🎯 TỪ KHÓA & KIỂM TRA SEO ON-PAGE
             </span>
 
+            {/* FOCUS KEYWORD INPUT */}
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Từ khóa chính (Focus Keyword)
+              </label>
+              <input
+                type="text"
+                placeholder="Ví dụ: căn hộ quy nhơn"
+                value={focusKeyword}
+                onChange={(e) => setFocusKeyword(e.target.value)}
+                className="input text-xs font-bold text-sky-800"
+              />
+              <span className="text-[10px] text-slate-400">
+                Từ khóa mục tiêu bạn muốn tối ưu SEO cho bài viết này.
+              </span>
+            </div>
+
+            {/* REAL-TIME SEO CHECKLIST (ASSISTANCE ONLY - NO HARD BLOCK) */}
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2 text-xs">
+              <div className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider border-b border-slate-200 pb-1 flex items-center justify-between">
+                <span>Checklist Hỗ Trợ SEO</span>
+                <span className="text-[10px] text-sky-600 font-bold">Khuyến nghị</span>
+              </div>
+
+              <div className="space-y-1.5 text-[11px]">
+                {/* 1. Keyword in Title */}
+                <div className="flex items-center gap-2">
+                  <span>{kw ? (kwInTitle ? "✅" : "❌") : "⚪"}</span>
+                  <span className={kwInTitle ? "text-slate-800 font-semibold" : "text-slate-500"}>
+                    Từ khóa có trong Tiêu đề bài viết
+                  </span>
+                </div>
+
+                {/* 2. Keyword in Meta Description */}
+                <div className="flex items-center gap-2">
+                  <span>{kw ? (kwInDesc ? "✅" : "❌") : "⚪"}</span>
+                  <span className={kwInDesc ? "text-slate-800 font-semibold" : "text-slate-500"}>
+                    Từ khóa có trong Meta Description / Sa-pô
+                  </span>
+                </div>
+
+                {/* 3. Keyword in First Paragraph */}
+                <div className="flex items-center gap-2">
+                  <span>{kw ? (kwInFirstP ? "✅" : "❌") : "⚪"}</span>
+                  <span className={kwInFirstP ? "text-slate-800 font-semibold" : "text-slate-500"}>
+                    Từ khóa xuất hiện trong đoạn mở đầu
+                  </span>
+                </div>
+
+                {/* 4. Keyword in at least one H2 */}
+                <div className="flex items-center gap-2">
+                  <span>{kw ? (kwInH2 ? "✅" : "❌") : "⚪"}</span>
+                  <span className={kwInH2 ? "text-slate-800 font-semibold" : "text-slate-500"}>
+                    Từ khóa có trong ít nhất 1 tiêu đề H2
+                  </span>
+                </div>
+
+                {/* 5. Title Length */}
+                <div className="flex items-center gap-2">
+                  <span>{seoTitleLen >= 30 && seoTitleLen <= 65 ? "✅" : "⚠️"}</span>
+                  <span className="text-slate-700">
+                    Độ dài Tiêu đề: <b className="font-mono">{seoTitleLen}/60</b> ký tự {seoTitleLen > 60 ? "(Quá dài)" : ""}
+                  </span>
+                </div>
+
+                {/* 6. Meta Description Length */}
+                <div className="flex items-center gap-2">
+                  <span>{seoDescLen >= 100 && seoDescLen <= 165 ? "✅" : "⚠️"}</span>
+                  <span className="text-slate-700">
+                    Độ dài Meta Desc: <b className="font-mono">{seoDescLen}/160</b> ký tự {seoDescLen > 160 ? "(Quá dài)" : ""}
+                  </span>
+                </div>
+
+                {/* 7. Featured Image */}
+                <div className="flex items-center gap-2">
+                  <span>{thumbnail ? "✅" : "⚠️"}</span>
+                  <span className={thumbnail ? "text-slate-800" : "text-amber-700 font-bold"}>
+                    {thumbnail ? "Đã có ảnh đại diện bài viết" : "Chưa có ảnh đại diện"}
+                  </span>
+                </div>
+
+                {/* 8. Summary */}
+                <div className="flex items-center gap-2">
+                  <span>{summary.trim() ? "✅" : "⚠️"}</span>
+                  <span className={summary.trim() ? "text-slate-800" : "text-amber-700 font-bold"}>
+                    {summary.trim() ? "Đã có mô tả ngắn / Sa-pô" : "Chưa có mô tả ngắn"}
+                  </span>
+                </div>
+
+                {/* 9. Images ALT Check */}
+                <div className="flex items-center gap-2">
+                  <span>{imagesWithoutAlt.length === 0 ? "✅" : "⚠️"}</span>
+                  <span className={imagesWithoutAlt.length === 0 ? "text-slate-800" : "text-amber-700 font-bold"}>
+                    {imagesWithoutAlt.length === 0
+                      ? "Tất cả ảnh trong bài đều có thẻ ALT"
+                      : `Có ${imagesWithoutAlt.length} ảnh trong bài chưa có thẻ ALT`}
+                  </span>
+                </div>
+
+                {/* 10. H1 in body check */}
+                {bodyHasH1 && (
+                  <div className="flex items-center gap-2 text-rose-700 font-bold">
+                    <span>🚨</span>
+                    <span>Cảnh báo: Có thẻ H1 trong body</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SEO TITLE & META DESCRIPTION INPUTS */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-slate-700">SEO Title (Tiêu đề Google)</label>
@@ -510,7 +722,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
                     seoTitleLen > 60 ? "text-rose-600 font-extrabold" : "text-slate-400"
                   }`}
                 >
-                  {seoTitleLen}/60 ký tự {seoTitleLen > 60 ? "(Quá dài)" : ""}
+                  {seoTitleLen}/60
                 </span>
               </div>
               <input
@@ -522,39 +734,19 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-700">Meta Description</label>
-                <span
-                  className={`text-[10px] font-bold ${
-                    seoDescLen > 160 ? "text-rose-600 font-extrabold" : "text-slate-400"
-                  }`}
-                >
-                  {seoDescLen}/160 ký tự {seoDescLen > 160 ? "(Quá dài)" : ""}
-                </span>
-              </div>
-              <textarea
-                rows={3}
-                placeholder="Mặc định dùng Mô tả ngắn Sa-pô..."
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-sky-500"
-              />
-            </div>
-
             {/* GOOGLE SEARCH SNIPPET PREVIEW */}
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1 select-none">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 🌐 Xem trước kết quả Google Search
               </div>
               <div className="text-sky-700 text-xs font-bold truncate">
-                {metaTitle.trim() || title.trim() || "Tiêu đề bài viết hiển thị Google"}
+                {seoTitle || "Tiêu đề bài viết hiển thị Google"}
               </div>
               <div className="text-[11px] text-emerald-700 font-mono truncate">
                 https://minhdungland.com.vn/news/{slug || "slug-bai-viet"}
               </div>
               <div className="text-[11px] text-slate-600 line-clamp-2 leading-tight">
-                {summary.trim() || "Mô tả ngắn của bài viết sẽ hiển thị dưới đây trên kết quả tìm kiếm Google..."}
+                {seoDesc || "Mô tả ngắn của bài viết sẽ hiển thị dưới đây trên kết quả tìm kiếm Google..."}
               </div>
             </div>
           </div>

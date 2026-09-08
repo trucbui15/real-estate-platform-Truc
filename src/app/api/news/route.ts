@@ -75,6 +75,7 @@ export async function POST(req: Request) {
         category: body.category || null,
         tags: body.tags ? body.tags.trim() : null,
         metaTitle: body.metaTitle ? body.metaTitle.trim() : null,
+        focusKeyword: body.focusKeyword ? body.focusKeyword.trim() : null,
         ogImage: body.ogImage || null,
         content: body.content,
         authorId: session.user.id,

@@ -54,6 +54,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       category: body.category !== undefined ? body.category || null : existing.category,
       tags: body.tags !== undefined ? body.tags?.trim() || null : existing.tags,
       metaTitle: body.metaTitle !== undefined ? body.metaTitle?.trim() || null : existing.metaTitle,
+      focusKeyword: body.focusKeyword !== undefined ? body.focusKeyword?.trim() || null : (existing as any).focusKeyword,
       ogImage: body.ogImage !== undefined ? body.ogImage || null : existing.ogImage,
       content: body.content !== undefined ? body.content : existing.content,
       published: newPublished,

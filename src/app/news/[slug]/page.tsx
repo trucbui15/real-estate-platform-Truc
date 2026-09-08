@@ -3,16 +3,17 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
+import { processArticleHtml } from "@/lib/articleProcessor";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await prisma.news.findUnique({ where: { slug: params.slug } });
   if (!article) return { title: "Không tìm thấy bài viết - Minh Dũng Land" };
 
   return {
-    title: `${article.title} - Minh Dũng Land`,
+    title: `${article.metaTitle || article.title} - Minh Dũng Land`,
     description: article.summary || article.title,
     openGraph: {
-      title: article.title,
+      title: article.metaTitle || article.title,
       description: article.summary || article.title,
       images: article.thumbnail ? [{ url: article.thumbnail }] : [],
     },
@@ -26,6 +27,8 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
   });
 
   if (!article || !article.published) return notFound();
+
+  const processedContent = await processArticleHtml(article.content);
 
   const tagsList = article.tags
     ? article.tags.split(",").map((t) => t.trim()).filter(Boolean)
@@ -85,7 +88,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
         {/* RICH HTML ARTICLE CONTENT */}
         <article
           className="prose prose-slate max-w-none text-sm sm:text-base leading-relaxed text-slate-800 space-y-4 pt-2 border-t border-slate-100"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
         />
 
         {/* TAGS */}

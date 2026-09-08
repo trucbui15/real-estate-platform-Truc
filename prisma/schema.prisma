@@ -169,6 +169,7 @@ model News {
   metaTitle   String?
   ogImage     String?
   publishedAt DateTime?
+  focusKeyword String?
   author      User      @relation("NewsAuthor", fields: [authorId], references: [id])
 }
 
