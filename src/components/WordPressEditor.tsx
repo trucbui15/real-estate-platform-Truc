@@ -420,7 +420,7 @@ export default function WordPressEditor({
               <input
                 type="url"
                 required
-                placeholder="https://minhdungland.com.vn/..."
+                placeholder="https://www.minhdungland.com.vn/..."
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-none"

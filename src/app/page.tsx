@@ -4,7 +4,19 @@ import { prisma } from "@/lib/prisma";
 import ListingCard from "@/components/ListingCard";
 import HomeSearchFilters from "@/components/HomeSearchFilters";
 
+import { Metadata } from "next";
+import { SITE_URL } from "@/config/site";
+
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    url: SITE_URL,
+  },
+};
 
 export default async function HomePage() {
   let featured: any[] = [];

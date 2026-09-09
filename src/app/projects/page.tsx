@@ -1,7 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import ProjectsClient from "./ProjectsClient";
 
+import { Metadata } from "next";
+import { SITE_URL } from "@/config/site";
+
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Dự Án Bất Động Sản Quy Nhơn | Minh Dũng Land",
+  description: "Tổng hợp các dự án chung cư, căn hộ cao cấp, khu đô thị và đất nền trọng điểm tại Quy Nhơn, Bình Định.",
+  alternates: {
+    canonical: `${SITE_URL}/projects`,
+  },
+  openGraph: {
+    title: "Dự Án Bất Động Sản Quy Nhơn | Minh Dũng Land",
+    description: "Tổng hợp các dự án chung cư, căn hộ cao cấp, khu đô thị và đất nền trọng điểm tại Quy Nhơn, Bình Định.",
+    url: `${SITE_URL}/projects`,
+  },
+};
 
 export default async function ProjectsPage() {
   let rawProjects: any[] = [];

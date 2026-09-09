@@ -4,18 +4,37 @@ import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { processArticleHtml } from "@/lib/articleProcessor";
+import { SITE_URL, SITE_NAME } from "@/config/site";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await prisma.news.findUnique({ where: { slug: params.slug } });
   if (!article) return { title: "Không tìm thấy bài viết - Minh Dũng Land" };
 
+  const canonicalUrl = `${SITE_URL}/news/${encodeURIComponent(params.slug)}`;
+  const title = `${article.metaTitle || article.title} - Minh Dũng Land`;
+  const description = article.summary || article.title;
+  const ogImage = article.thumbnail || `${SITE_URL}/og-image.jpg`;
+
   return {
-    title: `${article.metaTitle || article.title} - Minh Dũng Land`,
-    description: article.summary || article.title,
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      title: article.metaTitle || article.title,
-      description: article.summary || article.title,
-      images: article.thumbnail ? [{ url: article.thumbnail }] : [],
+      title,
+      description,
+      url: canonicalUrl,
+      images: [{ url: ogImage }],
+      type: "article",
+      publishedTime: article.publishedAt ? article.publishedAt.toISOString() : undefined,
+      modifiedTime: article.updatedAt ? article.updatedAt.toISOString() : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }
@@ -34,8 +53,40 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
     ? article.tags.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
 
+  const articleUrl = `${SITE_URL}/news/${encodeURIComponent(article.slug)}`;
+  const authorName = article.author?.name?.trim() || SITE_NAME;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": articleUrl,
+    },
+    headline: article.metaTitle || article.title,
+    description: article.summary || article.title,
+    image: article.thumbnail ? [article.thumbnail] : [`${SITE_URL}/og-image.jpg`],
+    datePublished: (article.publishedAt || article.createdAt).toISOString(),
+    dateModified: article.updatedAt.toISOString(),
+    author: {
+      "@type": article.author?.name ? "Person" : "Organization",
+      name: authorName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+  };
+
   return (
     <div className="container-page py-10 space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       {/* BREADCRUMB */}
       <div className="flex items-center gap-2 text-xs text-slate-500 font-medium overflow-x-auto">
         <Link href="/" className="hover:text-slate-900">Trang chủ</Link>

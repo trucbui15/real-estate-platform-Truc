@@ -370,7 +370,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
             {/* SLUG URL EDITABLE BAR */}
             <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex-wrap">
               <span className="font-bold text-slate-700">Permalink:</span>
-              <span className="text-slate-400">minhdungland.com.vn/news/</span>
+              <span className="text-slate-400">www.minhdungland.com.vn/news/</span>
               {editingSlug ? (
                 <div className="flex items-center gap-1 flex-1">
                   <input
@@ -743,7 +743,7 @@ export default function NewsForm({ initialData, isEdit = false }: NewsFormProps)
                 {seoTitle || "Tiêu đề bài viết hiển thị Google"}
               </div>
               <div className="text-[11px] text-emerald-700 font-mono truncate">
-                https://minhdungland.com.vn/news/{slug || "slug-bai-viet"}
+                https://www.minhdungland.com.vn/news/{slug || "slug-bai-viet"}
               </div>
               <div className="text-[11px] text-slate-600 line-clamp-2 leading-tight">
                 {seoDesc || "Mô tả ngắn của bài viết sẽ hiển thị dưới đây trên kết quả tìm kiếm Google..."}

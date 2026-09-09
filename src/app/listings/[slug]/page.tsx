@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { canViewInternalUnitCode } from "@/lib/permissions";
 import { formatVND } from "@/lib/utils";
 import ListingDetailClient from "./ListingDetailClient";
+import { SITE_URL } from "@/config/site";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const rawSlug = params.slug;
@@ -53,13 +54,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const priceText = formatVND(listing.transactionType === "RENT" ? listing.rentPrice : listing.salePrice);
   const description = listing.description || `${listing.title} - Giá: ${priceText}. Thông tin chi tiết tại Minh Dũng Land.`;
+  const canonicalUrl = `${SITE_URL}/listings/${encodeURIComponent(params.slug)}`;
 
   return {
     title: `${listing.title} | Minh Dũng Land`,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${listing.title} | Minh Dũng Land`,
       description,
+      url: canonicalUrl,
       images: [{ url: firstImage }],
     },
     twitter: {

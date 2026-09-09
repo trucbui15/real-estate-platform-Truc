@@ -2,11 +2,19 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 
+import { SITE_URL } from "@/config/site";
+
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Tin tức & Phân tích Thị trường Bất Động Sản Quy Nhơn - Minh Dũng Land",
   description: "Cập nhật tin tức, quy hoạch, xu hướng thị trường bất động sản Quy Nhơn và thông tin dự án mới nhất.",
+  alternates: {
+    canonical: `${SITE_URL}/news`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/news`,
+  },
 };
 
 export default async function NewsPage() {

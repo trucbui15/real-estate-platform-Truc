@@ -27,10 +27,11 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.minhdungland.com.vn";
+import { SITE_URL, SITE_NAME } from "@/config/site";
+import { CONTACT_CONFIG } from "@/config/contact";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
   description:
     "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
@@ -43,8 +44,8 @@ export const metadata: Metadata = {
     title: "Minh Dũng Land - Nền tảng bất động sản Quy Nhơn",
     description:
       "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
-    url: siteUrl,
-    siteName: "Minh Dũng Land",
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
         url: "/og-image.jpg",
@@ -63,6 +64,37 @@ export const metadata: Metadata = {
       "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
     images: ["/og-image.jpg"],
   },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "RealEstateAgent",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/logo.png`,
+      description: "Mua bán, cho thuê căn hộ, nhà đất, biệt thự, dự án tại Quy Nhơn và Bình Định. Minh bạch, xác thực, cập nhật liên tục.",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: CONTACT_CONFIG.address,
+        addressLocality: "Quy Nhơn",
+        addressRegion: "Bình Định",
+        addressCountry: "VN",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      publisher: {
+        "@id": `${SITE_URL}/#organization`,
+      },
+      inLanguage: "vi-VN",
+    },
+  ],
 };
 
 const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -89,6 +121,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Script>
           </>
         )}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <AuthProvider>
           <ReferralTracker />
           <GoogleTranslateManager />

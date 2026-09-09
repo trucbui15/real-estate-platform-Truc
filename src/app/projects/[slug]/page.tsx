@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { isDeniedUnitCode } from "@/lib/permissions";
 import ProjectDetailClient from "./ProjectDetailClient";
 
+import { SITE_URL } from "@/config/site";
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const project = await prisma.project.findUnique({
     where: { slug: params.slug },
@@ -13,12 +15,17 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   if (!project) return { title: "Dự án không tồn tại - Minh Dũng Land" };
   const ogImage = project.thumbnail || "/og-image.jpg";
+  const canonicalUrl = `${SITE_URL}/projects/${encodeURIComponent(params.slug)}`;
   return {
     title: `${project.name} | Minh Dũng Land`,
     description: project.description || `Bảng hàng, căn hộ bán và cho thuê tại ${project.name}`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${project.name} | Minh Dũng Land`,
       description: project.description || `Bảng hàng, căn hộ bán và cho thuê tại ${project.name}`,
+      url: canonicalUrl,
       images: [{ url: ogImage }],
     },
     twitter: {

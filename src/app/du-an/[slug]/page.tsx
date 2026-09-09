@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProjectMicrositeRenderer from "@/components/microsite/ProjectMicrositeRenderer";
-import { CONTACT_CONFIG } from "@/config/contact";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 60; // Revalidate ISR every 60s
 
@@ -32,9 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       project.description ||
       `Thông tin chính thức, bảng giá, mặt bằng và tiến độ dự án ${project.name}`;
     const ogImage = ws?.publishedOgImage || project.thumbnail || "/logo.png";
-    const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || CONTACT_CONFIG.websiteUrl;
-    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
-    const canonicalUrl = `${baseUrl}/du-an/${slug}`;
+    const canonicalUrl = `${SITE_URL}/du-an/${encodeURIComponent(slug)}`;
 
     return {
       title,

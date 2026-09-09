@@ -1,7 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import ListingsClient from "./ListingsClient";
 
+import { Metadata } from "next";
+import { SITE_URL } from "@/config/site";
+
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Danh Sách Bất Động Sản Quy Nhơn | Minh Dũng Land",
+  description: "Tra cứu giỏ hàng căn hộ chung cư, nhà phố, biệt thự bán và cho thuê tại Quy Nhơn, Bình Định.",
+  alternates: {
+    canonical: `${SITE_URL}/listings`,
+  },
+  openGraph: {
+    title: "Danh Sách Bất Động Sản Quy Nhơn | Minh Dũng Land",
+    description: "Tra cứu giỏ hàng căn hộ chung cư, nhà phố, biệt thự bán và cho thuê tại Quy Nhơn, Bình Định.",
+    url: `${SITE_URL}/listings`,
+  },
+};
 
 export default async function ListingsPage({
   searchParams,
