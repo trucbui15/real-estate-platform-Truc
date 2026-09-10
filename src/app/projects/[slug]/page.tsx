@@ -74,7 +74,7 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
       transactionType: "SALE",
       unitStatus: { in: ["DANG_BAN"] },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ isHot: "desc" }, { hotAt: "desc" }, { createdAt: "desc" }],
     include: { project: true, author: true },
   });
 
@@ -85,7 +85,7 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
       transactionType: "RENT",
       unitStatus: { in: ["DANG_CHO_THUE"] },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ isHot: "desc" }, { hotAt: "desc" }, { createdAt: "desc" }],
     include: { project: true, author: true },
   });
 

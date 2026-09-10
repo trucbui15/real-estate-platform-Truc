@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatVND, LABELS } from "@/lib/utils";
-import { canViewInternalUnitCode } from "@/lib/permissions";
+import { canViewInternalUnitCode, canToggleHotListing } from "@/lib/permissions";
 
 function DashboardListingsContent() {
   const { data: session } = useSession();
@@ -13,73 +13,101 @@ function DashboardListingsContent() {
   const [items, setItems] = useState<any[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [togglingHotId, setTogglingHotId] = useState<string | null>(null);
 
   const initialUnitCode = searchParams.get("unitCode") || "";
+  const initialIsHot = searchParams.get("isHot") === "true" ? "HOT" : "ALL";
   const [searchQuery, setSearchQuery] = useState(initialUnitCode);
+  const [hotFilter, setHotFilter] = useState<"ALL" | "HOT">(initialIsHot);
+
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestQueryRef = useRef<string>(initialUnitCode);
+  const hotFilterRef = useRef<"ALL" | "HOT">(initialIsHot);
 
   const role = (session?.user as any)?.role;
   const canApprove = role === "ADMIN" || role === "MANAGER";
   const canSearchUnitCode = canViewInternalUnitCode(role);
+  const canToggleHot = canToggleHotListing(role);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ message, type });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
 
   // Core fetch function with AbortController for race-condition prevention
-  const fetchListings = useCallback(async (query: string, isInitial = false) => {
-    // Abort previous in-flight request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    const trimmed = query.trim();
-    const queryParam = trimmed ? `&unitCode=${encodeURIComponent(trimmed)}` : "";
-
-    // Sync URL query param without full page reload
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (trimmed) {
-        params.set("unitCode", trimmed);
-      } else {
-        params.delete("unitCode");
+  const fetchListings = useCallback(
+    async (query: string, currentHotFilter: "ALL" | "HOT" = hotFilterRef.current, isInitial = false) => {
+      // Abort previous in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-      const newRelativePathQuery =
-        window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
-      window.history.replaceState(null, "", newRelativePathQuery);
-    }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-    try {
-      const res = await fetch(`/api/listings?all=1&page=1${queryParam}`, {
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error("Lỗi tải danh sách tin đăng");
-      const data = await res.json();
+      const trimmed = query.trim();
+      const queryParam = trimmed ? `&unitCode=${encodeURIComponent(trimmed)}` : "";
+      const hotParam = currentHotFilter === "HOT" ? "&isHot=true" : "";
 
-      // Only apply if this request matches the latest user input
-      if (latestQueryRef.current === query) {
-        setItems(data.items || []);
+      // Sync URL query param without full page reload
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (trimmed) {
+          params.set("unitCode", trimmed);
+        } else {
+          params.delete("unitCode");
+        }
+        if (currentHotFilter === "HOT") {
+          params.set("isHot", "true");
+        } else {
+          params.delete("isHot");
+        }
+        const newRelativePathQuery =
+          window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+        window.history.replaceState(null, "", newRelativePathQuery);
       }
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
-        console.error("Lỗi tìm kiếm mã căn:", err);
+
+      try {
+        const res = await fetch(`/api/listings?all=1&page=1${queryParam}${hotParam}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error("Lỗi tải danh sách tin đăng");
+        const data = await res.json();
+
+        // Only apply if this request matches the latest user input
+        if (latestQueryRef.current === query) {
+          setItems(data.items || []);
+        }
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Lỗi tải danh sách tin đăng:", err);
+        }
+      } finally {
+        if (latestQueryRef.current === query) {
+          setIsSearching(false);
+          if (isInitial) setInitialLoading(false);
+        }
       }
-    } finally {
-      if (latestQueryRef.current === query) {
-        setIsSearching(false);
-        if (isInitial) setInitialLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   // Initial load
   useEffect(() => {
     if (session) {
       const currentQ = searchParams.get("unitCode") || "";
+      const currentH = searchParams.get("isHot") === "true" ? "HOT" : "ALL";
       latestQueryRef.current = currentQ;
+      hotFilterRef.current = currentH;
       setSearchQuery(currentQ);
-      fetchListings(currentQ, true);
+      setHotFilter(currentH);
+      fetchListings(currentQ, currentH, true);
     }
     return () => {
       if (abortControllerRef.current) {
@@ -87,6 +115,9 @@ function DashboardListingsContent() {
       }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+      }
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
       }
     };
   }, [session, fetchListings]);
@@ -103,7 +134,7 @@ function DashboardListingsContent() {
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      fetchListings(val);
+      fetchListings(val, hotFilterRef.current);
     }, 250);
   };
 
@@ -115,13 +146,46 @@ function DashboardListingsContent() {
     setSearchQuery("");
     latestQueryRef.current = "";
     setIsSearching(true);
-    fetchListings("");
+    fetchListings("", hotFilterRef.current);
   };
+
+  const handleHotFilterChange = (filter: "ALL" | "HOT") => {
+    setHotFilter(filter);
+    hotFilterRef.current = filter;
+    setIsSearching(true);
+    fetchListings(searchQuery, filter);
+  };
+
+  // Toggle HOT status without page reload
+  async function toggleHot(id: string, newIsHot: boolean) {
+    if (!canToggleHot) return;
+    setTogglingHotId(id);
+    try {
+      const res = await fetch(`/api/listings/${id}/hot`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHot: newIsHot }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Không thể cập nhật trạng thái HOT");
+      }
+      const updated = await res.json();
+      setItems((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, isHot: newIsHot, hotAt: updated.hotAt } : l))
+      );
+      showToast(newIsHot ? "Đã đánh dấu tin đăng HOT" : "Đã bỏ đánh dấu HOT");
+    } catch (err: any) {
+      showToast(err.message || "Lỗi cập nhật tin HOT", "error");
+    } finally {
+      setTogglingHotId(null);
+    }
+  }
 
   async function remove(id: string) {
     if (!confirm("Xoá tin đăng này?")) return;
     await fetch(`/api/listings/${id}`, { method: "DELETE" });
-    fetchListings(searchQuery);
+    fetchListings(searchQuery, hotFilterRef.current);
   }
 
   async function setStatus(id: string, unitStatus: string) {
@@ -130,16 +194,60 @@ function DashboardListingsContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ unitStatus }),
     });
-    fetchListings(searchQuery);
+    fetchListings(searchQuery, hotFilterRef.current);
   }
 
   const hasSearchKeyword = Boolean(searchQuery.trim());
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold border transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${
+            toast.type === "error"
+              ? "bg-rose-50 border-rose-200 text-rose-800"
+              : "bg-amber-50 border-amber-300 text-amber-950"
+          }`}
+        >
+          <span>{toast.type === "error" ? "⚠️" : "✓"}</span>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">Tin đăng bất động sản</h1>
+        <div>
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">Tin đăng bất động sản</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Quản lý kho tin đăng, duyệt tin và gắn nhãn HOT ưu tiên hiển thị</p>
+        </div>
+
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap self-start sm:self-auto">
+          {/* QUICK HOT FILTER PILLS */}
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+            <button
+              type="button"
+              onClick={() => handleHotFilterChange("ALL")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                hotFilter === "ALL"
+                  ? "bg-white text-slate-800 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Tất cả
+            </button>
+            <button
+              type="button"
+              onClick={() => handleHotFilterChange("HOT")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer flex items-center gap-1 ${
+                hotFilter === "HOT"
+                  ? "bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-xs font-bold"
+                  : "text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+              }`}
+            >
+              Tin HOT
+            </button>
+          </div>
+
           {canSearchUnitCode && (
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs">
@@ -150,7 +258,7 @@ function DashboardListingsContent() {
                 value={searchQuery}
                 onChange={handleInputChange}
                 placeholder="Tìm mã căn"
-                className="pl-8 pr-8 py-1.5 text-xs sm:text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-44 sm:w-56 transition placeholder:text-slate-400 font-medium"
+                className="pl-8 pr-8 py-1.5 text-xs sm:text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-40 sm:w-52 transition placeholder:text-slate-400 font-medium"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 gap-1">
                 {isSearching && (
@@ -188,6 +296,7 @@ function DashboardListingsContent() {
               </div>
             </div>
           )}
+
           <Link
             href="/dashboard/listings/new"
             className="btn-primary text-xs sm:text-sm shrink-0 self-start sm:self-auto"
@@ -203,7 +312,9 @@ function DashboardListingsContent() {
           <div className="card p-8 text-center text-xs text-slate-400 bg-white">Đang tải danh sách tin...</div>
         ) : items.length === 0 ? (
           <div className="card p-8 text-center text-xs text-slate-400 bg-white">
-            {hasSearchKeyword ? "Không tìm thấy mã căn phù hợp." : "Chưa có tin đăng nào"}
+            {hasSearchKeyword || hotFilter === "HOT"
+              ? "Không tìm thấy tin đăng phù hợp."
+              : "Chưa có tin đăng nào"}
           </div>
         ) : (
           items.map((l) => (
@@ -215,8 +326,15 @@ function DashboardListingsContent() {
             >
               <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-sky-700 font-mono">
-                    {l.productCode ? `Mã SP: ${l.productCode}` : `Mã căn: ${l.unitCode}`}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-sky-700 font-mono">
+                      {l.productCode ? `Mã SP: ${l.productCode}` : `Mã căn: ${l.unitCode}`}
+                    </span>
+                    {l.isHot && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-xs">
+                        HOT
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2">{l.title}</h3>
                   {l.project && (
@@ -241,11 +359,29 @@ function DashboardListingsContent() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap">
                 <div className="text-[11px] text-slate-400 font-mono">
                   {new Date(l.updatedAt).toLocaleDateString("vi-VN")}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {canToggleHot && (
+                    <button
+                      type="button"
+                      onClick={() => toggleHot(l.id, !l.isHot)}
+                      disabled={togglingHotId === l.id}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition min-h-[36px] flex items-center gap-1 cursor-pointer ${
+                        l.isHot
+                          ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                      title={l.isHot ? "Bỏ đánh dấu HOT" : "Đánh dấu tin HOT"}
+                    >
+                      {togglingHotId === l.id && (
+                        <span className="animate-spin inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
+                      )}
+                      {l.isHot ? "Bỏ HOT" : "HOT"}
+                    </button>
+                  )}
                   <Link
                     href={`/dashboard/listings/${l.id}/edit`}
                     className="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold border border-sky-200 transition min-h-[36px] flex items-center"
@@ -276,16 +412,16 @@ function DashboardListingsContent() {
 
       {/* DESKTOP TABLE VIEW (Hidden on mobile) */}
       <div className="hidden md:block overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 bg-white shadow-2xs">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[950px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
             <tr>
-              <th className="px-3.5 py-3.5 min-w-[125px]">Mã SP / Mã căn</th>
-              <th className="px-3.5 py-3.5 min-w-[180px]">Tiêu đề BĐS</th>
+              <th className="px-3.5 py-3.5 min-w-[130px]">Mã SP / Mã căn</th>
+              <th className="px-3.5 py-3.5 min-w-[200px]">Tiêu đề BĐS</th>
               <th className="px-3.5 py-3.5 min-w-[130px]">Người đăng tin</th>
               <th className="px-2.5 py-3.5 min-w-[85px] whitespace-nowrap">Giá</th>
               <th className="px-3 py-3.5 min-w-[135px] whitespace-nowrap">Trạng thái</th>
               <th className="px-2.5 py-3.5 min-w-[85px] whitespace-nowrap">Cập nhật</th>
-              <th className="px-3.5 py-3.5 text-right min-w-[110px]">Thao tác</th>
+              <th className="px-3.5 py-3.5 text-right min-w-[150px]">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -298,7 +434,9 @@ function DashboardListingsContent() {
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                  {hasSearchKeyword ? "Không tìm thấy mã căn phù hợp." : "Chưa có tin đăng nào"}
+                  {hasSearchKeyword || hotFilter === "HOT"
+                    ? "Không tìm thấy tin đăng phù hợp."
+                    : "Chưa có tin đăng nào"}
                 </td>
               </tr>
             ) : (
@@ -309,11 +447,18 @@ function DashboardListingsContent() {
                     isSearching ? "opacity-60" : "opacity-100"
                   }`}
                 >
-                  <td className="px-3.5 py-3 text-xs min-w-[125px]">
-                    <div className="font-bold text-blue-700 font-mono">Mã SP: {l.productCode || "—"}</div>
+                  <td className="px-3.5 py-3 text-xs min-w-[130px]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-blue-700 font-mono">Mã SP: {l.productCode || "—"}</span>
+                      {l.isHot && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 shrink-0">
+                          HOT
+                        </span>
+                      )}
+                    </div>
                     <div className="font-semibold text-amber-700 font-mono text-[11px]">Mã căn: {l.unitCode}</div>
                   </td>
-                  <td className="px-3.5 py-3 min-w-[180px]">
+                  <td className="px-3.5 py-3 min-w-[200px]">
                     <div className="font-bold text-slate-900">{l.title}</div>
                     {l.project && (
                       <div className="text-[11px] text-slate-500 font-medium">🏢 {l.project.name}</div>
@@ -338,8 +483,27 @@ function DashboardListingsContent() {
                   <td className="px-2.5 py-3 text-xs text-slate-500 min-w-[85px] whitespace-nowrap">
                     {new Date(l.updatedAt).toLocaleDateString("vi-VN")}
                   </td>
-                  <td className="px-3.5 py-3 text-right min-w-[110px]">
+                  <td className="px-3.5 py-3 text-right min-w-[150px]">
                     <div className="flex items-center justify-end gap-1.5">
+                      {/* ACTION: HOT TOGGLE (ADMIN / MANAGER ONLY) */}
+                      {canToggleHot && (
+                        <button
+                          type="button"
+                          onClick={() => toggleHot(l.id, !l.isHot)}
+                          disabled={togglingHotId === l.id}
+                          className={`text-xs font-bold px-2 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                            l.isHot
+                              ? "text-amber-800 bg-amber-50 border-amber-300 hover:bg-amber-100"
+                              : "text-slate-600 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
+                          title={l.isHot ? "Bỏ đánh dấu HOT" : "Đánh dấu tin HOT"}
+                        >
+                          {togglingHotId === l.id && (
+                            <span className="animate-spin inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
+                          )}
+                          {l.isHot ? "Bỏ HOT" : "HOT"}
+                        </button>
+                      )}
                       <Link
                         href={`/dashboard/listings/${l.id}/edit`}
                         className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded-lg hover:bg-blue-100 transition"

@@ -27,7 +27,7 @@ export default async function HomePage() {
     const [f, t, p] = await Promise.all([
       prisma.listing.findMany({
         where: { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } },
-        orderBy: { updatedAt: "desc" },
+        orderBy: [{ isHot: "desc" }, { hotAt: "desc" }, { updatedAt: "desc" }],
         take: 12,
         include: { project: true, province: true, district: true },
       }),

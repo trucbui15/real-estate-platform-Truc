@@ -135,7 +135,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
       ],
     },
     include: { project: true, province: true, district: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ isHot: "desc" }, { hotAt: "desc" }, { createdAt: "desc" }],
     take: 3,
   });
 

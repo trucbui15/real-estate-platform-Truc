@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canEditListing, canManageAllListings, canViewInternalUnitCode } from "@/lib/permissions";
+import { canEditListing, canManageAllListings, canViewInternalUnitCode, canToggleHotListing } from "@/lib/permissions";
 import { slugify } from "@/lib/utils";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -37,6 +37,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 
   const body = await req.json();
+
+  if (body.isHot !== undefined && !canToggleHotListing(session.user?.role)) {
+    return NextResponse.json(
+      { error: "Bạn không có quyền thay đổi trạng thái HOT của tin đăng (chỉ dành cho Quản trị / Quản lý)" },
+      { status: 403 }
+    );
+  }
 
   let finalProjectId = existing.projectId;
   if (body.projectId !== undefined) {
@@ -95,6 +102,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         description: body.description ?? existing.description,
         images: body.images ? JSON.stringify(body.images) : existing.images,
         verified: canManageAllListings(session.user.role) ? body.verified ?? existing.verified : existing.verified,
+        ...(body.isHot !== undefined
+          ? {
+              isHot: Boolean(body.isHot),
+              hotAt: Boolean(body.isHot) ? (existing.isHot ? existing.hotAt || new Date() : new Date()) : null,
+            }
+          : {}),
       },
       include: { project: true, province: true, district: true },
     });

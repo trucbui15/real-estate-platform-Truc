@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const furnitureStatus = searchParams.get("furnitureStatus") || undefined;
   const keyword = searchParams.get("keyword") || undefined;
   const unitCodeParam = searchParams.get("unitCode")?.trim() || undefined;
+  const isHotParam = searchParams.get("isHot");
   const isBackoffice = isBackofficeRole(session?.user?.role);
   const canSeeUnitCode = canViewInternalUnitCode(session?.user?.role);
   const showAll = searchParams.get("all") === "1" && isBackoffice;
@@ -122,6 +123,7 @@ export async function GET(req: Request) {
     ...(showAll
       ? {}
       : { unitStatus: { in: ["DANG_BAN", "DANG_CHO_THUE"] } }),
+    ...(isHotParam === "true" ? { isHot: true } : isHotParam === "false" ? { isHot: false } : {}),
   };
 
   const [items, total] = await Promise.all([
@@ -133,7 +135,7 @@ export async function GET(req: Request) {
         district: true,
         author: { select: { id: true, name: true, role: true, email: true, phone: true, referralCode: true } },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ isHot: "desc" }, { hotAt: "desc" }, { updatedAt: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),

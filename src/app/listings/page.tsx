@@ -70,12 +70,18 @@ export default async function ListingsPage({
       : {}),
   };
 
-  let orderBy: any = { updatedAt: "desc" };
+  let existingSort: any = { updatedAt: "desc" };
   if (sort === "price-asc") {
-    orderBy = { [priceField]: "asc" };
+    existingSort = { [priceField]: "asc" };
   } else if (sort === "price-desc") {
-    orderBy = { [priceField]: "desc" };
+    existingSort = { [priceField]: "desc" };
   }
+
+  const orderBy: any = [
+    { isHot: "desc" },
+    { hotAt: "desc" },
+    existingSort,
+  ];
 
   let items: any[] = [];
   let total = 0;

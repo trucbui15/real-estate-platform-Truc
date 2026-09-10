@@ -45,7 +45,7 @@ export default function ListingCard({ listing }: { listing: any }) {
           </div>
         )}
 
-        {/* BADGES */}
+        {/* BADGES (TOP-LEFT) */}
         <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5 z-10">
           <span className="rounded bg-slate-900/80 backdrop-blur px-2 py-0.5 text-[11px] font-bold text-white">
             {LABELS.transactionType[listing.transactionType as "SALE" | "RENT"] || listing.transactionType}
@@ -56,6 +56,18 @@ export default function ListingCard({ listing }: { listing: any }) {
             </span>
           )}
         </div>
+
+        {/* HOT BADGE OVERLAY (TOP-RIGHT) */}
+        {listing.isHot && (
+          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 pointer-events-none transition-transform duration-300 ease-out group-hover:scale-110">
+            <img
+              src="/images/hot-badge.png"
+              alt="HOT Listing"
+              className="w-[62px] sm:w-[82px] h-auto object-contain select-none drop-shadow-[0_3px_8px_rgba(0,0,0,0.4)]"
+              loading="lazy"
+            />
+          </div>
+        )}
 
         {/* IMAGE COUNT */}
         {images.length > 0 && (

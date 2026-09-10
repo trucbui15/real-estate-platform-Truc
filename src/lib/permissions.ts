@@ -58,6 +58,9 @@ export const canEditListing = (
 export const canApproveListing = (role?: Role | string) =>
   role === "ADMIN" || role === "MANAGER"; // Duyệt tin trước khi public
 
+export const canToggleHotListing = (role?: Role | string) =>
+  role === "ADMIN" || role === "MANAGER"; // Chỉ ADMIN & MANAGER được bật/tắt tin HOT
+
 // 6. Quản lý Khách hàng (CRM)
 export const canAccessCRM = (role?: Role | string) =>
   role === "ADMIN" || role === "MANAGER" || role === "STAFF" || role === "COLLABORATOR_PRO";

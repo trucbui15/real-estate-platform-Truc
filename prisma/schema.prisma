@@ -125,6 +125,8 @@ model Listing {
   description        String?
   images             String?
   verified           Boolean           @default(false)
+  isHot              Boolean           @default(false)
+  hotAt              DateTime?
   viewCount          Int               @default(0)
   authorId           String
   createdAt          DateTime          @default(now())
@@ -140,6 +142,7 @@ model Listing {
 
   @@index([transactionType, propertyType, unitStatus])
   @@index([provinceId])
+  @@index([isHot, hotAt])
 }
 
 model Favorite {
