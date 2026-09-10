@@ -5,7 +5,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { isBackofficeRole } from "@/lib/permissions";
-import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
+import { validatePhone, sanitizePhoneInput, normalizeUnitCode } from "@/lib/utils";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ListingCard from "@/components/ListingCard";
 
@@ -256,12 +256,15 @@ export default function ProjectMicrositeRenderer({
       if (statusFilter !== "ALL" && u.unitStatus !== statusFilter) return false;
       // 4. Direction
       if (directionFilter !== "ALL" && u.doorDirection !== directionFilter) return false;
-      // 5. Search
+      // 5. Search (chuẩn hóa bỏ khoảng trắng, "-", ".", "_", lowercase)
       if (searchUnitCode.trim() !== "") {
-        const kw = searchUnitCode.trim().toLowerCase();
-        const code = (u.unitCode || "").toLowerCase();
+        const normKw = normalizeUnitCode(searchUnitCode);
+        const normCode = normalizeUnitCode(u.unitCode);
+        const floorKw = searchUnitCode.trim().toLowerCase();
         const floor = (u.floor || "").toLowerCase();
-        if (!code.includes(kw) && !floor.includes(kw)) return false;
+        const matchCode = normKw ? normCode.includes(normKw) : false;
+        const matchFloor = floor.includes(floorKw);
+        if (!matchCode && !matchFloor) return false;
       }
       return true;
     });

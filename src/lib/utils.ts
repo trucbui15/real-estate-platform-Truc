@@ -51,6 +51,20 @@ export function normalizePhone(phone?: string | null): string {
 }
 
 /**
+ * Chuẩn hóa mã căn (unitCode) phục vụ tìm kiếm realtime:
+ * - Bỏ khoảng trắng
+ * - Bỏ dấu "-", ".", "_"
+ * - Chuyển về lowercase
+ * Ví dụ:
+ *  "ALT 0911", "ALT0911", "alt 0911", "alt0911", "ALT-0911", "ALT.0911", "alt_0911"
+ *  -> đều match chuỗi "alt0911"
+ */
+export function normalizeUnitCode(code?: string | null): string {
+  if (!code) return "";
+  return code.toLowerCase().replace(/[\s\-_.]/g, "");
+}
+
+/**
  * Regex kiểm tra số điện thoại Việt Nam chuẩn:
  * - Đúng 10 chữ số
  * - Bắt đầu bằng chữ số 0

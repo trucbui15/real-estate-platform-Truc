@@ -42,7 +42,7 @@ function KyGuiContent() {
             setForm((f) => ({ ...f, projectId: match.id }));
           }
         }
-      } catch (err) {}
+      } catch (err) { }
     }
     prefillProject();
   }, [projectParam]);
@@ -64,7 +64,7 @@ function KyGuiContent() {
               setForm((f) => ({ ...f, phone: f.phone || data.phone }));
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }
   }, [session]);
@@ -119,7 +119,7 @@ function KyGuiContent() {
       <div className="mx-auto max-w-xl">
         <h1 className="font-display text-2xl font-semibold text-brand-900">Ký gửi bất động sản</h1>
         <p className="mt-2 text-brand-700">
-          Gửi thông tin bất động sản bạn muốn bán hoặc cho thuê — đội ngũ tư vấn Minh Dũng Land sẽ liên hệ trong 24h.
+          Gửi thông tin bất động sản bạn muốn bán hoặc cho thuê - đội ngũ tư vấn Minh Dũng Land sẽ liên hệ trong 24h.
         </p>
 
         {sent ? (

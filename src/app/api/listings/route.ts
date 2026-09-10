@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/utils";
+import { slugify, normalizeUnitCode } from "@/lib/utils";
 import { canCreateListing, isBackofficeRole, canViewInternalUnitCode } from "@/lib/permissions";
 
 // GET /api/listings
@@ -27,13 +27,52 @@ export async function GET(req: Request) {
   const legalStatus = searchParams.get("legalStatus") || undefined;
   const furnitureStatus = searchParams.get("furnitureStatus") || undefined;
   const keyword = searchParams.get("keyword") || undefined;
+  const unitCodeParam = searchParams.get("unitCode")?.trim() || undefined;
   const isBackoffice = isBackofficeRole(session?.user?.role);
   const canSeeUnitCode = canViewInternalUnitCode(session?.user?.role);
   const showAll = searchParams.get("all") === "1" && isBackoffice;
   const page = Math.max(1, Number(searchParams.get("page") || 1));
-  const pageSize = 12;
+  const limitParam = Number(searchParams.get("limit") || searchParams.get("pageSize"));
+  const defaultPageSize = showAll ? 100 : 12;
+  const pageSize = Math.max(1, Math.min(100, limitParam || defaultPageSize));
 
   const priceField = transactionType === "RENT" ? "rentPrice" : "salePrice";
+
+  // Chuẩn hóa tìm kiếm mã căn (bỏ khoảng trắng, dấu "-", ".", "_" và chuyển lowercase)
+  let matchedUnitCodeListingIds: string[] | null = null;
+  if (canSeeUnitCode && unitCodeParam) {
+    const norm = normalizeUnitCode(unitCodeParam);
+    if (norm) {
+      try {
+        const matched: { id: string }[] = await prisma.$queryRaw`
+          SELECT id FROM "Listing"
+          WHERE REGEXP_REPLACE(LOWER("unitCode"), '[\\s\\-_.]', '', 'g') LIKE ${'%' + norm + '%'}
+             OR REGEXP_REPLACE(LOWER(COALESCE("productCode", '')), '[\\s\\-_.]', '', 'g') LIKE ${'%' + norm + '%'}
+        `;
+        matchedUnitCodeListingIds = matched.map((m) => m.id);
+      } catch (err) {
+        console.error("Lỗi regex tìm kiếm mã căn:", err);
+      }
+    } else {
+      matchedUnitCodeListingIds = [];
+    }
+  }
+
+  let matchedKeywordUnitCodeIds: string[] = [];
+  if (canSeeUnitCode && keyword) {
+    const norm = normalizeUnitCode(keyword);
+    if (norm) {
+      try {
+        const matched: { id: string }[] = await prisma.$queryRaw`
+          SELECT id FROM "Listing"
+          WHERE REGEXP_REPLACE(LOWER("unitCode"), '[\\s\\-_.]', '', 'g') LIKE ${'%' + norm + '%'}
+        `;
+        matchedKeywordUnitCodeIds = matched.map((m) => m.id);
+      } catch (err) {
+        console.error("Lỗi keyword unitCode regex:", err);
+      }
+    }
+  }
 
   const where: any = {
     ...(transactionType ? { transactionType } : {}),
@@ -46,6 +85,11 @@ export async function GET(req: Request) {
     ...(direction ? { doorDirection: direction } : {}),
     ...(legalStatus ? { legalStatus } : {}),
     ...(furnitureStatus ? { furnitureStatus } : {}),
+    ...(canSeeUnitCode && unitCodeParam && matchedUnitCodeListingIds !== null
+      ? { id: { in: matchedUnitCodeListingIds } }
+      : canSeeUnitCode && unitCodeParam
+      ? { unitCode: { contains: unitCodeParam, mode: "insensitive" } }
+      : {}),
     ...(minPrice || maxPrice
       ? {
           [priceField]: {
@@ -68,6 +112,9 @@ export async function GET(req: Request) {
             { title: { contains: keyword, mode: "insensitive" } },
             { productCode: { contains: keyword, mode: "insensitive" } },
             ...(canSeeUnitCode ? [{ unitCode: { contains: keyword, mode: "insensitive" } }] : []),
+            ...(canSeeUnitCode && matchedKeywordUnitCodeIds.length > 0
+              ? [{ id: { in: matchedKeywordUnitCodeIds } }]
+              : []),
             { project: { name: { contains: keyword, mode: "insensitive" } } },
           ],
         }

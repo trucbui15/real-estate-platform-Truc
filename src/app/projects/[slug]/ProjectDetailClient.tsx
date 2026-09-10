@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import ListingCard from "@/components/ListingCard";
 import { compressImagesInBatch, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
+import { normalizeUnitCode } from "@/lib/utils";
 
 const unitStatusLabel: Record<string, { label: string; style: string; badgeStyle: string }> = {
   DANG_BAN: {
@@ -322,12 +323,15 @@ export default function ProjectDetailClient({
         return false;
       }
 
-      // 5. Search unit code or floor
+      // 5. Search unit code or floor (chuẩn hóa bỏ khoảng trắng, "-", ".", "_", lowercase)
       if (searchUnitCode.trim() !== "") {
-        const kw = searchUnitCode.trim().toLowerCase();
-        const code = (u.unitCode || "").toLowerCase();
+        const normKw = normalizeUnitCode(searchUnitCode);
+        const normCode = normalizeUnitCode(u.unitCode);
+        const floorKw = searchUnitCode.trim().toLowerCase();
         const floor = (u.floor || "").toLowerCase();
-        if (!code.includes(kw) && !floor.includes(kw)) return false;
+        const matchCode = normKw ? normCode.includes(normKw) : false;
+        const matchFloor = floor.includes(floorKw);
+        if (!matchCode && !matchFloor) return false;
       }
 
       return true;
