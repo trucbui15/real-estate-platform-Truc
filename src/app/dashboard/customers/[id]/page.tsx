@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LABELS } from "@/lib/utils";
+import { useToast } from "@/components/ToastProvider";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
+  const { toast } = useToast();
 
   const [customer, setCustomer] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -16,6 +19,8 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [assignFeedback, setAssignFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isManagerUp = session && ["ADMIN", "MANAGER"].includes((session.user as any).role);
 
@@ -26,6 +31,7 @@ export default function CustomerDetailPage() {
   }
 
   async function loadAssignees() {
+    if (!isManagerUp) return;
     try {
       const [resUsers, resCols] = await Promise.all([
         fetch("/api/users"),
@@ -113,22 +119,23 @@ export default function CustomerDetailPage() {
     load();
   }
 
-  async function handleDeleteCustomer() {
+  async function handleConfirmDelete() {
     if (!customer) return;
-    if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn khách hàng "${customer.fullName}" khỏi hệ thống? Hành động này không thể hoàn tác.`)) {
-      return;
-    }
+    setDeleting(true);
     try {
       const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+      setDeleting(false);
       if (res.ok) {
-        alert("Đã xóa khách hàng thành công!");
+        toast.success(`Đã xóa vĩnh viễn khách hàng "${customer.fullName}" thành công!`);
+        setShowDeleteModal(false);
         router.push("/dashboard/customers");
       } else {
         const data = await res.json();
-        alert(data.error || "Không thể xóa khách hàng.");
+        toast.error(data.error || "Không thể xóa khách hàng.");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ khi xóa.");
+      setDeleting(false);
+      toast.error("Lỗi kết nối máy chủ khi xóa.");
     }
   }
 
@@ -144,14 +151,14 @@ export default function CustomerDetailPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={() => router.back()} className="text-sm font-semibold text-brand-600 hover:underline">
+        <button onClick={() => router.back()} className="text-sm font-semibold text-brand-600 hover:underline cursor-pointer">
           ← Quay lại danh sách
         </button>
 
         {isManagerUp && (
           <button
-            onClick={handleDeleteCustomer}
-            className="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200 flex items-center gap-1"
+            onClick={() => setShowDeleteModal(true)}
+            className="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200 flex items-center gap-1 cursor-pointer"
           >
             Xóa khách hàng
           </button>
@@ -430,6 +437,33 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL XÁC NHẬN XÓA KHÁCH HÀNG */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Xác nhận xóa vĩnh viễn khách hàng"
+        message={
+          <div className="space-y-2.5">
+            <p className="text-slate-700">
+              Bạn có chắc chắn muốn <span className="font-bold text-rose-600">XÓA vĩnh viễn</span> khách hàng{" "}
+              <strong className="text-slate-900 font-bold">"{customer?.fullName}"</strong> khỏi hệ thống?
+            </p>
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800 space-y-1">
+              <div className="font-bold flex items-center gap-1">
+                <span>⚠️</span>
+                <span>Hành động này không thể hoàn tác!</span>
+              </div>
+              <div>Toàn bộ thông tin liên hệ, yêu cầu tư vấn và lịch sử chăm sóc của khách hàng sẽ bị xóa hoàn toàn.</div>
+            </div>
+          </div>
+        }
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy bỏ"
+        variant="danger"
+        isLoading={deleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 }

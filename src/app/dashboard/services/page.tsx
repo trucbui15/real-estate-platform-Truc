@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ToastProvider";
 
 const statusMeta: Record<string, { label: string; style: string }> = {
   MOI: { label: "MỚI TẠO", style: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -13,6 +14,7 @@ const statusMeta: Record<string, { label: string; style: string }> = {
 
 export default function DashboardServicesPage() {
   const { data: session } = useSession();
+  const { toast } = useToast();
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [tab, setTab] = useState<"ALL" | "BOOKING" | "VISA">("ALL");
   const [keyword, setKeyword] = useState("");
@@ -69,12 +71,13 @@ export default function DashboardServicesPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
+        toast.success("Đã cập nhật trạng thái yêu cầu dịch vụ!");
         loadData();
       } else {
-        alert("Không thể cập nhật trạng thái");
+        toast.error("Không thể cập nhật trạng thái");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ");
+      toast.error("Lỗi kết nối máy chủ");
     } finally {
       setUpdatingId(null);
     }
@@ -97,12 +100,13 @@ export default function DashboardServicesPage() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        toast.success("Đã phân công người phụ trách thành công!");
         loadData();
       } else {
-        alert("Không thể phân công");
+        toast.error("Không thể phân công");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ");
+      toast.error("Lỗi kết nối máy chủ");
     } finally {
       setUpdatingId(null);
     }

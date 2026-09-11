@@ -7,13 +7,21 @@ declare module "next-auth" {
     user: {
       id: string;
       role: Role;
+      active?: boolean;
+      isInactive?: boolean;
       name?: string | null;
       email?: string | null;
+      phone?: string | null;
+      referralCode?: string | null;
+      publicReferralToken?: string | null;
     };
   }
   interface User {
     id: string;
     role: Role;
+    active?: boolean;
+    phone?: string | null;
+    referralCode?: string | null;
   }
 }
 
@@ -21,5 +29,10 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    active?: boolean;
+    isInactive?: boolean;
+    phone?: string | null;
+    referralCode?: string | null;
+    publicReferralToken?: string | null;
   }
 }

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canAccessCRM, canManageAllCustomers, canAssignCustomers } from "@/lib/permissions";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canAccessCRM(authUser.role)) {
+    return NextResponse.json({ error: "Không có quyền truy cập hoặc tài khoản đã bị khóa" }, { status: 403 });
   }
   const customer = await prisma.customer.findUnique({
     where: { id: params.id },
@@ -34,16 +33,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
   if (!customer) return NextResponse.json({ error: "Không tìm thấy khách hàng" }, { status: 404 });
 
-  if (!canManageAllCustomers(session.user.role) && customer.assignedToId !== session.user.id) {
+  if (!canManageAllCustomers(authUser.role) && customer.assignedToId !== authUser.id) {
     return NextResponse.json({ error: "Không có quyền xem khách hàng này" }, { status: 403 });
   }
   return NextResponse.json(customer);
 }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canAccessCRM(authUser.role)) {
+    return NextResponse.json({ error: "Không có quyền truy cập hoặc tài khoản đã bị khóa" }, { status: 403 });
   }
 
   const existing = await prisma.customer.findUnique({
@@ -55,10 +54,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   });
   if (!existing) return NextResponse.json({ error: "Không tìm thấy khách hàng" }, { status: 404 });
 
-  const isManagerUp = canManageAllCustomers(session.user.role);
+  const isManagerUp = canManageAllCustomers(authUser.role);
 
   // STAFF & COLLABORATOR_PRO chỉ được sửa thông tin khách mà mình được phân công
-  if (!isManagerUp && existing.assignedToId !== session.user.id) {
+  if (!isManagerUp && existing.assignedToId !== authUser.id) {
     return NextResponse.json({ error: "Không có quyền sửa khách hàng này" }, { status: 403 });
   }
 
@@ -70,7 +69,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     body.assignedToId !== undefined ||
     body.assignedCollaboratorId !== undefined;
 
-  if (isAssignmentAttempt && !canAssignCustomers(session.user.role)) {
+  if (isAssignmentAttempt && !canAssignCustomers(authUser.role)) {
     return NextResponse.json({ error: "Chỉ Admin và Quản lý mới có quyền phân công khách hàng" }, { status: 403 });
   }
 
@@ -175,7 +174,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     await prisma.customerActivity.create({
       data: {
         customerId: existing.id,
-        authorId: session.user.id,
+        authorId: authUser.id,
         type: "NOTE",
         content: `${oldDisplayName} → ${newDisplayName}`,
       },
@@ -187,7 +186,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     await prisma.customerActivity.create({
       data: {
         customerId: existing.id,
-        authorId: session.user.id,
+        authorId: authUser.id,
         type: "STATUS_CHANGE",
         content: `Đổi trạng thái: ${existing.status} → ${body.status}`,
       },
@@ -198,8 +197,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canManageAllCustomers(session.user.role)) {
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canManageAllCustomers(authUser.role)) {
     return NextResponse.json({ error: "Chỉ Quản lý/Admin được xoá khách hàng" }, { status: 403 });
   }
 

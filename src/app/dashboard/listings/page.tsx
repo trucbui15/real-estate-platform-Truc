@@ -5,23 +5,25 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatVND, LABELS } from "@/lib/utils";
 import { canViewInternalUnitCode, canToggleHotListing } from "@/lib/permissions";
+import { useToast } from "@/components/ToastProvider";
+import ConfirmModal from "@/components/ConfirmModal";
 
 function DashboardListingsContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const [items, setItems] = useState<any[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [togglingHotId, setTogglingHotId] = useState<string | null>(null);
+  const [listingToDelete, setListingToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const initialUnitCode = searchParams.get("unitCode") || "";
   const initialIsHot = searchParams.get("isHot") === "true" ? "HOT" : "ALL";
   const [searchQuery, setSearchQuery] = useState(initialUnitCode);
   const [hotFilter, setHotFilter] = useState<"ALL" | "HOT">(initialIsHot);
-
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -32,14 +34,6 @@ function DashboardListingsContent() {
   const canApprove = role === "ADMIN" || role === "MANAGER";
   const canSearchUnitCode = canViewInternalUnitCode(role);
   const canToggleHot = canToggleHotListing(role);
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ message, type });
-    toastTimerRef.current = setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
 
   // Core fetch function with AbortController for race-condition prevention
   const fetchListings = useCallback(
@@ -116,9 +110,6 @@ function DashboardListingsContent() {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-      if (toastTimerRef.current) {
-        clearTimeout(toastTimerRef.current);
-      }
     };
   }, [session, fetchListings]);
 
@@ -174,46 +165,57 @@ function DashboardListingsContent() {
       setItems((prev) =>
         prev.map((l) => (l.id === id ? { ...l, isHot: newIsHot, hotAt: updated.hotAt } : l))
       );
-      showToast(newIsHot ? "Đã đánh dấu tin đăng HOT" : "Đã bỏ đánh dấu HOT");
+      toast.success(newIsHot ? "Đã đánh dấu tin đăng HOT" : "Đã bỏ đánh dấu HOT");
     } catch (err: any) {
-      showToast(err.message || "Lỗi cập nhật tin HOT", "error");
+      toast.error(err.message || "Lỗi cập nhật tin HOT");
     } finally {
       setTogglingHotId(null);
     }
   }
 
-  async function remove(id: string) {
-    if (!confirm("Xoá tin đăng này?")) return;
-    await fetch(`/api/listings/${id}`, { method: "DELETE" });
-    fetchListings(searchQuery, hotFilterRef.current);
+  async function handleConfirmDeleteListing() {
+    if (!listingToDelete) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/listings/${listingToDelete.id}`, { method: "DELETE" });
+      setDeleteLoading(false);
+      if (res.ok) {
+        toast.success(`Đã xóa tin đăng "${listingToDelete.title}" thành công!`);
+        setListingToDelete(null);
+        fetchListings(searchQuery, hotFilterRef.current);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Không thể xóa tin đăng.");
+      }
+    } catch (e) {
+      setDeleteLoading(false);
+      toast.error("Lỗi kết nối máy chủ khi xóa tin đăng.");
+    }
   }
 
   async function setStatus(id: string, unitStatus: string) {
-    await fetch(`/api/listings/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ unitStatus }),
-    });
-    fetchListings(searchQuery, hotFilterRef.current);
+    try {
+      const res = await fetch(`/api/listings/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unitStatus }),
+      });
+      if (res.ok) {
+        toast.success("Đã cập nhật trạng thái tin đăng thành công!");
+        fetchListings(searchQuery, hotFilterRef.current);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Không thể cập nhật trạng thái tin đăng.");
+      }
+    } catch (e) {
+      toast.error("Lỗi kết nối máy chủ.");
+    }
   }
 
   const hasSearchKeyword = Boolean(searchQuery.trim());
 
   return (
     <div className="space-y-4 relative">
-      {/* TOAST NOTIFICATION */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold border transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${
-            toast.type === "error"
-              ? "bg-rose-50 border-rose-200 text-rose-800"
-              : "bg-amber-50 border-amber-300 text-amber-950"
-          }`}
-        >
-          <span>{toast.type === "error" ? "⚠️" : "✓"}</span>
-          <span>{toast.message}</span>
-        </div>
-      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -397,7 +399,7 @@ function DashboardListingsContent() {
                     </button>
                   )}
                   <button
-                    onClick={() => remove(l.id)}
+                    onClick={() => setListingToDelete({ id: l.id, title: l.title })}
                     className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center cursor-pointer"
                     title="Xóa vĩnh viễn tin đăng"
                   >
@@ -519,7 +521,7 @@ function DashboardListingsContent() {
                         </button>
                       )}
                       <button
-                        onClick={() => remove(l.id)}
+                        onClick={() => setListingToDelete({ id: l.id, title: l.title })}
                         className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg hover:bg-rose-100 transition cursor-pointer"
                         title="Xóa vĩnh viễn tin đăng"
                       >
@@ -533,6 +535,29 @@ function DashboardListingsContent() {
           </tbody>
         </table>
       </div>
+
+      {/* CONFIRM MODAL XÓA TIN ĐĂNG */}
+      <ConfirmModal
+        isOpen={Boolean(listingToDelete)}
+        title="Xác nhận xóa vĩnh viễn tin đăng"
+        message={
+          <div className="space-y-2">
+            <p>
+              Bạn có chắc chắn muốn <strong className="text-rose-600">XÓA VĨNH VIỄN</strong> tin đăng{" "}
+              <strong className="text-slate-900 font-bold">"{listingToDelete?.title}"</strong> khỏi hệ thống?
+            </p>
+            <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+              ⚠️ Hành động này không thể hoàn tác. Mọi hình ảnh và nội dung liên quan sẽ bị xóa khỏi website.
+            </p>
+          </div>
+        }
+        variant="danger"
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy bỏ"
+        isLoading={deleteLoading}
+        onConfirm={handleConfirmDeleteListing}
+        onClose={() => setListingToDelete(null)}
+      />
     </div>
   );
 }

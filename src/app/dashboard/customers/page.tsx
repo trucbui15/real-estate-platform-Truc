@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { LABELS, validatePhone, sanitizePhoneInput } from "@/lib/utils";
+import { useToast } from "@/components/ToastProvider";
+import ConfirmModal from "@/components/ConfirmModal";
 
 const statusColor: Record<string, string> = {
   MOI: "bg-blue-100 text-blue-700",
@@ -15,6 +17,7 @@ const statusColor: Record<string, string> = {
 
 export default function CustomersPage() {
   const { data: session } = useSession();
+  const { toast } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [collaborators, setCollaborators] = useState<any[]>([]);
@@ -23,6 +26,8 @@ export default function CustomersPage() {
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -54,18 +59,43 @@ export default function CustomersPage() {
   const role = (session?.user as any)?.role;
   const isManagerUp = ["ADMIN", "MANAGER"].includes(role);
 
-  async function load() {
-    setLoading(true);
+  const keywordRef = useRef(keyword);
+  useEffect(() => {
+    keywordRef.current = keyword;
+  }, [keyword]);
+
+  async function load(options?: { isBackground?: boolean }) {
+    const isBg = options?.isBackground ?? false;
+    if (!isBg) {
+      setLoading(true);
+    }
     const qs = new URLSearchParams();
     if (status) qs.set("status", status);
-    if (keyword) qs.set("keyword", keyword);
+    const kw = keywordRef.current?.trim();
+    if (kw) qs.set("keyword", kw);
     if (assigneeFilter) qs.set("assignee", assigneeFilter);
-    const res = await fetch(`/api/customers?${qs.toString()}`);
-    setItems(res.ok ? await res.json() : []);
-    setLoading(false);
+
+    try {
+      const res = await fetch(`/api/customers?${qs.toString()}`, { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/login?error=SessionExpired";
+        return;
+      }
+      if (res.ok) {
+        const freshItems = await res.json();
+        setItems(freshItems);
+      }
+    } catch (err) {
+      console.error("[CRM] Lỗi tải dữ liệu khách hàng:", err);
+    } finally {
+      if (!isBg) {
+        setLoading(false);
+      }
+    }
   }
 
   async function loadAssignees() {
+    if (!isManagerUp) return;
     try {
       const [resUsers, resCols] = await Promise.all([
         fetch("/api/users", { cache: "no-store" }),
@@ -79,10 +109,38 @@ export default function CustomersPage() {
   }
 
   useEffect(() => {
-    if (session) {
-      load();
-      loadAssignees();
-    }
+    if (!session) return;
+
+    // Initial load
+    load();
+    loadAssignees();
+
+    // 1. Smart polling mỗi 3 giây khi tab đang hiển thị (document.visibilityState === "visible")
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        load({ isBackground: true });
+      }
+    }, 3000);
+
+    // 2. Refetch ngay lập tức khi tab regain focus hoặc visibilityState chuyển sang visible
+    const handleFocus = () => {
+      load({ isBackground: true });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        load({ isBackground: true });
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, assigneeFilter]);
 
@@ -104,26 +162,27 @@ export default function CustomersPage() {
       });
       setUpdatingId(null);
       if (res.ok) {
+        toast.success("Đã cập nhật phân công khách hàng thành công!");
         load();
       } else {
         const data = await res.json();
-        alert(data.error || "Không thể phân công. Vui lòng thử lại.");
+        toast.error(data.error || "Không thể phân công. Vui lòng thử lại.");
       }
     } catch (err) {
       setUpdatingId(null);
-      alert("Lỗi kết nối máy chủ.");
+      toast.error("Lỗi kết nối máy chủ khi phân công.");
     }
   }
 
   async function handleCreateCustomer(e: React.FormEvent) {
     e.preventDefault();
     if (!newForm.fullName.trim()) {
-      alert("Vui lòng nhập họ và tên khách hàng!");
+      toast.warning("Vui lòng nhập họ và tên khách hàng!");
       return;
     }
     const phoneError = validatePhone(newForm.phone);
     if (phoneError) {
-      alert(phoneError);
+      toast.warning(phoneError);
       return;
     }
     setCreating(true);
@@ -156,6 +215,7 @@ export default function CustomersPage() {
 
       setCreating(false);
       if (res.ok) {
+        toast.success("Đã thêm khách hàng mới thành công!");
         setShowAddModal(false);
         setNewForm({
           fullName: "",
@@ -169,31 +229,31 @@ export default function CustomersPage() {
         load();
       } else {
         const data = await res.json();
-        alert(data.error || "Không thể tạo khách hàng mới.");
+        toast.error(data.error || "Không thể tạo khách hàng mới.");
       }
     } catch (err) {
       setCreating(false);
-      alert("Lỗi kết nối khi tạo khách hàng.");
+      toast.error("Lỗi kết nối khi tạo khách hàng.");
     }
   }
 
-  async function handleDeleteCustomer(id: string, name: string) {
-    if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn khách hàng "${name}" khỏi hệ thống? Hành động này không thể hoàn tác.`)) {
-      return;
-    }
-    setUpdatingId(id);
+  async function handleConfirmDeleteCustomer() {
+    if (!customerToDelete) return;
+    setDeletingCustomer(true);
     try {
-      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
-      setUpdatingId(null);
+      const res = await fetch(`/api/customers/${customerToDelete.id}`, { method: "DELETE" });
+      setDeletingCustomer(false);
       if (res.ok) {
+        toast.success(`Đã xóa vĩnh viễn khách hàng "${customerToDelete.name}" thành công.`);
+        setCustomerToDelete(null);
         load();
       } else {
         const data = await res.json();
-        alert(data.error || "Không thể xóa khách hàng.");
+        toast.error(data.error || "Không thể xóa khách hàng.");
       }
     } catch (e) {
-      setUpdatingId(null);
-      alert("Lỗi kết nối máy chủ khi xóa.");
+      setDeletingCustomer(false);
+      toast.error("Lỗi kết nối máy chủ khi xóa khách hàng.");
     }
   }
 
@@ -208,13 +268,15 @@ export default function CustomersPage() {
               : "Toàn bộ khách hàng trên hệ thống. Bạn có thể phân công trực tiếp cho Nhân sự hoặc Cộng tác viên (CTV)."}
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary text-xs sm:text-sm self-start sm:self-auto flex items-center gap-1.5 cursor-pointer"
-        >
-          <span>➕</span>
-          <span>Thêm khách hàng</span>
-        </button>
+        {isManagerUp && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary text-xs sm:text-sm self-start sm:self-auto flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>➕</span>
+            <span>Thêm khách hàng</span>
+          </button>
+        )}
       </div>
 
       {/* FILTER BAR - ULTRA COMPACT & PROPORTIONAL ON MOBILE & DESKTOP */}
@@ -275,7 +337,7 @@ export default function CustomersPage() {
 
         <div className="col-span-2 sm:col-span-1 sm:w-auto">
           <button
-            onClick={load}
+            onClick={() => load()}
             className="btn-primary w-full sm:w-auto h-9 text-xs py-1.5 px-4 rounded-xl cursor-pointer font-bold flex items-center justify-center gap-1"
           >
             🔍 Lọc
@@ -391,9 +453,9 @@ export default function CustomersPage() {
                     </Link>
                     {isManagerUp && (
                       <button
-                        onClick={() => handleDeleteCustomer(c.id, c.fullName)}
+                        onClick={() => setCustomerToDelete({ id: c.id, name: c.fullName })}
                         disabled={updatingId === c.id}
-                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center"
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition min-h-[36px] flex items-center cursor-pointer"
                       >
                         Xóa
                       </button>
@@ -514,9 +576,9 @@ export default function CustomersPage() {
                     {isManagerUp && (
                       <td className="px-4 py-3.5 text-right min-w-[100px]">
                         <button
-                          onClick={() => handleDeleteCustomer(c.id, c.fullName)}
+                          onClick={() => setCustomerToDelete({ id: c.id, name: c.fullName })}
                           disabled={updatingId === c.id}
-                          className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200"
+                          className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-xs font-bold transition border border-red-200 cursor-pointer"
                           title="Xóa vĩnh viễn khách hàng này"
                         >
                           Xóa
@@ -531,8 +593,8 @@ export default function CustomersPage() {
         </table>
       </div>
 
-      {/* MODAL THÊM KHÁCH HÀNG MỚI */}
-      {showAddModal && (
+      {/* MODAL THÊM KHÁCH HÀNG MỚI (CHỈ ADMIN & MANAGER) */}
+      {showAddModal && isManagerUp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg p-5 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between border-b pb-3 border-slate-100 sticky top-0 bg-white z-10">
@@ -685,6 +747,32 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+      {/* MODAL XÁC NHẬN XÓA KHÁCH HÀNG THAY THẾ WINDOW.CONFIRM */}
+      <ConfirmModal
+        isOpen={Boolean(customerToDelete)}
+        title="Xác nhận xóa vĩnh viễn khách hàng"
+        message={
+          <div className="space-y-2.5">
+            <p className="text-slate-700">
+              Bạn có chắc chắn muốn <span className="font-bold text-rose-600">XÓA vĩnh viễn</span> khách hàng{" "}
+              <strong className="text-slate-900 font-bold">"{customerToDelete?.name}"</strong> khỏi hệ thống?
+            </p>
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800 space-y-1">
+              <div className="font-bold flex items-center gap-1">
+                <span>⚠️</span>
+                <span>Hành động này không thể hoàn tác!</span>
+              </div>
+              <div>Toàn bộ thông tin liên hệ, yêu cầu tư vấn và lịch sử chăm sóc của khách hàng sẽ bị xóa hoàn toàn.</div>
+            </div>
+          </div>
+        }
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy bỏ"
+        variant="danger"
+        isLoading={deletingCustomer}
+        onConfirm={handleConfirmDeleteCustomer}
+        onClose={() => setCustomerToDelete(null)}
+      />
     </div>
   );
 }

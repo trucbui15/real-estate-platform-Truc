@@ -1,20 +1,19 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessCRM, canManageAllCustomers, canAssignCustomers } from "@/lib/permissions";
+import { canAccessCRM, canManageAllCustomers, canAssignCustomers, canCreateCustomer } from "@/lib/permissions";
 import { pushLeadToGoogleSheet } from "@/lib/googleSheetsService";
 import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // GET /api/customers?status=..&keyword=..&assignee=..
-// STAFF & COLLABORATOR_PRO: Chỉ thấy khách được giao cho mình (assignedToId = session.user.id)
+// STAFF & COLLABORATOR_PRO: Chỉ thấy khách được giao cho mình (assignedToId = authUser.id)
 // MANAGER / ADMIN: Thấy toàn bộ khách hàng
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canAccessCRM(authUser.role)) {
+    return NextResponse.json({ error: "Không có quyền truy cập hoặc tài khoản đã bị khóa" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -35,15 +34,15 @@ export async function GET(req: Request) {
     assigneeCondition = { assignedCollaboratorId: assignee.replace("collaborator:", "") };
   }
 
-  const isManagerUp = canManageAllCustomers(session.user.role);
+  const isManagerUp = canManageAllCustomers(authUser.role);
   const permissionCondition = isManagerUp
     ? {}
-    : session.user.role === "COLLABORATOR_PRO"
-      ? { assignedToId: session.user.id } // CTV Pro chỉ thấy khách hàng được phân công cho chính mình
+    : authUser.role === "COLLABORATOR_PRO"
+      ? { assignedToId: authUser.id } // CTV Pro chỉ thấy khách hàng được phân công cho chính mình
       : {
           OR: [
-            { assignedToId: session.user.id },
-            { assignedCollaborator: { referredByUserId: session.user.id } },
+            { assignedToId: authUser.id },
+            { assignedCollaborator: { referredByUserId: authUser.id } },
           ],
         };
 
@@ -77,11 +76,14 @@ export async function GET(req: Request) {
   return NextResponse.json(customers);
 }
 
-// POST /api/customers — Nhập tay 1 khách hàng mới
+// POST /api/customers — Nhập tay 1 khách hàng mới (Chỉ ADMIN & MANAGER)
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canCreateCustomer(authUser.role)) {
+    return NextResponse.json(
+      { error: "Chỉ Quản trị viên và Quản lý mới có quyền tạo khách hàng thủ công." },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
@@ -98,12 +100,12 @@ export async function POST(req: Request) {
 
   const cleanPhone = normalizePhone(body.phone);
 
-  let assignedToId: string | null = session.user.id;
+  let assignedToId: string | null = authUser.id;
   let assignedCollaboratorId: string | null = null;
   let assignedAt: Date | null = new Date();
 
   // Chỉ Admin / Manager mới được chỉ định người phụ trách khác
-  if (canAssignCustomers(session.user.role)) {
+  if (canAssignCustomers(authUser.role)) {
     if (body.assigneeType === "COLLABORATOR" && body.assigneeId) {
       assignedToId = null;
       assignedCollaboratorId = body.assigneeId;

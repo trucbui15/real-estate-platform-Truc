@@ -4,17 +4,21 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function DashboardNewsListPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [newsToDelete, setNewsToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function loadNews() {
     setLoading(true);
@@ -35,21 +39,23 @@ export default function DashboardNewsListPage() {
     if (session) loadNews();
   }, [session]);
 
-  async function handleDelete(id: string, title: string) {
-    if (!confirm(`Bạn có chắc chắn muốn xóa bài viết "${title}"?`)) return;
-    setDeletingId(id);
+  async function handleConfirmDeleteNews() {
+    if (!newsToDelete) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/news/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/news/${newsToDelete.id}`, { method: "DELETE" });
+      setDeleting(false);
       if (res.ok) {
-        setItems((prev) => prev.filter((item) => item.id !== id));
+        toast.success(`Đã xóa bài viết "${newsToDelete.title}" thành công!`);
+        setItems((prev) => prev.filter((item) => item.id !== newsToDelete.id));
+        setNewsToDelete(null);
       } else {
         const data = await res.json();
-        alert(data.error || "Không thể xóa bài viết");
+        toast.error(data.error || "Không thể xóa bài viết");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ");
-    } finally {
-      setDeletingId(null);
+      setDeleting(false);
+      toast.error("Lỗi kết nối máy chủ");
     }
   }
 
@@ -290,9 +296,8 @@ export default function DashboardNewsListPage() {
                           ✏️ Sửa
                         </Link>
                         <button
-                          onClick={() => handleDelete(item.id, item.title)}
-                          disabled={deletingId === item.id}
-                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 cursor-pointer disabled:opacity-50"
+                          onClick={() => setNewsToDelete({ id: item.id, title: item.title })}
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 cursor-pointer"
                           title="Xóa bài viết"
                         >
                           Xóa
@@ -306,6 +311,29 @@ export default function DashboardNewsListPage() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM MODAL XÓA BÀI VIẾT */}
+      <ConfirmModal
+        isOpen={Boolean(newsToDelete)}
+        title="Xác nhận xóa bài viết tin tức"
+        message={
+          <div className="space-y-2">
+            <p>
+              Bạn có chắc chắn muốn <strong className="text-rose-600">XÓA BÀI VIẾT</strong>{" "}
+              <strong className="text-slate-900 font-bold">"{newsToDelete?.title}"</strong> khỏi hệ thống?
+            </p>
+            <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+              ⚠️ Hành động này sẽ gỡ bài viết khỏi website ngay lập tức và không thể hoàn tác.
+            </p>
+          </div>
+        }
+        variant="danger"
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy bỏ"
+        isLoading={deleting}
+        onConfirm={handleConfirmDeleteNews}
+        onClose={() => setNewsToDelete(null)}
+      />
     </div>
   );
 }

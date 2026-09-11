@@ -1,33 +1,50 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageCustomers, canViewAllCollaborators } from "@/lib/permissions";
+import { canAccessCollaborators, canViewAllCollaborators } from "@/lib/permissions";
 
 // GET /api/collaborators — Lấy danh sách CTV trong Dashboard
-// forAssign=true hoặc ADMIN/MANAGER: Xem tất cả CTV active để phân công
-// STAFF (xem danh sách quản lý): Chỉ xem CTV do mình trực tiếp giới thiệu
+// - ADMIN / MANAGER: Xem toàn bộ CTV trên hệ thống, có thể search realtime
+// - STAFF: CHỈ ĐƯỢC XEM CTV do chính mình quản lý/giới thiệu (referredByUserId = currentUser.id)
+// - COLLABORATOR_PRO / CUSTOMER: Bị từ chối truy cập (HTTP 403)
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canManageCustomers(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canAccessCollaborators(authUser.role)) {
+    return NextResponse.json({ error: "Không có quyền truy cập danh sách CTV hoặc tài khoản đã bị khóa" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
   const forAssign = searchParams.get("forAssign") === "true";
-  const isManagerUp = canViewAllCollaborators(session.user.role);
+  const keyword = searchParams.get("keyword")?.trim() || searchParams.get("q")?.trim();
+  const isManagerUp = canViewAllCollaborators(authUser.role);
 
-  const whereCondition = (isManagerUp || forAssign)
-    ? {}
-    : { referredByUserId: session.user.id };
+  // Server-side scope enforcement:
+  // Nếu là STAFF: BẮT BUỘC chỉ được lọc CTV thuộc referredByUserId = authUser.id
+  // Không cho phép dùng query param để xem trộm CTV của người khác
+  const baseCondition: any = isManagerUp
+    ? (forAssign ? { status: "ACTIVE" } : {})
+    : { referredByUserId: authUser.id, ...(forAssign ? { status: "ACTIVE" } : {}) };
+
+  const searchCondition = keyword
+    ? {
+        OR: [
+          { fullName: { contains: keyword, mode: "insensitive" as const } },
+          { phone: { contains: keyword } },
+          { publicReferralToken: { contains: keyword, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
 
   const collaborators = await prisma.collaborator.findMany({
-    where: whereCondition,
+    where: {
+      ...baseCondition,
+      ...searchCondition,
+    },
     include: {
       referredByUser: { select: { id: true, name: true, role: true } },
-      _count: { select: { inquiries: true } },
+      _count: { select: { inquiries: true, assignedCustomers: true } },
     },
     orderBy: { createdAt: "desc" },
   });

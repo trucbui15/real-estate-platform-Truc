@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { validatePhone, sanitizePhoneInput } from "@/lib/utils";
 import { ROLE_LABELS } from "@/lib/permissions";
+import { useToast } from "@/components/ToastProvider";
 
 const roleLabel: Record<string, string> = {
   ADMIN: "Quản trị",
@@ -14,6 +15,7 @@ const roleLabel: Record<string, string> = {
 
 export default function UsersPage() {
   const { data: session } = useSession();
+  const { toast } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,15 +151,26 @@ export default function UsersPage() {
   async function handleDeleteUser() {
     if (!deleteModalUser) return;
     setDeleteLoading(true);
-    const res = await fetch(`/api/users/${deleteModalUser.id}`, {
-      method: "DELETE",
-    });
-    setDeleteLoading(false);
-    if (res.ok) {
-      const data = await res.json();
-      setSuccess(data.message || `Đã xóa tài khoản ${deleteModalUser.email}`);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/users/${deleteModalUser.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      setDeleteLoading(false);
+      if (res.ok) {
+        toast.success(data.message || `Đã xóa vĩnh viễn tài khoản ${deleteModalUser.email}`);
+        setDeleteModalUser(null);
+        load();
+      } else {
+        toast.error(data.error || "Không thể xóa tài khoản này.");
+        setDeleteModalUser(null);
+      }
+    } catch (err: any) {
+      setDeleteLoading(false);
+      toast.error(err.message || "Lỗi kết nối máy chủ khi xóa tài khoản.");
       setDeleteModalUser(null);
-      load();
     }
   }
 
@@ -532,13 +545,22 @@ export default function UsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
-              <h3 className="text-[16px] font-bold text-[#EF4444]">Xác nhận xóa tài khoản</h3>
-              <button onClick={() => setDeleteModalUser(null)} className="text-[#64748B] hover:text-[#0F172A]">✕</button>
+              <h3 className="text-[16px] font-bold text-[#EF4444]">Xác nhận xóa vĩnh viễn tài khoản</h3>
+              <button onClick={() => setDeleteModalUser(null)} className="text-[#64748B] hover:text-[#0F172A] cursor-pointer">✕</button>
             </div>
 
-            <p className="text-[14px] text-[#64748B] leading-relaxed">
-              Bạn có chắc chắn muốn xóa tài khoản <strong className="text-[#0F172A]">{deleteModalUser.name}</strong> ({deleteModalUser.email}) khỏi hệ thống?
-            </p>
+            <div className="space-y-3 text-[14px] text-[#64748B]">
+              <p>Bạn có chắc chắn muốn <strong className="text-rose-600 font-bold">XÓA VĨNH VIỄN</strong> tài khoản này khỏi cơ sở dữ liệu hệ thống?</p>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5 text-xs text-slate-700">
+                <div><span className="text-slate-400 font-semibold">Họ tên:</span> <strong className="text-slate-900">{deleteModalUser.name}</strong></div>
+                <div><span className="text-slate-400 font-semibold">Email:</span> <span className="font-mono text-slate-800">{deleteModalUser.email}</span></div>
+                <div><span className="text-slate-400 font-semibold">Vai trò:</span> <span className="font-bold text-sky-700">{roleLabel[deleteModalUser.role] || deleteModalUser.role}</span></div>
+                <div><span className="text-slate-400 font-semibold">Trạng thái:</span> <span className="font-semibold">{deleteModalUser.active ? "Đang hoạt động" : "🔒 Đã khóa"}</span></div>
+              </div>
+              <p className="text-[12px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5 leading-relaxed">
+                ⚠️ <strong>Cảnh báo:</strong> Thao tác này sẽ xóa sạch dữ liệu tài khoản và hồ sơ CTV liên kết (nếu có) khỏi cơ sở dữ liệu. Hành động này không thể hoàn tác.
+              </p>
+            </div>
 
             <div className="flex gap-3 pt-2">
               <button
@@ -552,9 +574,9 @@ export default function UsersPage() {
                 type="button"
                 onClick={handleDeleteUser}
                 disabled={deleteLoading}
-                className="bg-[#EF4444] hover:bg-[#DC2626] text-white font-semibold rounded-xl px-5 py-2.5 text-[14px] flex-1 transition"
+                className="bg-[#EF4444] hover:bg-[#DC2626] text-white font-semibold rounded-xl px-5 py-2.5 text-[14px] flex-1 transition cursor-pointer"
               >
-                {deleteLoading ? "Đang xóa..." : "Xóa vĩnh viễn"}
+                {deleteLoading ? "Đang xử lý..." : "Xác nhận xóa"}
               </button>
             </div>
           </div>

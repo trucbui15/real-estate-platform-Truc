@@ -12,11 +12,11 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, referralCode: true, active: true },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
+  if (!user || !user.active) {
+    return NextResponse.json({ error: "Tài khoản đã bị vô hiệu hóa hoặc không tồn tại", active: false }, { status: 401 });
   }
 
   const collab = await prisma.collaborator.findUnique({

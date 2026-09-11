@@ -1,28 +1,32 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getCurrentAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageAllListings } from "@/lib/permissions";
 
 export default async function DashboardHome() {
-  const session = await getServerSession(authOptions);
-  const role = session!.user.role;
+  const currentUser = await getCurrentAuthUser();
+  if (!currentUser) {
+    redirect("/login?callbackUrl=/dashboard");
+  }
+  const role = currentUser.role;
   const isManagerUp = canManageAllListings(role);
 
-  const listingWhere = isManagerUp ? {} : { authorId: session!.user.id };
-  const customerWhere = isManagerUp ? {} : { assignedToId: session!.user.id };
+  const listingWhere = isManagerUp ? {} : { authorId: currentUser.id };
+  const customerWhere = isManagerUp ? {} : { assignedToId: currentUser.id };
+  const collabWhere = isManagerUp ? {} : { referredByUserId: currentUser.id };
 
-  const [totalListings, pendingListings, totalCustomers, newCustomers] = await Promise.all([
+  const [totalListings, pendingListings, totalCustomers, totalCollabs] = await Promise.all([
     prisma.listing.count({ where: listingWhere }),
     prisma.listing.count({ where: { ...listingWhere, unitStatus: "CHO_DUYET" } }),
     prisma.customer.count({ where: customerWhere }),
-    prisma.customer.count({ where: { ...customerWhere, status: "MOI" } }),
+    prisma.collaborator.count({ where: collabWhere }),
   ]);
 
   const cards = [
     { label: isManagerUp ? "Tổng số tin đăng" : "Tin đăng của tôi", value: totalListings, icon: "🏢" },
     { label: "Tin chờ duyệt", value: pendingListings, icon: "⏳" },
     { label: isManagerUp ? "Tổng khách hàng" : "Khách được giao", value: totalCustomers, icon: "👥" },
-    { label: "Khách hàng mới", value: newCustomers, icon: "✨" },
+    { label: isManagerUp ? "Tổng số CTV" : "CTV của tôi", value: totalCollabs, icon: "🤝" },
   ];
 
   return (

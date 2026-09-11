@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 import {
   isBackofficeRole,
   canManageUsers,
   canManageProjectsAndNews,
-  canManageCollaborators,
+  canAccessCollaborators,
   canAccessCRM,
   ROLE_LABELS,
 } from "@/lib/permissions";
@@ -13,24 +12,24 @@ import {
 import DashboardNav from "./DashboardNav";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  const currentUser = await getCurrentAuthUser();
+  if (!currentUser) {
     redirect("/login?callbackUrl=/dashboard");
   }
 
-  if (!isBackofficeRole(session.user.role)) {
+  if (!isBackofficeRole(currentUser.role)) {
     redirect("/");
   }
 
-  const role = session.user.role;
+  const role = currentUser.role;
   const roleLabel = ROLE_LABELS[role] || "Thành viên";
 
   const links = [
     { href: "/dashboard", label: "Tổng quan", show: true },
     { href: "/dashboard/listings", label: "Tin đăng BĐS", show: true },
     { href: "/dashboard/customers", label: "Khách hàng (CRM)", show: canAccessCRM(role) },
+    { href: "/dashboard/collaborators", label: "Cộng tác viên (CTV)", show: canAccessCollaborators(role) },
     { href: "/dashboard/services", label: "Đặt phòng & Visa", show: true },
-    { href: "/dashboard/collaborators", label: "Cộng tác viên (CTV)", show: canManageCollaborators(role) },
     { href: "/dashboard/projects", label: "Dự án", show: canManageProjectsAndNews(role) },
     { href: "/dashboard/news", label: "Tin tức", show: canManageProjectsAndNews(role) },
     { href: "/dashboard/users", label: "Tài khoản nội bộ", show: canManageUsers(role) },

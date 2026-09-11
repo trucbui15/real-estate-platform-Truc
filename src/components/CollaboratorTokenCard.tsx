@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 interface CollaboratorTokenCardProps {
   publicReferralToken: string;
@@ -11,12 +12,14 @@ export default function CollaboratorTokenCard({
   publicReferralToken,
   status,
 }: CollaboratorTokenCardProps) {
+  const { toast } = useToast();
   const [copiedToken, setCopiedToken] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   function handleCopyToken() {
     navigator.clipboard.writeText(publicReferralToken);
     setCopiedToken(true);
+    toast.success(`Đã sao chép Mã Token CTV: ${publicReferralToken}`, "Đã sao chép");
     setTimeout(() => setCopiedToken(false), 2500);
   }
 
@@ -24,6 +27,7 @@ export default function CollaboratorTokenCard({
     const shareUrl = `${window.location.origin}/?ref=${publicReferralToken}`;
     navigator.clipboard.writeText(shareUrl);
     setCopiedLink(true);
+    toast.success(`Đã sao chép Link giới thiệu CTV kèm mã Token!`, "Đã sao chép");
     setTimeout(() => setCopiedLink(false), 2500);
   }
 

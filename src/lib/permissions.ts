@@ -74,13 +74,18 @@ export const canAssignCustomers = (role?: Role | string) =>
 // Backward-compatible aliases
 export const canManageCustomers = canAccessCRM;
 export const canViewAllCustomers = canManageAllCustomers;
+export const canCreateCustomer = (role?: Role | string) =>
+  role === "ADMIN" || role === "MANAGER"; // Chỉ ADMIN & MANAGER được tự tạo khách hàng thủ công
 
 // 7. Quản lý Cộng tác viên (Collaborators)
 export const canViewAllCollaborators = (role?: Role | string) =>
   role === "ADMIN" || role === "MANAGER"; // Admin & Manager xem toàn bộ CTV
 
 export const canManageCollaborators = (role?: Role | string) =>
-  role === "ADMIN" || role === "MANAGER"; // Admin & Manager quản lý CTV
+  role === "ADMIN" || role === "MANAGER"; // Admin & Manager quản lý CTV (duyệt/khóa/xóa)
+
+export const canAccessCollaborators = (role?: Role | string) =>
+  role === "ADMIN" || role === "MANAGER" || role === "STAFF"; // STAFF xem CTV trong phạm vi mình quản lý
 
 // 8. Quyền truy cập Backoffice chung
 export const isBackofficeRole = (role?: Role | string) =>

@@ -1,18 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 import bcrypt from "bcryptjs";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageUsers, canAccessCRM } from "@/lib/permissions";
 import { normalizePhone, validatePhone } from "@/lib/utils";
 
 // ADMIN, MANAGER và STAFF/CTV PRO được xem danh sách người dùng / nhân sự
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !canAccessCRM(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền xem danh sách người dùng" }, { status: 403 });
+  const authUser = await getCurrentAuthUser();
+  if (!authUser || !canAccessCRM(authUser.role)) {
+    return NextResponse.json({ error: "Không có quyền xem danh sách người dùng hoặc tài khoản đã bị khóa" }, { status: 403 });
   }
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role") || undefined;
@@ -32,10 +31,10 @@ export async function GET(req: Request) {
     } else {
       where.role = role;
     }
-    if (!allParam && !canManageUsers(session.user.role)) {
+    if (!allParam && !canManageUsers(authUser.role)) {
       where.active = true;
     }
-  } else if (allParam || canManageUsers(session.user.role)) {
+  } else if (allParam || canManageUsers(authUser.role)) {
     // Admin user management or explicit all=true: include all roles (ADMIN, MANAGER, STAFF, COLLABORATOR_PRO, CUSTOMER)
     // and both active/inactive
   } else {
@@ -73,8 +72,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !canManageUsers(session.user.role)) {
+    const authUser = await getCurrentAuthUser();
+    if (!authUser || !canManageUsers(authUser.role)) {
       return NextResponse.json({ error: "Chỉ Admin mới có quyền tạo tài khoản người dùng" }, { status: 403 });
     }
 
