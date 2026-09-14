@@ -6,6 +6,23 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { canManageProjectsAndNews, isBackofficeRole } from "@/lib/permissions";
 import { compressImage, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
+import ImageUploadField from "@/components/microsite/cms/ImageUploadField";
+import AmenitiesEditor from "@/components/microsite/cms/AmenitiesEditor";
+import FloorPlansEditor from "@/components/microsite/cms/FloorPlansEditor";
+import UnitTypesEditor from "@/components/microsite/cms/UnitTypesEditor";
+import GalleryEditor from "@/components/microsite/cms/GalleryEditor";
+import VideoTourEditor from "@/components/microsite/cms/VideoTourEditor";
+import ProgressEditor from "@/components/microsite/cms/ProgressEditor";
+import SalesPolicyEditor from "@/components/microsite/cms/SalesPolicyEditor";
+import {
+  normalizeAmenitiesData,
+  normalizeFloorPlansData,
+  normalizeUnitTypesData,
+  normalizeGalleryData,
+  normalizeVideoData,
+  normalizeProgressData,
+  normalizeSalesPolicyData,
+} from "@/components/microsite/cms/normalizeSectionData";
 
 // Danh mục mặc định 13 Sections chuẩn CMS
 const DEFAULT_SECTIONS = [
@@ -182,9 +199,24 @@ export default function ProjectWebsiteCmsPage() {
           if (ws.draftContentJson) {
             try {
               const parsedContent = JSON.parse(ws.draftContentJson);
+              const normAmenities = normalizeAmenitiesData(parsedContent.amenities);
+              const normFloorPlans = normalizeFloorPlansData(parsedContent.floor_plans);
+              const normUnitTypes = normalizeUnitTypesData(parsedContent.unit_types);
+              const normGallery = normalizeGalleryData(parsedContent.gallery);
+              const normVideo = normalizeVideoData(parsedContent.video);
+              const normProgress = normalizeProgressData(parsedContent.progress);
+              const normSalesPolicy = normalizeSalesPolicyData(parsedContent.sales_policy);
+
               setContentJson((prev: any) => ({
                 ...prev,
                 ...parsedContent,
+                amenities: normAmenities,
+                floor_plans: normFloorPlans,
+                unit_types: normUnitTypes,
+                gallery: normGallery,
+                video: normVideo,
+                progress: normProgress,
+                sales_policy: normSalesPolicy,
                 seo: {
                   metaTitle: ws.draftMetaTitle || parsedContent.seo?.metaTitle || "",
                   metaDescription: ws.draftMetaDescription || parsedContent.seo?.metaDescription || "",
@@ -265,9 +297,71 @@ export default function ProjectWebsiteCmsPage() {
     setSuccess("");
 
     try {
+      const preparedContent = {
+        ...contentJson,
+        amenities: {
+          ...contentJson.amenities,
+          items: contentJson.amenities?.items || [],
+        },
+        floor_plans: {
+          ...contentJson.floor_plans,
+          items: contentJson.floor_plans?.items || [],
+          blocks: (contentJson.floor_plans?.items || []).map((it: any) => ({
+            name: it.title,
+            desc: it.description,
+            image: it.image,
+            area: it.area,
+          })),
+        },
+        unit_types: {
+          ...contentJson.unit_types,
+          items: contentJson.unit_types?.items || [],
+          units: (contentJson.unit_types?.items || []).map((it: any) => ({
+            name: it.title,
+            area: it.area,
+            priceFrom: it.priceFrom,
+            image: it.image,
+            description: it.description,
+          })),
+        },
+        gallery: {
+          ...contentJson.gallery,
+          galleryItems: contentJson.gallery?.items || [],
+          images: (contentJson.gallery?.items || []).map((it: any) => ({
+            url: it.image,
+            caption: it.caption,
+          })),
+        },
+        video: {
+          ...contentJson.video,
+          items: contentJson.video?.items || [],
+          videoUrl:
+            (contentJson.video?.items || []).find((i: any) => i.type === "YOUTUBE")?.url ||
+            contentJson.video?.videoUrl ||
+            "",
+          tour360Url:
+            (contentJson.video?.items || []).find((i: any) => i.type === "TOUR_360")?.url ||
+            contentJson.video?.tour360Url ||
+            "",
+        },
+        progress: {
+          ...contentJson.progress,
+          items: (contentJson.progress?.items || []).map((it: any) => ({
+            ...it,
+            desc: it.description,
+          })),
+        },
+        sales_policy: {
+          ...contentJson.sales_policy,
+          summary: contentJson.sales_policy?.description || contentJson.sales_policy?.summary || "",
+          items: contentJson.sales_policy?.items || [],
+          promos: (contentJson.sales_policy?.items || []).map((it: any) => it.title).filter(Boolean),
+        },
+      };
+
       const payload = {
         draftSectionsConfig: JSON.stringify(sectionsConfig),
-        draftContentJson: JSON.stringify(contentJson),
+        draftContentJson: JSON.stringify(preparedContent),
         draftMetaTitle: contentJson.seo?.metaTitle || "",
         draftMetaDescription: contentJson.seo?.metaDescription || "",
         draftOgImage: contentJson.seo?.ogImage || "",
@@ -979,85 +1073,200 @@ export default function ProjectWebsiteCmsPage() {
 
             {/* AMENITIES SECTION FORM */}
             {activeSectionId === "amenities" && (
-              <div className="space-y-4">
-                <h3 className="text-base font-bold text-slate-900 border-b pb-2">🏊 Tiện Ích Đẳng Cấp</h3>
-                <div className="space-y-3 text-xs">
+              <AmenitiesEditor
+                title={contentJson.amenities?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, title } })}
+                description={contentJson.amenities?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, description } })}
+                items={contentJson.amenities?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* FLOOR PLANS SECTION FORM */}
+            {activeSectionId === "floor_plans" && (
+              <FloorPlansEditor
+                title={contentJson.floor_plans?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, floor_plans: { ...contentJson.floor_plans, title } })}
+                description={contentJson.floor_plans?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, floor_plans: { ...contentJson.floor_plans, description } })}
+                items={contentJson.floor_plans?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, floor_plans: { ...contentJson.floor_plans, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* UNIT TYPES SECTION FORM */}
+            {activeSectionId === "unit_types" && (
+              <UnitTypesEditor
+                title={contentJson.unit_types?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, unit_types: { ...contentJson.unit_types, title } })}
+                description={contentJson.unit_types?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, unit_types: { ...contentJson.unit_types, description } })}
+                items={contentJson.unit_types?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, unit_types: { ...contentJson.unit_types, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* GALLERY SECTION FORM */}
+            {activeSectionId === "gallery" && (
+              <GalleryEditor
+                title={contentJson.gallery?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, gallery: { ...contentJson.gallery, title } })}
+                description={contentJson.gallery?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, gallery: { ...contentJson.gallery, description } })}
+                items={contentJson.gallery?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, gallery: { ...contentJson.gallery, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* VIDEO & TOUR 360 SECTION FORM */}
+            {activeSectionId === "video" && (
+              <VideoTourEditor
+                title={contentJson.video?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, video: { ...contentJson.video, title } })}
+                description={contentJson.video?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, video: { ...contentJson.video, description } })}
+                items={contentJson.video?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, video: { ...contentJson.video, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* PROGRESS SECTION FORM */}
+            {activeSectionId === "progress" && (
+              <ProgressEditor
+                title={contentJson.progress?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, progress: { ...contentJson.progress, title } })}
+                description={contentJson.progress?.description || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, progress: { ...contentJson.progress, description } })}
+                items={contentJson.progress?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, progress: { ...contentJson.progress, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* SALES POLICY SECTION FORM */}
+            {activeSectionId === "sales_policy" && (
+              <SalesPolicyEditor
+                title={contentJson.sales_policy?.title || ""}
+                onTitleChange={(title) => setContentJson({ ...contentJson, sales_policy: { ...contentJson.sales_policy, title } })}
+                description={contentJson.sales_policy?.description || contentJson.sales_policy?.summary || ""}
+                onDescriptionChange={(description) => setContentJson({ ...contentJson, sales_policy: { ...contentJson.sales_policy, description, summary: description } })}
+                pdfUrl={contentJson.sales_policy?.pdfUrl || ""}
+                onPdfUrlChange={(pdfUrl) => setContentJson({ ...contentJson, sales_policy: { ...contentJson.sales_policy, pdfUrl } })}
+                items={contentJson.sales_policy?.items || []}
+                onItemsChange={(items) => setContentJson({ ...contentJson, sales_policy: { ...contentJson.sales_policy, items } })}
+                projectName={projectInfo?.name || "Dự án"}
+                disabled={!canEdit}
+              />
+            )}
+
+            {/* DOCUMENTS SECTION GUIDANCE FORM */}
+            {activeSectionId === "documents" && (
+              <div className="space-y-4 text-xs">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">📁 Tài Liệu & Bảng Giá Dự Án</h3>
+                <div>
+                  <label className="label">Tiêu đề Section Tài liệu</label>
+                  <input
+                    type="text"
+                    className="input text-xs"
+                    disabled={!canEdit}
+                    value={contentJson.documents?.title || ""}
+                    onChange={(e) => setContentJson({ ...contentJson, documents: { ...contentJson.documents, title: e.target.value } })}
+                    placeholder="VD: Tài liệu & Hồ sơ Dự án"
+                  />
+                </div>
+                <div>
+                  <label className="label">Mô tả Section</label>
+                  <input
+                    type="text"
+                    className="input text-xs"
+                    disabled={!canEdit}
+                    value={contentJson.documents?.description || ""}
+                    onChange={(e) => setContentJson({ ...contentJson, documents: { ...contentJson.documents, description: e.target.value } })}
+                    placeholder="VD: Xem và tải xuống bảng giá, chính sách, hợp đồng mẫu."
+                  />
+                </div>
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1.5">
+                  <p className="font-bold">ℹ️ Dữ liệu tài liệu được đồng bộ từ Kho Tài Liệu Dự Án (Project Resources):</p>
+                  <p className="text-slate-600">
+                    Hệ thống sẽ tự động hiển thị các tài liệu, hồ sơ pháp lý, bảng giá có trạng thái <strong>Công khai (Public)</strong> của dự án.
+                  </p>
+                  <Link
+                    href={`/dashboard/projects`}
+                    className="inline-block mt-1 text-blue-600 font-bold hover:underline"
+                  >
+                    Quản lý danh sách tài liệu tại trang Quản lý Dự án &rarr;
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* CONTACT SECTION FORM */}
+            {activeSectionId === "contact" && (
+              <div className="space-y-4 text-xs">
+                <h3 className="text-base font-bold text-slate-900 border-b pb-2">📞 Form Đăng Ký & Liên Hệ Tư Vấn</h3>
+                <div>
+                  <label className="label">Tiêu đề Form</label>
+                  <input
+                    type="text"
+                    className="input text-xs"
+                    disabled={!canEdit}
+                    value={contentJson.contact?.title || ""}
+                    onChange={(e) => setContentJson({ ...contentJson, contact: { ...contentJson.contact, title: e.target.value } })}
+                    placeholder="VD: Đăng Ký Tư Vấn & Nhận Bảng Giá Chi Tiết"
+                  />
+                </div>
+                <div>
+                  <label className="label">Mô tả phụ / Lời kêu gọi</label>
+                  <input
+                    type="text"
+                    className="input text-xs"
+                    disabled={!canEdit}
+                    value={contentJson.contact?.subtitle || ""}
+                    onChange={(e) => setContentJson({ ...contentJson, contact: { ...contentJson.contact, subtitle: e.target.value } })}
+                    placeholder="VD: Để lại thông tin để chuyên viên tư vấn hỗ trợ quý khách ngay lập tức."
+                  />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="label">Tiêu đề Section Tiện ích</label>
+                    <label className="label">Hotline hỗ trợ riêng (Tùy chọn)</label>
                     <input
-                      className="input"
+                      type="text"
+                      className="input text-xs font-mono"
                       disabled={!canEdit}
-                      value={contentJson.amenities?.title || ""}
-                      onChange={(e) => setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, title: e.target.value } })}
+                      value={contentJson.contact?.hotline || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, contact: { ...contentJson.contact, hotline: e.target.value } })}
+                      placeholder="VD: 0905.xxx.xxx"
                     />
                   </div>
-
-                  <div className="space-y-3 pt-2">
-                    <label className="label font-bold text-slate-800">Danh sách tiện ích nổi bật</label>
-                    {(contentJson.amenities?.items || []).map((item: any, idx: number) => (
-                      <div key={idx} className="p-3 border rounded-xl space-y-2 bg-slate-50">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-700">Tiện ích #{idx + 1}</span>
-                          {canEdit && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newItems = contentJson.amenities.items.filter((_: any, i: number) => i !== idx);
-                                setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
-                              }}
-                              className="text-red-500 font-bold text-xs"
-                            >
-                              Xóa tiện ích này
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            className="input"
-                            disabled={!canEdit}
-                            placeholder="Tên tiện ích (VD: Hồ bơi vô cực)"
-                            value={item.name}
-                            onChange={(e) => {
-                              const newItems = [...contentJson.amenities.items];
-                              newItems[idx].name = e.target.value;
-                              setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
-                            }}
-                          />
-                          <input
-                            className="input font-mono"
-                            disabled={!canEdit}
-                            placeholder="URL Ảnh tiện ích"
-                            value={item.image}
-                            onChange={(e) => {
-                              const newItems = [...contentJson.amenities.items];
-                              newItems[idx].image = e.target.value;
-                              setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    {canEdit && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newItems = [...(contentJson.amenities?.items || []), { name: "", image: "", desc: "" }];
-                          setContentJson({ ...contentJson, amenities: { ...contentJson.amenities, items: newItems } });
-                        }}
-                        className="btn-outline !py-1.5 !px-3 text-xs"
-                      >
-                        + Thêm tiện ích mới
-                      </button>
-                    )}
+                  <div>
+                    <label className="label">Link Zalo tư vấn (Tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="input text-xs font-mono"
+                      disabled={!canEdit}
+                      value={contentJson.contact?.zaloUrl || ""}
+                      onChange={(e) => setContentJson({ ...contentJson, contact: { ...contentJson.contact, zaloUrl: e.target.value } })}
+                      placeholder="https://zalo.me/..."
+                    />
                   </div>
                 </div>
               </div>
             )}
 
             {/* DEFAULT OTHER SECTIONS FALLBACK GENERIC INPUTS */}
-            {!["hero", "overview", "location", "amenities"].includes(activeSectionId) && (
+            {!["hero", "overview", "location", "amenities", "floor_plans", "unit_types", "gallery", "video", "progress", "sales_policy", "documents", "contact", "seo"].includes(activeSectionId) && (
               <div className="space-y-4">
                 <h3 className="text-base font-bold text-slate-900 border-b pb-2">
                   ⚙️ Cấu hình Section: {sectionsConfig.find((s) => s.id === activeSectionId)?.title}

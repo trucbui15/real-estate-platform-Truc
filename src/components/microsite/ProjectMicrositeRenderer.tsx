@@ -8,6 +8,15 @@ import { isBackofficeRole } from "@/lib/permissions";
 import { validatePhone, sanitizePhoneInput, normalizeUnitCode } from "@/lib/utils";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ListingCard from "@/components/ListingCard";
+import {
+  normalizeAmenitiesData,
+  normalizeFloorPlansData,
+  normalizeUnitTypesData,
+  normalizeGalleryData,
+  normalizeVideoData,
+  normalizeProgressData,
+  normalizeSalesPolicyData,
+} from "@/components/microsite/cms/normalizeSectionData";
 
 interface ProjectMicrositeRendererProps {
   projectId: string;
@@ -288,32 +297,34 @@ export default function ProjectMicrositeRenderer({
     return publicResources.find((r) => r.type === "TOUR_360");
   }, [publicResources]);
 
-  // Section Content Extractors
+  // Section Content Extractors with normalization
   const hero = contentJson?.hero || {};
   const overview = contentJson?.overview || {};
   const location = contentJson?.location || {};
-  const amenities = contentJson?.amenities || {};
-  const floorPlans = contentJson?.floor_plans || {};
-  const unitTypes = contentJson?.unit_types || {};
-  const gallery = contentJson?.gallery || {};
-  const video = contentJson?.video || {};
-  const progress = contentJson?.progress || {};
-  const salesPolicy = contentJson?.sales_policy || {};
+  const amenities = useMemo(() => normalizeAmenitiesData(contentJson?.amenities), [contentJson?.amenities]);
+  const floorPlans = useMemo(() => normalizeFloorPlansData(contentJson?.floor_plans), [contentJson?.floor_plans]);
+  const unitTypes = useMemo(() => normalizeUnitTypesData(contentJson?.unit_types), [contentJson?.unit_types]);
+  const gallery = useMemo(() => normalizeGalleryData(contentJson?.gallery), [contentJson?.gallery]);
+  const video = useMemo(() => normalizeVideoData(contentJson?.video), [contentJson?.video]);
+  const progress = useMemo(() => normalizeProgressData(contentJson?.progress), [contentJson?.progress]);
+  const salesPolicy = useMemo(() => normalizeSalesPolicyData(contentJson?.sales_policy), [contentJson?.sales_policy]);
   const documents = contentJson?.documents || {};
 
   // Check section content validity to hide empty sections
-  const hasFloorPlansContent = (floorPlans.blocks && floorPlans.blocks.length > 0) || publicResources.some((r) => r.type === "FLOOR_PLAN" || r.type === "DESIGN_FILE");
-  const hasUnitTypesContent = inventories.length > 0 || listings.length > 0 || (unitTypes.units && unitTypes.units.length > 0);
-  const hasGalleryContent = (gallery.images && gallery.images.length > 0) || publicResources.some((r) => r.type === "IMAGE");
-  const hasVideoContent = !!video.tour360Url || !!video.videoUrl || !!tour360Resource || publicResources.some((r) => r.type === "VIDEO");
-  const hasProgressContent = progress.items && progress.items.length > 0;
-  const hasPolicyContent = (salesPolicy.title || salesPolicy.summary) || publicResources.some((r) => r.type === "SALES_POLICY" || r.type === "PRICE_LIST");
+  const hasAmenitiesContent = amenities.items.length > 0;
+  const hasFloorPlansContent = floorPlans.items.length > 0 || publicResources.some((r) => r.type === "FLOOR_PLAN" || r.type === "DESIGN_FILE");
+  const hasUnitTypesContent = inventories.length > 0 || listings.length > 0 || unitTypes.items.length > 0;
+  const hasGalleryContent = gallery.items.length > 0 || publicResources.some((r) => r.type === "IMAGE");
+  const hasVideoContent = video.items.length > 0 || !!video.legacyTour360Url || !!video.legacyVideoUrl || !!tour360Resource || publicResources.some((r) => r.type === "VIDEO");
+  const hasProgressContent = progress.items.length > 0;
+  const hasPolicyContent = salesPolicy.items.length > 0 || !!salesPolicy.description || !!salesPolicy.pdfUrl || publicResources.some((r) => r.type === "SALES_POLICY" || r.type === "PRICE_LIST");
   const hasDocsContent = publicResources.length > 0 || !!documents.title;
 
   // Lọc các Section enabled, loại bỏ "hero" khỏi menu và sắp xếp theo order
   const activeSections = (sectionsConfig || [])
     .filter((s: any) => {
       if (!s.enabled) return false;
+      if (s.id === "amenities" && !hasAmenitiesContent) return false;
       if (s.id === "floor_plans" && !hasFloorPlansContent) return false;
       if (s.id === "unit_types" && !hasUnitTypesContent) return false;
       if (s.id === "gallery" && !hasGalleryContent) return false;
@@ -486,14 +497,15 @@ export default function ProjectMicrositeRenderer({
                               : "object-center"
                           }`}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-transparent"></div>
+                        {/* Soft localized gradient on content area only, preserving bright natural colors */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/25 via-slate-950/5 to-transparent pointer-events-none"></div>
                       </div>
                     ) : (
                       <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-900 via-indigo-950 to-slate-900"></div>
                     )}
 
                     <div className="container-page relative z-10 px-4">
-                      <div className="max-w-lg sm:max-w-xl space-y-3.5 bg-transparent p-0 border-none shadow-none text-white">
+                      <div className="max-w-lg sm:max-w-xl space-y-3.5 bg-slate-950/20 sm:bg-slate-950/15 backdrop-blur-[2px] p-5 sm:p-7 rounded-3xl border border-white/10 text-white shadow-xl">
                         {hero.tagLine && (
                           <span className="inline-block rounded-full bg-amber-400 text-slate-950 px-3.5 py-1 text-xs font-black shadow-md">
                             {hero.tagLine}
@@ -516,16 +528,20 @@ export default function ProjectMicrositeRenderer({
                             <span>✨</span> {hero.ctaText || "Đăng ký nhận Bảng giá"}
                           </button>
 
-                          {(hero.videoUrl || video.videoUrl) && (
-                            <a
-                              href={hero.videoUrl || video.videoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-white/25 hover:bg-white/40 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/40 backdrop-blur-xs transition flex items-center gap-2 min-h-[44px] drop-shadow-md"
-                            >
-                              <span>▶</span> Xem Video
-                            </a>
-                          )}
+                          {(() => {
+                            const heroVideoUrl = hero.videoUrl || video.legacyVideoUrl || video.items.find((v) => v.type === "YOUTUBE" || v.type === "VIDEO")?.url;
+                            if (!heroVideoUrl) return null;
+                            return (
+                              <a
+                                href={heroVideoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white/25 hover:bg-white/40 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/40 backdrop-blur-xs transition flex items-center gap-2 min-h-[44px] drop-shadow-md"
+                              >
+                                <span>▶</span> Xem Video
+                              </a>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -694,7 +710,10 @@ export default function ProjectMicrositeRenderer({
               );
 
             // --- SECTION 4: AMENITIES ---
-            case "amenities":
+            case "amenities": {
+              const validItems = (amenities.items || []).filter((item: any) => item.title || item.image);
+              if (validItems.length === 0) return null;
+
               return (
                 <section key="amenities" id="amenities" className="container-page px-4 space-y-8">
                   <div className="max-w-3xl space-y-2">
@@ -706,24 +725,42 @@ export default function ProjectMicrositeRenderer({
                   </div>
 
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {(amenities.items || []).map((item: any, idx: number) => (
-                      <div key={idx} className="rounded-3xl bg-white border border-slate-200/80 overflow-hidden shadow-sm hover:border-amber-400 hover:shadow-md transition group space-y-3 p-4">
-                        {item.image ? (
-                          <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-slate-100">
-                            <img src={getOptimizedCloudinaryUrl(item.image, "CARD")} alt={item.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                          </div>
-                        ) : (
-                          <div className="aspect-[16/10] bg-slate-100 rounded-2xl flex items-center justify-center text-2xl">🏊</div>
-                        )}
-                        <h3 className="font-bold text-sm sm:text-base text-slate-900">{item.name || `Tiện ích #${idx + 1}`}</h3>
+                    {validItems.map((item: any, idx: number) => (
+                      <div key={item.id || idx} className="rounded-3xl bg-white border border-slate-200/80 overflow-hidden shadow-sm hover:border-amber-400 hover:shadow-md transition group space-y-3 p-4 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          {item.image ? (
+                            <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-slate-100 cursor-pointer" onClick={() => setPreviewImage(item.image)}>
+                              <img
+                                src={getOptimizedCloudinaryUrl(item.image, "CARD")}
+                                alt={item.alt || `${projectName} - ${item.title || "Tiện ích"}`}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-[16/10] bg-slate-100 rounded-2xl flex items-center justify-center text-3xl">
+                              🏊
+                            </div>
+                          )}
+                          <h3 className="font-bold text-sm sm:text-base text-slate-900">{item.title}</h3>
+                          {item.description && (
+                            <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </section>
               );
+            }
 
             // --- SECTION 5: FLOOR PLANS ---
-            case "floor_plans":
+            case "floor_plans": {
+              const validBlocks = (floorPlans.items || []).filter((b: any) => b.title || b.image);
+              if (validBlocks.length === 0 && !publicResources.some((r) => r.type === "FLOOR_PLAN" || r.type === "DESIGN_FILE")) return null;
+
+              const activeBlock = validBlocks[activeFloorBlock] || validBlocks[0];
+
               return (
                 <section key="floor_plans" id="floor_plans" className="container-page px-4 space-y-8">
                   <div className="max-w-3xl space-y-2">
@@ -731,44 +768,55 @@ export default function ProjectMicrositeRenderer({
                       Mặt Bằng Kiến Trúc
                     </span>
                     <h2 className="text-xl sm:text-3xl font-black text-slate-900">{floorPlans.title || "Thiết kế mặt bằng kiến trúc chi tiết"}</h2>
+                    {floorPlans.description && <p className="text-xs sm:text-sm text-slate-600">{floorPlans.description}</p>}
                   </div>
 
-                  {floorPlans.blocks && floorPlans.blocks.length > 0 && (
+                  {validBlocks.length > 0 && (
                     <div className="space-y-6">
-                      <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                        {floorPlans.blocks.map((block: any, idx: number) => (
-                          <button
-                            key={idx}
-                            onClick={() => setActiveFloorBlock(idx)}
-                            className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition shrink-0 min-h-[40px] ${
-                              activeFloorBlock === idx
-                                ? "bg-amber-400 text-slate-950 shadow-sm"
-                                : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                            }`}
-                          >
-                            {block.name || `Sơ đồ #${idx + 1}`}
-                          </button>
-                        ))}
-                      </div>
+                      {validBlocks.length > 1 && (
+                        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                          {validBlocks.map((block: any, idx: number) => (
+                            <button
+                              key={block.id || idx}
+                              onClick={() => setActiveFloorBlock(idx)}
+                              className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition shrink-0 min-h-[40px] ${
+                                activeFloorBlock === idx
+                                  ? "bg-amber-400 text-slate-950 shadow-sm"
+                                  : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                              }`}
+                            >
+                              {block.title || `Sơ đồ #${idx + 1}`}
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
-                      <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-6 flex flex-col items-center shadow-sm space-y-4">
-                        {floorPlans.blocks[activeFloorBlock]?.image ? (
-                          <img
-                            src={getOptimizedCloudinaryUrl(floorPlans.blocks[activeFloorBlock].image, "FLOOR_PLAN")}
-                            alt={floorPlans.blocks[activeFloorBlock].name}
-                            loading="lazy"
-                            className="max-h-[480px] w-auto object-contain rounded-xl cursor-pointer"
-                            onClick={() => setPreviewImage(floorPlans.blocks[activeFloorBlock].image)}
-                          />
-                        ) : (
-                          <div className="h-64 flex items-center justify-center text-slate-400 text-xs">Chưa cập nhật sơ đồ mặt bằng</div>
-                        )}
-                        <p className="text-xs text-slate-600 font-medium text-center">{floorPlans.blocks[activeFloorBlock]?.desc}</p>
-                      </div>
+                      {activeBlock && (
+                        <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-6 flex flex-col items-center shadow-sm space-y-4">
+                          {activeBlock.image ? (
+                            <img
+                              src={getOptimizedCloudinaryUrl(activeBlock.image, "FLOOR_PLAN")}
+                              alt={activeBlock.alt || `${projectName} - ${activeBlock.title || "Mặt bằng"}`}
+                              loading="lazy"
+                              className="max-h-[480px] w-auto object-contain rounded-xl cursor-pointer hover:opacity-95 transition"
+                              onClick={() => setPreviewImage(activeBlock.image || null)}
+                            />
+                          ) : (
+                            <div className="h-48 flex items-center justify-center text-slate-400 text-xs">Chưa cập nhật sơ đồ mặt bằng</div>
+                          )}
+                          <div className="text-center space-y-1">
+                            <h3 className="font-bold text-sm sm:text-base text-slate-900">{activeBlock.title}</h3>
+                            {activeBlock.description && (
+                              <p className="text-xs text-slate-600 font-medium max-w-2xl">{activeBlock.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </section>
               );
+            }
 
             // --- SECTION 6: UNIT TYPES & INVENTORY & LISTINGS ---
             case "unit_types":
@@ -1029,31 +1077,51 @@ export default function ProjectMicrositeRenderer({
                     </div>
                   )}
 
-                  {/* C. CĂN HỘ MẪU (STATIC FALLBACK IF NO INVENTORY & NO LISTINGS) */}
-                  {inventories.length === 0 && listings.length === 0 && unitTypes.units && unitTypes.units.length > 0 && (
-                    <div className="space-y-6">
+                  {/* C. CĂN HỘ MẪU & THIẾT KẾ CĂN HỘ (CMS STRUCTURED DATA) */}
+                  {unitTypes.items.length > 0 && (
+                    <div className="space-y-6 pt-4">
                       <div className="max-w-3xl space-y-2">
                         <span className="text-xs font-extrabold text-amber-600 uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-full border border-amber-200/60 inline-block">
-                          Căn Hộ Mẫu
+                          Căn Hộ Mẫu & Thiết Kế
                         </span>
                         <h2 className="text-xl sm:text-3xl font-black text-slate-900">{unitTypes.title || "Các loại diện tích & thiết kế căn hộ"}</h2>
+                        {unitTypes.description && (
+                          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{unitTypes.description}</p>
+                        )}
                       </div>
 
                       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {unitTypes.units.map((unit: any, idx: number) => (
-                          <div key={idx} className="rounded-3xl bg-white border border-slate-200/80 p-5 space-y-4 shadow-sm hover:shadow-md transition">
+                        {unitTypes.items.map((unit) => (
+                          <div key={unit.id} className="rounded-3xl bg-white border border-slate-200/80 p-5 space-y-4 shadow-sm hover:shadow-md transition">
                             {unit.image && (
-                              <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100">
-                                <img src={getOptimizedCloudinaryUrl(unit.image, "CARD")} alt={unit.name} loading="lazy" className="w-full h-full object-cover" />
+                              <div
+                                className="aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100 cursor-pointer group relative"
+                                onClick={() => setPreviewImage(unit.image!)}
+                              >
+                                <img
+                                  src={getOptimizedCloudinaryUrl(unit.image, "CARD")}
+                                  alt={unit.alt || unit.title || `${projectName} căn hộ`}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
+                                  🔍 Xem ảnh lớn
+                                </div>
                               </div>
                             )}
                             <div>
-                              <h3 className="font-bold text-sm sm:text-base text-slate-900">{unit.name}</h3>
-                              {unit.area && <span className="text-xs text-slate-500">Diện tích: {unit.area}</span>}
+                              <h3 className="font-bold text-sm sm:text-base text-slate-900">{unit.title}</h3>
+                              {unit.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{unit.description}</p>}
                             </div>
                             {unit.priceFrom && <div className="text-sm font-black text-amber-600">Từ {unit.priceFrom}</div>}
                             <button
-                              onClick={() => setShowInquiryModal(true)}
+                              onClick={() => {
+                                setLeadForm((prev) => ({
+                                  ...prev,
+                                  note: `Đăng ký nhận báo giá cho loại căn: ${unit.title} (${projectName})`,
+                                }));
+                                setShowInquiryModal(true);
+                              }}
                               className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-xl transition min-h-[40px]"
                             >
                               Nhận thông báo giá căn này
@@ -1067,7 +1135,8 @@ export default function ProjectMicrositeRenderer({
               );
 
             // --- SECTION 7: GALLERY ---
-            case "gallery":
+            case "gallery": {
+              if (gallery.items.length === 0) return null;
               return (
                 <section key="gallery" id="gallery" className="container-page px-4 space-y-8">
                   <div className="max-w-3xl space-y-2">
@@ -1075,17 +1144,24 @@ export default function ProjectMicrositeRenderer({
                       Thư Viện Ảnh
                     </span>
                     <h2 className="text-xl sm:text-3xl font-black text-slate-900">{gallery.title || "Bộ sưu tập hình ảnh thực tế"}</h2>
+                    {gallery.description && (
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{gallery.description}</p>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                    {(gallery.images || []).map((img: any, idx: number) => (
-                      <div key={idx} className="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3] group relative bg-slate-100 cursor-pointer" onClick={() => setPreviewImage(img.url)}>
-                        {img.url ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {gallery.items.map((img) => (
+                      <div
+                        key={img.id}
+                        className="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3] group relative bg-slate-100 cursor-pointer shadow-2xs hover:shadow-md transition"
+                        onClick={() => setPreviewImage(img.image)}
+                      >
+                        {img.image ? (
                           <img
-                            src={getOptimizedCloudinaryUrl(img.url, "CARD")}
-                            srcSet={`${getOptimizedCloudinaryUrl(img.url, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(img.url, "CARD")} 600w`}
-                            sizes="(max-width: 640px) 50vw, 33vw"
-                            alt={img.caption || "Gallery image"}
+                            src={getOptimizedCloudinaryUrl(img.image, "CARD")}
+                            srcSet={`${getOptimizedCloudinaryUrl(img.image, "THUMBNAIL")} 300w, ${getOptimizedCloudinaryUrl(img.image, "CARD")} 600w`}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            alt={img.alt || img.caption || `${projectName} ảnh thực tế`}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           />
@@ -1102,9 +1178,13 @@ export default function ProjectMicrositeRenderer({
                   </div>
                 </section>
               );
+            }
 
             // --- SECTION 8: VIDEO & 360 ---
-            case "video":
+            case "video": {
+              const hasVideoOrTour = video.items.length > 0 || video.legacyVideoUrl || video.legacyTour360Url || tour360Resource;
+              if (!hasVideoOrTour) return null;
+
               return (
                 <section key="video" id="video" className="container-page px-4 space-y-8">
                   <div className="max-w-3xl space-y-2">
@@ -1112,44 +1192,117 @@ export default function ProjectMicrositeRenderer({
                       Video & Tour 360°
                     </span>
                     <h2 className="text-xl sm:text-3xl font-black text-slate-900">{video.title || "Trải nghiệm hình ảnh thực tế ảo 360°"}</h2>
+                    {video.description && (
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{video.description}</p>
+                    )}
                   </div>
 
                   <div className="space-y-6">
-                    {(video.tour360Url || tour360Resource?.url) && (
-                      <div className="bg-slate-900 rounded-3xl p-6 text-white space-y-4 shadow-xl">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="space-y-1">
-                            <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Virtual Tour 360°</span>
-                            <h3 className="text-lg font-black text-white">Khám phá không gian căn hộ 360° thực tế</h3>
-                            <p className="text-xs text-slate-300">Trải nghiệm góc nhìn toàn cảnh không giới hạn trực tiếp từ điện thoại & máy tính.</p>
-                          </div>
-                          <a
-                            href={video.tour360Url || tour360Resource?.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-amber-400 text-slate-950 font-black text-xs px-6 py-3.5 rounded-2xl shadow-md hover:bg-amber-300 transition shrink-0 min-h-[44px] flex items-center justify-center gap-2"
-                          >
-                            <span>🌐</span> Mở Tour 360° Toàn Màn Hình
-                          </a>
-                        </div>
-                      </div>
-                    )}
+                    {/* Render structured items if present */}
+                    {video.items.length > 0 ? (
+                      <div className="grid gap-6 sm:grid-cols-2">
+                        {video.items.map((item) => {
+                          const isYoutube = item.type === "YOUTUBE" || item.url.includes("youtube.com") || item.url.includes("youtu.be");
+                          const isTour360 = item.type === "TOUR_360";
 
-                    {video.videoUrl && (
-                      <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg aspect-video bg-black">
-                        <iframe
-                          src={video.videoUrl.includes("youtube.com") ? video.videoUrl.replace("watch?v=", "embed/") : video.videoUrl}
-                          className="w-full h-full"
-                          allowFullScreen
-                        ></iframe>
+                          if (isTour360) {
+                            return (
+                              <div key={item.id} className="bg-slate-900 rounded-3xl p-6 text-white space-y-4 shadow-xl flex flex-col justify-between">
+                                <div className="space-y-2">
+                                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Virtual Tour 360°</span>
+                                  <h3 className="text-lg font-black text-white">{item.title || "Khám phá không gian thực tế 360°"}</h3>
+                                  {item.thumbnail && (
+                                    <div className="aspect-video rounded-2xl overflow-hidden bg-slate-800 my-2">
+                                      <img src={getOptimizedCloudinaryUrl(item.thumbnail, "CARD")} alt={item.alt || item.title || "Tour 360"} className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                </div>
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-amber-400 text-slate-950 font-black text-xs px-6 py-3.5 rounded-2xl shadow-md hover:bg-amber-300 transition min-h-[44px] flex items-center justify-center gap-2"
+                                >
+                                  <span>🌐</span> Mở Tour 360° Toàn Màn Hình
+                                </a>
+                              </div>
+                            );
+                          }
+
+                          if (isYoutube) {
+                            const embedUrl = item.url.includes("watch?v=")
+                              ? item.url.replace("watch?v=", "embed/")
+                              : item.url.includes("youtu.be/")
+                              ? item.url.replace("youtu.be/", "www.youtube.com/embed/")
+                              : item.url;
+                            return (
+                              <div key={item.id} className="space-y-2">
+                                {item.title && <h3 className="font-bold text-sm sm:text-base text-slate-900">{item.title}</h3>}
+                                <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg aspect-video bg-black">
+                                  <iframe
+                                    src={embedUrl}
+                                    title={item.title || "Video Showcase"}
+                                    className="w-full h-full"
+                                    allowFullScreen
+                                  ></iframe>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          // Standard HTML5 video or external link
+                          return (
+                            <div key={item.id} className="space-y-2">
+                              {item.title && <h3 className="font-bold text-sm sm:text-base text-slate-900">{item.title}</h3>}
+                              <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg aspect-video bg-black">
+                                <video src={item.url} poster={item.thumbnail} controls className="w-full h-full object-contain" />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
+                    ) : (
+                      /* Legacy Fallback */
+                      <>
+                        {(video.legacyTour360Url || tour360Resource?.url) && (
+                          <div className="bg-slate-900 rounded-3xl p-6 text-white space-y-4 shadow-xl">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="space-y-1">
+                                <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Virtual Tour 360°</span>
+                                <h3 className="text-lg font-black text-white">Khám phá không gian căn hộ 360° thực tế</h3>
+                                <p className="text-xs text-slate-300">Trải nghiệm góc nhìn toàn cảnh không giới hạn trực tiếp từ điện thoại & máy tính.</p>
+                              </div>
+                              <a
+                                href={video.legacyTour360Url || tour360Resource?.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-amber-400 text-slate-950 font-black text-xs px-6 py-3.5 rounded-2xl shadow-md hover:bg-amber-300 transition shrink-0 min-h-[44px] flex items-center justify-center gap-2"
+                              >
+                                <span>🌐</span> Mở Tour 360° Toàn Màn Hình
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
+                        {video.legacyVideoUrl && (
+                          <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg aspect-video bg-black">
+                            <iframe
+                              src={video.legacyVideoUrl.includes("youtube.com") ? video.legacyVideoUrl.replace("watch?v=", "embed/") : video.legacyVideoUrl}
+                              className="w-full h-full"
+                              allowFullScreen
+                            ></iframe>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </section>
               );
+            }
 
             // --- SECTION 9: PROGRESS ---
-            case "progress":
+            case "progress": {
+              if (progress.items.length === 0) return null;
               return (
                 <section key="progress" id="progress" className="container-page px-4 space-y-8">
                   <div className="max-w-3xl space-y-2">
@@ -1157,35 +1310,96 @@ export default function ProjectMicrositeRenderer({
                       Tiến Độ
                     </span>
                     <h2 className="text-xl sm:text-3xl font-black text-slate-900">{progress.title || "Cập nhật tiến độ xây dựng công trình"}</h2>
+                    {progress.description && (
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{progress.description}</p>
+                    )}
                   </div>
 
                   <div className="space-y-4">
-                    {(progress.items || []).map((p: any, idx: number) => (
-                      <div key={idx} className="bg-white border border-slate-200/80 rounded-3xl p-5 flex flex-col sm:flex-row gap-4 items-start shadow-sm">
-                        {p.image && <img src={getOptimizedCloudinaryUrl(p.image, "CARD")} alt={p.title} loading="lazy" className="w-full sm:w-48 aspect-[16/10] object-cover rounded-2xl" />}
-                        <div className="space-y-1.5">
-                          {p.date && <span className="text-xs font-bold text-amber-600">{p.date}</span>}
-                          <h3 className="font-bold text-base text-slate-900">{p.title}</h3>
-                          <p className="text-xs text-slate-600 leading-relaxed">{p.desc}</p>
+                    {progress.items.map((p) => (
+                      <div key={p.id} className="bg-white border border-slate-200/80 rounded-3xl p-5 flex flex-col sm:flex-row gap-5 items-start shadow-sm hover:shadow-md transition">
+                        {p.image && (
+                          <div
+                            className="w-full sm:w-56 aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100 shrink-0 cursor-pointer group relative"
+                            onClick={() => setPreviewImage(p.image!)}
+                          >
+                            <img
+                              src={getOptimizedCloudinaryUrl(p.image, "CARD")}
+                              alt={p.alt || p.title || "Tiến độ thi công"}
+                              loading="lazy"
+                              className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
+                              🔍 Xem ảnh
+                            </div>
+                          </div>
+                        )}
+                        <div className="space-y-2 flex-1">
+                          {p.date && (
+                            <span className="inline-block text-xs font-extrabold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60">
+                              📅 {p.date}
+                            </span>
+                          )}
+                          <h3 className="font-bold text-base sm:text-lg text-slate-900">{p.title}</h3>
+                          {p.description && (
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">{p.description}</p>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
                 </section>
               );
+            }
 
             // --- SECTION 10: SALES POLICY ---
-            case "sales_policy":
+            case "sales_policy": {
+              const hasContent = salesPolicy.items.length > 0 || salesPolicy.description || salesPolicy.pdfUrl;
+              if (!hasContent) return null;
+
               return (
                 <section key="sales_policy" id="sales_policy" className="container-page px-4 space-y-8">
                   <div className="bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white border border-amber-300/80 rounded-3xl p-6 sm:p-10 space-y-6 shadow-sm">
                     <div className="max-w-3xl space-y-2">
                       <span className="text-xs font-extrabold text-amber-600 uppercase tracking-widest bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200 inline-block">
-                        Chính Sách Bán Hàng
+                        Chính Sách Bán Hàng & Ưu Đãi
                       </span>
                       <h2 className="text-xl sm:text-3xl font-black text-slate-900">{salesPolicy.title || "Ưu đãi thanh toán & tiến độ hỗ trợ vay"}</h2>
-                      {salesPolicy.summary && <p className="text-xs sm:text-sm text-slate-600">{salesPolicy.summary}</p>}
+                      {salesPolicy.description && <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{salesPolicy.description}</p>}
                     </div>
+
+                    {salesPolicy.items.length > 0 && (
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+                        {salesPolicy.items.map((item) => (
+                          <div key={item.id} className="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-2xs space-y-3 flex flex-col justify-between">
+                            <div className="space-y-2">
+                              {item.image && (
+                                <div
+                                  className="aspect-video rounded-xl overflow-hidden bg-slate-100 cursor-pointer"
+                                  onClick={() => setPreviewImage(item.image!)}
+                                >
+                                  <img src={getOptimizedCloudinaryUrl(item.image, "CARD")} alt={item.alt || item.title} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <h3 className="font-bold text-sm text-slate-900">{item.title}</h3>
+                              {item.description && (
+                                <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                              )}
+                            </div>
+                            {item.link && (
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 pt-1"
+                              >
+                                <span>Xem chi tiết</span> <span>→</span>
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-4 pt-2">
                       <button
@@ -1194,10 +1408,21 @@ export default function ProjectMicrositeRenderer({
                       >
                         Tải chính sách chi tiết & Bảng tính dòng tiền
                       </button>
+                      {salesPolicy.pdfUrl && (
+                        <a
+                          href={salesPolicy.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-white text-slate-900 font-bold text-xs px-5 py-3.5 rounded-2xl border border-slate-300 hover:bg-slate-50 transition flex items-center gap-2 min-h-[44px]"
+                        >
+                          <span>📄</span> Xem file PDF Chính sách
+                        </a>
+                      )}
                     </div>
                   </div>
                 </section>
               );
+            }
 
             // --- SECTION 11: DOCUMENTS ---
             case "documents":
