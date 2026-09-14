@@ -40,6 +40,7 @@ export default function WordPressEditor({
         editorRef.current.innerHTML = value || "";
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   function handleEditorInput() {

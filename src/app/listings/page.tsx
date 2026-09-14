@@ -47,6 +47,7 @@ export default async function ListingsPage({
       ? {
           OR: [
             { title: { contains: searchParams.keyword, mode: "insensitive" } },
+            { productCode: { contains: searchParams.keyword, mode: "insensitive" } },
             { unitCode: { contains: searchParams.keyword, mode: "insensitive" } },
             { project: { name: { contains: searchParams.keyword, mode: "insensitive" } } },
           ],

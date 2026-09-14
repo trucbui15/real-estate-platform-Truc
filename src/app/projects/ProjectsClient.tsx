@@ -244,7 +244,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500 space-y-3 shadow-2xs">
           <div className="text-4xl">🔍</div>
           <div className="font-bold text-slate-800 text-base">
-            Không tìm thấy dự án phù hợp với từ khóa "{searchQuery}"
+            Không tìm thấy dự án phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;
           </div>
           <button
             onClick={() => setSearchQuery("")}

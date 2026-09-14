@@ -9,3 +9,6 @@ next-env.d.ts
 # uploaded images (local storage) — giữ thư mục nhưng bỏ qua file upload
 public/uploads/*
 !public/uploads/.gitkeep
+
+# Temporary / scratch / test files
+scratch/

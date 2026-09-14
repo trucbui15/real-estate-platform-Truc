@@ -17,24 +17,35 @@ export async function GET(req: Request) {
   const keyword = searchParams.get("keyword")?.trim();
 
   try {
-    // Truy vấn các CustomerInquiry liên quan đến Đặt phòng & Visa
-    const inquiries = await prisma.customerInquiry.findMany({
-      where: {
+    const andConditions: any[] = [];
+
+    if (type === "BOOKING") {
+      andConditions.push({ note: { contains: "[ĐẶT PHÒNG" } });
+    } else if (type === "VISA") {
+      andConditions.push({ note: { contains: "[DỊCH VỤ VISA" } });
+    } else {
+      andConditions.push({
         OR: [
           { note: { contains: "[ĐẶT PHÒNG" } },
           { note: { contains: "[DỊCH VỤ VISA" } },
         ],
-        ...(type === "BOOKING" ? { note: { contains: "[ĐẶT PHÒNG" } } : {}),
-        ...(type === "VISA" ? { note: { contains: "[DỊCH VỤ VISA" } } : {}),
-        ...(keyword
-          ? {
-              OR: [
-                { customer: { fullName: { contains: keyword, mode: "insensitive" } } },
-                { customer: { phone: { contains: keyword } } },
-                { note: { contains: keyword, mode: "insensitive" } },
-              ],
-            }
-          : {}),
+      });
+    }
+
+    if (keyword) {
+      andConditions.push({
+        OR: [
+          { customer: { fullName: { contains: keyword, mode: "insensitive" } } },
+          { customer: { phone: { contains: keyword } } },
+          { note: { contains: keyword, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    // Truy vấn các CustomerInquiry liên quan đến Đặt phòng & Visa
+    const inquiries = await prisma.customerInquiry.findMany({
+      where: {
+        AND: andConditions,
       },
       include: {
         customer: {

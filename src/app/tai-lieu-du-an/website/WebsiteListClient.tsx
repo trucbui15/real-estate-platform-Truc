@@ -58,7 +58,7 @@ export default function WebsiteListClient({ projects }: WebsiteListClientProps) 
       {/* PROJECT CARDS GRID */}
       {filteredProjects.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 text-xs bg-white space-y-2">
-          <div>🔍 Không tìm thấy dự án phù hợp với từ khóa "{searchQuery}".</div>
+          <div>🔍 Không tìm thấy dự án phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;.</div>
           <button
             onClick={() => setSearchQuery("")}
             className="text-blue-600 font-bold hover:underline"

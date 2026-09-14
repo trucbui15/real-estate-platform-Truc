@@ -36,9 +36,9 @@ export default function ProjectImageEditorModal({
     }
   }, [project]);
 
-  if (!isOpen || !project) return null;
-
   const [uploadStatusText, setUploadStatusText] = useState("");
+
+  if (!isOpen || !project) return null;
 
   async function handleFileSelect(files: FileList | null) {
     if (!files || files.length === 0) return;
