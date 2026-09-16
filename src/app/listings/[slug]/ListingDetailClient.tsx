@@ -255,6 +255,42 @@ export default function ListingDetailClient({
                 .filter(Boolean)
                 .join(", ")}
             </p>
+
+            {/* MOBILE ONLY CTV/STAFF SHARE BUTTON */}
+            {effectiveCtvToken && (
+              <div className="lg:hidden pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${effectiveCtvToken}`;
+                    navigator.clipboard.writeText(shareUrl);
+                    alert(`✓ Đã sao chép Link giới thiệu CTV (Mã: ${effectiveCtvToken})!\nHãy dán gửi cho khách hàng: ${shareUrl}`);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition shadow-xs cursor-pointer"
+                >
+                  <span>🔗</span>
+                  <span>Sao chép Link giới thiệu CTV</span>
+                </button>
+              </div>
+            )}
+
+            {!effectiveCtvToken && (session?.user as any)?.referralCode && (
+              <div className="lg:hidden pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const code = (session?.user as any)?.referralCode;
+                    const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${code}`;
+                    navigator.clipboard.writeText(shareUrl);
+                    alert(`✓ Đã sao chép Link giới thiệu Nhân viên (Mã: ${code})!\nHãy dán để chia sẻ: ${shareUrl}`);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-slate-800 text-white font-bold text-[13px] hover:bg-slate-700 transition shadow-xs cursor-pointer"
+                >
+                  <span>🔗</span>
+                  <span>Sao chép Link Nhân viên ({ (session?.user as any)?.referralCode })</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 3. PROJECT CARD LINK (IF ATTACHED) */}
@@ -487,23 +523,58 @@ export default function ListingDetailClient({
       </div>
 
       {/* MOBILE STICKY BOTTOM ACTION BAR (< 1024PX) */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 p-3 shadow-lg flex items-center gap-3">
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 p-3 shadow-lg flex items-center gap-2">
+        {/* REFERRAL SHARE BUTTON FOR CTV */}
+        {effectiveCtvToken && (
+          <button
+            type="button"
+            onClick={() => {
+              const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${effectiveCtvToken}`;
+              navigator.clipboard.writeText(shareUrl);
+              alert(`✓ Đã sao chép Link giới thiệu CTV (Mã: ${effectiveCtvToken})!\nHãy dán gửi cho khách hàng: ${shareUrl}`);
+            }}
+            className="py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-bold text-[12px] sm:text-[13px] hover:bg-emerald-700 transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            title="Sao chép Link giới thiệu CTV"
+          >
+            <span>🔗</span>
+            <span>Sao chép link</span>
+          </button>
+        )}
+
+        {/* REFERRAL SHARE BUTTON FOR INTERNAL STAFF */}
+        {!effectiveCtvToken && (session?.user as any)?.referralCode && (
+          <button
+            type="button"
+            onClick={() => {
+              const code = (session?.user as any)?.referralCode;
+              const shareUrl = `${window.location.origin}/listings/${listing.slug}?ref=${code}`;
+              navigator.clipboard.writeText(shareUrl);
+              alert(`✓ Đã sao chép Link giới thiệu Nhân viên (Mã: ${code})!\nHãy dán để chia sẻ: ${shareUrl}`);
+            }}
+            className="py-2.5 px-3 rounded-xl bg-slate-800 text-white font-bold text-[12px] sm:text-[13px] hover:bg-slate-700 transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            title="Sao chép Link Nhân viên"
+          >
+            <span>🔗</span>
+            <span>Sao chép link</span>
+          </button>
+        )}
+
         <a
           href={zaloUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 py-2.5 rounded-xl bg-[#0284C7] text-white font-bold text-[13px] text-center shadow-xs flex items-center justify-center gap-1.5"
+          className="flex-1 py-2.5 px-2 rounded-xl bg-[#0284C7] text-white font-bold text-[12px] sm:text-[13px] text-center shadow-xs flex items-center justify-center gap-1 truncate"
         >
           <span>💬</span>
-          <span>Nhắn Zalo OA</span>
+          <span className="truncate">Nhắn Zalo OA</span>
         </a>
 
         <button
           onClick={() => setConsultModalOpen(true)}
-          className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-[13px] text-center shadow-xs flex items-center justify-center gap-1.5"
+          className="flex-1 py-2.5 px-2 rounded-xl bg-slate-900 text-white font-bold text-[12px] sm:text-[13px] text-center shadow-xs flex items-center justify-center gap-1 truncate"
         >
           <span>📝</span>
-          <span>Nhận tư vấn</span>
+          <span className="truncate">Nhận tư vấn</span>
         </button>
       </div>
 
