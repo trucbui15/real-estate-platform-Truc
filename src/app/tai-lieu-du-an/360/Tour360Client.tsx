@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { parseImages, getProjectCoverImage } from "@/lib/utils";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import ProjectImageEditorModal from "@/components/ProjectImageEditorModal";
@@ -119,7 +118,12 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
             return (
               <div
                 key={project.id}
-                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl transition duration-300 relative"
+                onClick={() => {
+                  if (primaryResource?.url) {
+                    window.open(primaryResource.url, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 transition duration-300 relative cursor-pointer"
               >
                 <div className="space-y-4">
                   {/* IMAGE CONTAINER WITH 360 BADGE */}
@@ -150,7 +154,7 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
                     {/* OVERLAY BADGE 360° */}
                     <div className="absolute left-3 top-3">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 backdrop-blur px-3 py-1 text-[10px] font-extrabold text-amber-300 shadow">
-                        <span className="animate-pulse text-xs">🔄</span> 360° TOUR
+                        <span className="animate-pulse text-xs">🔄</span> 360° TOUR {project.resources.length > 1 ? `(${project.resources.length} link)` : ""}
                       </span>
                     </div>
 
@@ -158,7 +162,10 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
                     {canEdit && (
                       <button
                         type="button"
-                        onClick={() => setEditingProject(project)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingProject(project);
+                        }}
                         className="absolute right-2.5 top-2.5 bg-slate-900/85 hover:bg-sky-600 text-white font-bold text-[11px] px-2.5 py-1 rounded-xl shadow-lg transition backdrop-blur flex items-center gap-1 z-10 cursor-pointer"
                         title="Chỉnh sửa ảnh đại diện dự án"
                       >
@@ -183,30 +190,20 @@ export default function Tour360Client({ cityResource, projects, canEdit = false 
                     {/* All 360 Links under this project */}
                     <div className="space-y-2 pt-2">
                       {project.resources.map((res: any) => (
-                        <a
+                        <div
                           key={res.id}
-                          href={res.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between rounded-xl bg-surface p-2.5 text-xs text-dark border border-gray-100 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 transition font-bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(res.url, "_blank", "noopener,noreferrer");
+                          }}
+                          className="flex items-center justify-between rounded-xl bg-surface p-2.5 text-xs text-dark border border-gray-100 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 transition font-bold cursor-pointer"
                         >
                           <span className="truncate mr-2">{res.title}</span>
                           <span className="shrink-0 text-primary-600 text-[11px]">Mở 360° ↗</span>
-                        </a>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
-
-                {/* FOOTER ACTION */}
-                <div className="pt-4 border-t border-gray-100 mt-4 flex items-center justify-between text-xs font-semibold text-gray-500">
-                  <Link
-                    href={`/listings?project=${project.slug}`}
-                    className="hover:text-primary-600 hover:underline"
-                  >
-                    Xem sản phẩm →
-                  </Link>
-                  <span className="text-[11px] text-gray-400 font-mono">{project.resources.length} link 360°</span>
                 </div>
               </div>
             );

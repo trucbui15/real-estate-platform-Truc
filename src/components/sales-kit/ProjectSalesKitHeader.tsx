@@ -130,7 +130,7 @@ export function ProjectSalesKitHeader({
                 href={`/listings?project=${slug}`}
                 className="btn-primary !px-5 !py-2.5 text-xs shadow-md shadow-primary-500/20"
               >
-                Xem sản phẩm mở bán / cho thuê ➔
+                Xem sản phẩm mở bán / cho thuê
               </Link>
             </div>
           </div>
