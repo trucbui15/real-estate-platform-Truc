@@ -198,7 +198,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/quynhon_key_projects_hero_banner.jpg"
-            alt="Khám phá các dự án trọng điểm Quy Nhơn"
+            alt="Dự án trọng điểm Quy Nhơn"
             className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
           />
         </div>
@@ -210,7 +210,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
               <span>Bảng Hàng Bất Động Sản Quy Nhơn & Bình Định</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight font-display drop-shadow-md">
-              Khám Phá Các Dự Án Trọng Điểm
+              Dự Án Trọng Điểm
             </h1>
             <p className="text-xs sm:text-sm text-slate-100 font-medium leading-relaxed drop-shadow-sm">
               Tra cứu nhanh thông tin dự án, mặt bằng căn hộ, tiến độ thanh toán và bảng hàng giá gốc từ Chủ đầu tư.
@@ -323,7 +323,7 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                   </div>
 
                   {/* CARD BODY CONTENT */}
-                  <div className="px-5 space-y-2.5">
+                  <div className="px-5 space-y-2.5 pb-5">
                     <h2 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors duration-200 leading-snug font-display">
                       {p.name}
                     </h2>
@@ -355,19 +355,6 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
                       )}
                     </div>
                   </div>
-                </Link>
-
-                {/* PREMIUM CTA BUTTON */}
-                <Link
-                  href={`/projects/${p.slug}`}
-                  className="p-4 mt-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-slate-700 hover:text-blue-600 transition-colors duration-200"
-                >
-                  <span className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                    {hasInventory ? "Xem Chi Tiết Bảng Hàng" : "Khám Phá Dự Án"}
-                  </span>
-                  <span className="text-base text-blue-600 transition-transform duration-300 group-hover:translate-x-1.5">
-                    →
-                  </span>
                 </Link>
               </div>
             );

@@ -129,6 +129,19 @@ function parseImagesList(imagesRaw: any): string[] {
   return [];
 }
 
+function getPageNumbers(current: number, total: number): (number | string)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, "...", total];
+  }
+  if (current >= total - 3) {
+    return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
 export default function ProjectMicrositeRenderer({
   projectId,
   projectSlug,
@@ -288,6 +301,25 @@ export default function ProjectMicrositeRenderer({
     setSearchUnitCode("");
   }
 
+  // Phân trang Bảng hàng trực tiếp (mỗi trang hiển thị đúng 5 sản phẩm/căn)
+  const INVENTORY_PAGE_SIZE = 5;
+  const [inventoryPage, setInventoryPage] = useState<number>(1);
+
+  // Tự động chuyển về trang 1 khi đổi bộ lọc hoặc tòa
+  useEffect(() => {
+    setInventoryPage(1);
+  }, [blockTab, bedroomFilter, statusFilter, directionFilter, searchUnitCode]);
+
+  const totalInventoryPages = Math.max(1, Math.ceil(filteredInventory.length / INVENTORY_PAGE_SIZE));
+
+  const paginatedInventory = useMemo(() => {
+    const start = (inventoryPage - 1) * INVENTORY_PAGE_SIZE;
+    return filteredInventory.slice(start, start + INVENTORY_PAGE_SIZE);
+  }, [filteredInventory, inventoryPage]);
+
+  const inventoryFromIndex = filteredInventory.length > 0 ? (inventoryPage - 1) * INVENTORY_PAGE_SIZE + 1 : 0;
+  const inventoryToIndex = Math.min(inventoryPage * INVENTORY_PAGE_SIZE, filteredInventory.length);
+
   // Public Resources (Active & Public)
   const publicResources = useMemo(() => {
     return (resources || []).filter((r) => r.isActive && r.isPublic);
@@ -394,6 +426,28 @@ export default function ProjectMicrositeRenderer({
   // Sale & Rent Listings
   const saleListings = useMemo(() => (listings || []).filter((l: any) => l.transactionType === "SALE"), [listings]);
   const rentListings = useMemo(() => (listings || []).filter((l: any) => l.transactionType === "RENT"), [listings]);
+
+  // Phân trang Bất động sản chuyển nhượng / rao bán (6 BĐS mỗi trang = 2 hàng x 3 cột)
+  const SALE_PAGE_SIZE = 6;
+  const [salePage, setSalePage] = useState<number>(1);
+  const totalSalePages = Math.max(1, Math.ceil(saleListings.length / SALE_PAGE_SIZE));
+  const paginatedSaleListings = useMemo(() => {
+    const start = (salePage - 1) * SALE_PAGE_SIZE;
+    return saleListings.slice(start, start + SALE_PAGE_SIZE);
+  }, [saleListings, salePage]);
+  const saleFromIndex = saleListings.length > 0 ? (salePage - 1) * SALE_PAGE_SIZE + 1 : 0;
+  const saleToIndex = Math.min(salePage * SALE_PAGE_SIZE, saleListings.length);
+
+  // Phân trang Bất động sản cho thuê (6 BĐS mỗi trang)
+  const RENT_PAGE_SIZE = 6;
+  const [rentPage, setRentPage] = useState<number>(1);
+  const totalRentPages = Math.max(1, Math.ceil(rentListings.length / RENT_PAGE_SIZE));
+  const paginatedRentListings = useMemo(() => {
+    const start = (rentPage - 1) * RENT_PAGE_SIZE;
+    return rentListings.slice(start, start + RENT_PAGE_SIZE);
+  }, [rentListings, rentPage]);
+  const rentFromIndex = rentListings.length > 0 ? (rentPage - 1) * RENT_PAGE_SIZE + 1 : 0;
+  const rentToIndex = Math.min(rentPage * RENT_PAGE_SIZE, rentListings.length);
 
   // Dynamic Tracking IDs
   const projectGaId = contentJson?.seo?.gaId;
@@ -954,7 +1008,14 @@ export default function ProjectMicrositeRenderer({
                           </div>
 
                           <div className="text-[11px] text-slate-500 font-semibold">
-                            Hiển thị: <strong>{filteredInventory.length}</strong> / {inventories.length} căn
+                            {filteredInventory.length > INVENTORY_PAGE_SIZE ? (
+                              <>
+                                Đang xem: <strong className="text-slate-900">{inventoryFromIndex} - {inventoryToIndex}</strong> / {filteredInventory.length} căn
+                                <span className="text-slate-400 font-normal ml-1">(Trang {inventoryPage}/{totalInventoryPages})</span>
+                              </>
+                            ) : (
+                              <>Hiển thị: <strong>{filteredInventory.length}</strong> / {inventories.length} căn</>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -976,8 +1037,8 @@ export default function ProjectMicrositeRenderer({
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                              {filteredInventory.length > 0 ? (
-                                filteredInventory.map((unit) => {
+                              {paginatedInventory.length > 0 ? (
+                                paginatedInventory.map((unit) => {
                                   const st = unitStatusLabel[unit.unitStatus] || unitStatusLabel.DANG_BAN;
                                   const images = parseImagesList(unit.images);
                                   return (
@@ -1035,6 +1096,90 @@ export default function ProjectMicrositeRenderer({
                             </tbody>
                           </table>
                         </div>
+
+                        {/* PHÂN TRANG BẢNG HÀNG (5 CĂN / TRANG) */}
+                        {filteredInventory.length > INVENTORY_PAGE_SIZE && (
+                          <div className="p-3.5 sm:p-4 bg-slate-50/90 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
+                            <div className="text-xs text-slate-600 font-medium text-center sm:text-left">
+                              Đang hiển thị căn <strong className="text-slate-900 font-bold">{inventoryFromIndex} - {inventoryToIndex}</strong> / <strong className="text-slate-900 font-bold">{filteredInventory.length}</strong> căn
+                              {totalInventoryPages > 1 && (
+                                <span className="text-slate-400 ml-1.5">(Trang {inventoryPage} trên {totalInventoryPages})</span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-center gap-1.5">
+                              {/* Nút mũi tên lùi */}
+                              <button
+                                type="button"
+                                disabled={inventoryPage <= 1}
+                                onClick={() => {
+                                  setInventoryPage((p) => Math.max(1, p - 1));
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                title="Trang trước"
+                              >
+                                <span>‹</span>
+                                <span className="hidden sm:inline">Trước</span>
+                              </button>
+
+                              {/* Danh sách các số trang */}
+                              {getPageNumbers(inventoryPage, totalInventoryPages).map((p, idx) => {
+                                if (p === "...") {
+                                  return (
+                                    <span key={`ellipsis-${idx}`} className="px-1 text-xs text-slate-400 font-bold">
+                                      ...
+                                    </span>
+                                  );
+                                }
+                                const pageNum = Number(p);
+                                const isActive = pageNum === inventoryPage;
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    type="button"
+                                    onClick={() => setInventoryPage(pageNum)}
+                                    className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                      isActive
+                                        ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs font-black"
+                                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                    }`}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+
+                              {/* Nút mũi tên tới */}
+                              <button
+                                type="button"
+                                disabled={inventoryPage >= totalInventoryPages}
+                                onClick={() => {
+                                  setInventoryPage((p) => Math.min(totalInventoryPages, p + 1));
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                title="Trang sau"
+                              >
+                                <span className="hidden sm:inline">Sau</span>
+                                <span>›</span>
+                              </button>
+
+                              {/* Nút Xem thêm trang tiếp theo */}
+                              {inventoryPage < totalInventoryPages && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setInventoryPage((p) => Math.min(totalInventoryPages, p + 1));
+                                  }}
+                                  className="ml-1 sm:ml-2 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                  title="Xem 5 căn tiếp theo"
+                                >
+                                  <span>Xem thêm</span>
+                                  <span>➔</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1050,28 +1195,192 @@ export default function ProjectMicrositeRenderer({
                       </div>
 
                       {saleListings.length > 0 && (
-                        <div className="space-y-3">
-                          <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                            <span>🏷️</span> Căn hộ chuyển nhượng / Rao bán ({saleListings.length})
-                          </h3>
+                        <div className="space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                              <span>🏷️</span> Căn hộ chuyển nhượng / Rao bán ({saleListings.length})
+                            </h3>
+                            {saleListings.length > SALE_PAGE_SIZE && (
+                              <span className="text-xs text-slate-500 font-medium">
+                                Đang xem <strong>{saleFromIndex} - {saleToIndex}</strong> / {saleListings.length} tin (Trang {salePage}/{totalSalePages})
+                              </span>
+                            )}
+                          </div>
+
                           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {saleListings.map((listing) => (
+                            {paginatedSaleListings.map((listing) => (
                               <ListingCard key={listing.id} listing={listing} />
                             ))}
                           </div>
+
+                          {/* PHÂN TRANG HÀNG CHUYỂN NHƯỢNG (6 BĐS / TRANG) */}
+                          {saleListings.length > SALE_PAGE_SIZE && (
+                            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs select-none">
+                              <div className="text-xs text-slate-600 font-medium text-center sm:text-left">
+                                Hiển thị <strong className="text-slate-900 font-bold">{saleFromIndex} - {saleToIndex}</strong> / <strong className="text-slate-900 font-bold">{saleListings.length}</strong> BĐS chuyển nhượng
+                                {totalSalePages > 1 && (
+                                  <span className="text-slate-400 ml-1.5">(Trang {salePage} trên {totalSalePages})</span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={salePage <= 1}
+                                  onClick={() => setSalePage((p) => Math.max(1, p - 1))}
+                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                  title="Trang trước"
+                                >
+                                  <span>‹</span>
+                                  <span className="hidden sm:inline">Trước</span>
+                                </button>
+
+                                {getPageNumbers(salePage, totalSalePages).map((p, idx) => {
+                                  if (p === "...") {
+                                    return (
+                                      <span key={`sale-ellipsis-${idx}`} className="px-1 text-xs text-slate-400 font-bold">
+                                        ...
+                                      </span>
+                                    );
+                                  }
+                                  const pageNum = Number(p);
+                                  const isActive = pageNum === salePage;
+                                  return (
+                                    <button
+                                      key={`sale-page-${pageNum}`}
+                                      type="button"
+                                      onClick={() => setSalePage(pageNum)}
+                                      className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                        isActive
+                                          ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs font-black"
+                                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                      }`}
+                                    >
+                                      {pageNum}
+                                    </button>
+                                  );
+                                })}
+
+                                <button
+                                  type="button"
+                                  disabled={salePage >= totalSalePages}
+                                  onClick={() => setSalePage((p) => Math.min(totalSalePages, p + 1))}
+                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                  title="Trang sau"
+                                >
+                                  <span className="hidden sm:inline">Sau</span>
+                                  <span>›</span>
+                                </button>
+
+                                {salePage < totalSalePages && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSalePage((p) => Math.min(totalSalePages, p + 1))}
+                                    className="ml-1 sm:ml-2 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                    title="Xem 6 tin tiếp theo"
+                                  >
+                                    <span>Xem thêm</span>
+                                    <span>➔</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {rentListings.length > 0 && (
-                        <div className="space-y-3 pt-2">
-                          <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                            <span>🔑</span> Căn hộ cho thuê ({rentListings.length})
-                          </h3>
+                        <div className="space-y-4 pt-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                              <span>🔑</span> Căn hộ cho thuê ({rentListings.length})
+                            </h3>
+                            {rentListings.length > RENT_PAGE_SIZE && (
+                              <span className="text-xs text-slate-500 font-medium">
+                                Đang xem <strong>{rentFromIndex} - {rentToIndex}</strong> / {rentListings.length} tin (Trang {rentPage}/{totalRentPages})
+                              </span>
+                            )}
+                          </div>
+
                           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {rentListings.map((listing) => (
+                            {paginatedRentListings.map((listing) => (
                               <ListingCard key={listing.id} listing={listing} />
                             ))}
                           </div>
+
+                          {/* PHÂN TRANG HÀNG CHO THUÊ (6 BĐS / TRANG) */}
+                          {rentListings.length > RENT_PAGE_SIZE && (
+                            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs select-none">
+                              <div className="text-xs text-slate-600 font-medium text-center sm:text-left">
+                                Hiển thị <strong className="text-slate-900 font-bold">{rentFromIndex} - {rentToIndex}</strong> / <strong className="text-slate-900 font-bold">{rentListings.length}</strong> BĐS cho thuê
+                                {totalRentPages > 1 && (
+                                  <span className="text-slate-400 ml-1.5">(Trang {rentPage} trên {totalRentPages})</span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={rentPage <= 1}
+                                  onClick={() => setRentPage((p) => Math.max(1, p - 1))}
+                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                  title="Trang trước"
+                                >
+                                  <span>‹</span>
+                                  <span className="hidden sm:inline">Trước</span>
+                                </button>
+
+                                {getPageNumbers(rentPage, totalRentPages).map((p, idx) => {
+                                  if (p === "...") {
+                                    return (
+                                      <span key={`rent-ellipsis-${idx}`} className="px-1 text-xs text-slate-400 font-bold">
+                                        ...
+                                      </span>
+                                    );
+                                  }
+                                  const pageNum = Number(p);
+                                  const isActive = pageNum === rentPage;
+                                  return (
+                                    <button
+                                      key={`rent-page-${pageNum}`}
+                                      type="button"
+                                      onClick={() => setRentPage(pageNum)}
+                                      className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                        isActive
+                                          ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs font-black"
+                                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                      }`}
+                                    >
+                                      {pageNum}
+                                    </button>
+                                  );
+                                })}
+
+                                <button
+                                  type="button"
+                                  disabled={rentPage >= totalRentPages}
+                                  onClick={() => setRentPage((p) => Math.min(totalRentPages, p + 1))}
+                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-35 disabled:hover:bg-white disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                                  title="Trang sau"
+                                >
+                                  <span className="hidden sm:inline">Sau</span>
+                                  <span>›</span>
+                                </button>
+
+                                {rentPage < totalRentPages && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setRentPage((p) => Math.min(totalRentPages, p + 1))}
+                                    className="ml-1 sm:ml-2 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                    title="Xem 6 tin tiếp theo"
+                                  >
+                                    <span>Xem thêm</span>
+                                    <span>➔</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

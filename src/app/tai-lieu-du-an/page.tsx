@@ -93,10 +93,6 @@ export default async function TaiLieuDuAnPage() {
               </p>
             </div>
 
-            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-primary-600">
-              <span>Khám phá ngay</span>
-              <span className="group-hover:translate-x-1 transition-transform">➔</span>
-            </div>
           </Link>
         ))}
       </div>

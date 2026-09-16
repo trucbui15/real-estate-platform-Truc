@@ -80,9 +80,10 @@ export default function WebsiteListClient({ projects }: WebsiteListClientProps) 
             );
 
             return (
-              <div
+              <Link
                 key={project.id}
-                className="group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md hover:border-amber-400 transition duration-300"
+                href={`/du-an/${project.slug}`}
+                className="group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-lg hover:border-amber-400 transition-all duration-300 cursor-pointer"
               >
                 {/* THUMBNAIL IMAGE */}
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
@@ -111,7 +112,7 @@ export default function WebsiteListClient({ projects }: WebsiteListClientProps) 
                 {/* CONTENT */}
                 <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                   <div className="space-y-1.5">
-                    <h2 className="font-extrabold text-base text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">
+                    <h2 className="font-extrabold text-base text-slate-900 line-clamp-1 group-hover:text-amber-600 transition">
                       {project.name}
                     </h2>
 
@@ -133,34 +134,29 @@ export default function WebsiteListClient({ projects }: WebsiteListClientProps) 
                     )}
                   </div>
 
-                  {/* CTAS */}
-                  <div className="pt-3 border-t border-slate-100 space-y-2">
-                    {/* PRIMARY CTA -> INTERNAL MICROSITE */}
-                    <Link
-                      href={`/du-an/${project.slug}`}
-                      className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs py-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 min-h-[42px]"
-                    >
-                      <span>Xem website dự án</span>
-                      <span>→</span>
-                    </Link>
-
-                    {/* SECONDARY EXTERNAL LINKS */}
-                    {externalWebsites.map((res) => (
-                      <a
-                        key={res.id}
-                        href={res.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition flex items-center justify-center gap-1.5"
-                      >
-                        <span>🔗</span>
-                        <span className="truncate">Website tham khảo ({res.title})</span>
-                        <span>↗</span>
-                      </a>
-                    ))}
-                  </div>
+                  {/* OPTIONAL EXTERNAL LINKS */}
+                  {externalWebsites.length > 0 && (
+                    <div className="pt-3 border-t border-slate-100 flex flex-col gap-1.5">
+                      {externalWebsites.map((res) => (
+                        <button
+                          key={res.id}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(res.url, "_blank", "noopener,noreferrer");
+                          }}
+                          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <span>🔗</span>
+                          <span className="truncate">Website tham khảo ({res.title})</span>
+                          <span>↗</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
