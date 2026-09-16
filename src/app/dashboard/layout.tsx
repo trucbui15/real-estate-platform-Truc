@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentAuthUser } from "@/lib/auth";
 import {
   isBackofficeRole,
@@ -42,8 +43,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
     >
       <aside className="w-full min-w-0 max-w-full md:sticky md:top-20 md:h-fit space-y-2.5">
         <div className="card p-3 sm:p-3.5 flex items-center justify-between md:block bg-white shadow-xs">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Vai trò của bạn:</div>
-          <div className="font-bold text-xs sm:text-sm md:text-base text-sky-700 mt-0.5">{roleLabel}</div>
+          <div>
+            <div className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Vai trò của bạn:</div>
+            <div className="font-bold text-xs sm:text-sm md:text-base text-sky-700 mt-0.5">{roleLabel}</div>
+          </div>
+          <Link
+            href="/profile"
+            className="text-xs font-bold text-slate-600 hover:text-sky-700 inline-flex items-center mt-1 md:mt-2 bg-slate-50 md:bg-transparent px-2.5 py-1 md:p-0 rounded-lg border md:border-0 border-slate-200"
+            title="Đến trang thông tin cá nhân, mã CTV & đổi mật khẩu"
+          >
+            Hồ sơ cá nhân
+          </Link>
         </div>
 
         <DashboardNav links={links} />

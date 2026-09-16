@@ -20,6 +20,7 @@ export default function Header() {
   const isKyGuiActive = pathname.startsWith("/ky-gui");
   const isNewsActive = pathname.startsWith("/news");
   const isServicesActive = pathname.startsWith("/dat-phong") || pathname.startsWith("/dich-vu-visa");
+  const isProfileActive = pathname.startsWith("/profile");
 
   return (
     <header className="sticky top-0 z-50 h-[68px] md:h-[72px] border-b border-sky-100/90 bg-gradient-to-r from-sky-50/95 via-blue-50/90 to-indigo-50/95 backdrop-blur-md shadow-xs transition-all">
@@ -367,6 +368,20 @@ export default function Header() {
             <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
               {session ? (
                 <>
+                  {/* LINK TRANG CÁ NHÂN / PROFILE CHO MOBILE */}
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl font-bold transition text-[14px] border ${
+                      isProfileActive
+                        ? "bg-blue-50 text-[#0284C7] border-blue-200 shadow-2xs"
+                        : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-blue-50 hover:text-[#0284C7]"
+                    }`}
+                  >
+                    <span>👤</span>
+                    <span className="truncate">Trang cá nhân ({session.user?.name || "Tài khoản"})</span>
+                  </Link>
+
                   {isBackoffice && (
                     <Link
                       href="/dashboard"
@@ -380,7 +395,7 @@ export default function Header() {
                     onClick={() => signOut({ callbackUrl: "/" })}
                     className="btn-outline w-full text-center text-[14px] flex items-center justify-center py-2.5 px-3"
                   >
-                    <span className="truncate max-w-full">Đăng xuất ({session.user?.name})</span>
+                    <span className="truncate max-w-full">Đăng xuất</span>
                   </button>
                 </>
               ) : (
