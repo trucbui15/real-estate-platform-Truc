@@ -33,7 +33,7 @@ export default function Footer() {
               setForm((f) => ({ ...f, phone: f.phone || data.phone }));
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }
   }, [session]);
@@ -168,13 +168,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
+                {/* <Link
                   href="/ky-gui"
                   className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
                   <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
                   <span>Ký gửi bất động sản</span>
-                </Link>
+                </Link> */}
               </li>
               <li>
                 <Link
@@ -298,11 +298,10 @@ export default function Footer() {
               <form onSubmit={handleSubmit} className="space-y-2.5">
                 {message && (
                   <div
-                    className={`rounded-lg p-2 text-[11px] font-medium ${
-                      message.type === "success"
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : "bg-rose-50 text-rose-800 border border-rose-200"
-                    }`}
+                    className={`rounded-lg p-2 text-[11px] font-medium ${message.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                      }`}
                   >
                     {message.text}
                   </div>
@@ -336,11 +335,10 @@ export default function Footer() {
                     required
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: sanitizePhoneInput(e.target.value) })}
-                    className={`w-full rounded-lg border bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition ${
-                      form.phone && validatePhone(form.phone)
-                        ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
-                        : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    }`}
+                    className={`w-full rounded-lg border bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition ${form.phone && validatePhone(form.phone)
+                      ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
+                      : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      }`}
                   />
                   {form.phone && validatePhone(form.phone) && (
                     <p className="mt-1 text-[11px] text-rose-600 font-semibold flex items-center gap-1">
@@ -387,9 +385,9 @@ export default function Footer() {
               Liên hệ
             </Link>
             <span className="text-slate-300">·</span>
-            <Link href="/ky-gui" className="hover:text-blue-600 transition">
+            {/* <Link href="/ky-gui" className="hover:text-blue-600 transition">
               Ký gửi BĐS
-            </Link>
+            </Link> */}
           </div>
 
           <div className="font-medium text-slate-500">

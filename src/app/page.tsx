@@ -120,7 +120,7 @@ export default async function HomePage() {
       <section className="container-page pt-4">
         <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-sm">
           <div className="grid items-center gap-6 md:grid-cols-3">
-            <div className="md:col-span-2 space-y-2">
+            {/* <div className="md:col-span-2 space-y-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#E0F2FE] px-3 py-1 text-[13px] font-semibold text-[#0284C7]">
                 Dịch vụ ký gửi BĐS
               </span>
@@ -130,12 +130,12 @@ export default async function HomePage() {
               <p className="text-[14px] text-[#64748B] leading-relaxed">
                 Đăng ký ký gửi nhanh chóng để tiếp cận khách hàng tiềm năng cùng sự hỗ trợ pháp lý chuyên nghiệp từ Minh Dũng Land.
               </p>
-            </div>
+            </div> */}
 
             <div className="md:text-right">
-              <Link href="/ky-gui" className="btn-primary text-[14px] w-full md:w-auto">
+              {/* <Link href="/ky-gui" className="btn-primary text-[14px] w-full md:w-auto">
                 Ký gửi bất động sản ngay ➔
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
