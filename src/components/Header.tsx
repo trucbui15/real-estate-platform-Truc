@@ -42,11 +42,10 @@ export default function Header() {
           {/* MENU 1: MUA BÁN / CHO THUÊ ▾ */}
           <div className="relative group py-5">
             <button
-              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
-                isListingsActive
+              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${isListingsActive
                   ? "text-[#0284C7] font-extrabold"
                   : "text-slate-700 hover:text-[#0284C7]"
-              }`}
+                }`}
             >
               <span>Mua bán / Cho thuê</span>
               <span className="text-[11px] transition-transform duration-200 group-hover:rotate-180">▾</span>
@@ -72,11 +71,10 @@ export default function Header() {
           {/* MENU 2: DỰ ÁN ▾ */}
           <div className="relative group py-5">
             <button
-              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
-                isProjectsActive
+              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${isProjectsActive
                   ? "text-[#0284C7] font-bold"
                   : "text-slate-700 hover:text-[#0284C7]"
-              }`}
+                }`}
             >
               <span>Dự án</span>
               <span className="text-[11px] transition-transform duration-200 group-hover:rotate-180">▾</span>
@@ -108,11 +106,10 @@ export default function Header() {
           {/* MENU 3: ĐẶT PHÒNG / VISA ▾ */}
           <div className="relative group py-5">
             <button
-              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${
-                isServicesActive
+              className={`flex items-center gap-1 text-[14px] md:text-[15px] font-semibold transition ${isServicesActive
                   ? "text-[#0284C7] font-bold"
                   : "text-slate-700 hover:text-[#0284C7]"
-              }`}
+                }`}
             >
               <span>Đặt phòng/Visa</span>
               <span className="text-[11px] transition-transform duration-200 group-hover:rotate-180">▾</span>
@@ -136,7 +133,7 @@ export default function Header() {
           </div>
 
           {/* MENU 4: KÝ GỬI BĐS */}
-          <Link
+          {/* <Link
             href="/ky-gui"
             className={`text-[14px] md:text-[15px] font-semibold transition ${
               isKyGuiActive
@@ -145,16 +142,15 @@ export default function Header() {
             }`}
           >
             Ký gửi BĐS
-          </Link>
+          </Link> */}
 
           {/* MENU 5: TIN TỨC */}
           <Link
             href="/news"
-            className={`text-[14px] md:text-[15px] font-semibold transition ${
-              isNewsActive
+            className={`text-[14px] md:text-[15px] font-semibold transition ${isNewsActive
                 ? "text-[#0284C7] font-bold"
                 : "text-slate-700 hover:text-[#0284C7]"
-            }`}
+              }`}
           >
             Tin tức
           </Link>
@@ -237,9 +233,8 @@ export default function Header() {
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <button
                   onClick={() => setMobileAccordion(mobileAccordion === "listings" ? null : "listings")}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
-                    isListingsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                  }`}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${isListingsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                    }`}
                 >
                   <span>Mua bán / Cho thuê</span>
                   <span className="text-xs">{mobileAccordion === "listings" ? "▲" : "▼"}</span>
@@ -269,9 +264,8 @@ export default function Header() {
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <button
                   onClick={() => setMobileAccordion(mobileAccordion === "projects" ? null : "projects")}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
-                    isProjectsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                  }`}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${isProjectsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                    }`}
                 >
                   <span>Dự án</span>
                   <span className="text-xs">{mobileAccordion === "projects" ? "▲" : "▼"}</span>
@@ -308,9 +302,8 @@ export default function Header() {
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <button
                   onClick={() => setMobileAccordion(mobileAccordion === "services" ? null : "services")}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${
-                    isServicesActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                  }`}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 font-semibold transition text-left ${isServicesActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                    }`}
                 >
                   <span>Đặt phòng/Visa</span>
                   <span className="text-xs">{mobileAccordion === "services" ? "▲" : "▼"}</span>
@@ -337,7 +330,7 @@ export default function Header() {
               </div>
 
               {/* DIRECT LINK: KÝ GỬI */}
-              <Link
+              {/* <Link
                 href="/ky-gui"
                 onClick={() => setMobileOpen(false)}
                 className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
@@ -345,15 +338,14 @@ export default function Header() {
                 }`}
               >
                 Ký gửi BĐS
-              </Link>
+              </Link> */}
 
               {/* DIRECT LINK: TIN TỨC */}
               <Link
                 href="/news"
                 onClick={() => setMobileOpen(false)}
-                className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${
-                  isNewsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
-                }`}
+                className={`px-3.5 py-2.5 rounded-xl font-semibold transition border border-transparent ${isNewsActive ? "text-[#2563EB] bg-blue-50/50" : "text-slate-800 hover:bg-slate-50"
+                  }`}
               >
                 Tin tức
               </Link>
@@ -372,11 +364,10 @@ export default function Header() {
                   <Link
                     href="/profile"
                     onClick={() => setMobileOpen(false)}
-                    className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl font-bold transition text-[14px] border ${
-                      isProfileActive
+                    className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl font-bold transition text-[14px] border ${isProfileActive
                         ? "bg-blue-50 text-[#0284C7] border-blue-200 shadow-2xs"
                         : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-blue-50 hover:text-[#0284C7]"
-                    }`}
+                      }`}
                   >
                     <span>👤</span>
                     <span className="truncate">Trang cá nhân ({session.user?.name || "Tài khoản"})</span>
