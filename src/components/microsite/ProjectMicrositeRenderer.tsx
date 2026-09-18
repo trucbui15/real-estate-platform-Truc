@@ -17,6 +17,7 @@ import {
   normalizeProgressData,
   normalizeSalesPolicyData,
 } from "@/components/microsite/cms/normalizeSectionData";
+import OverviewBentoGrid from "@/components/microsite/OverviewBentoGrid";
 
 interface ProjectMicrositeRendererProps {
   projectId: string;
@@ -698,16 +699,9 @@ export default function ProjectMicrositeRenderer({
                       {overview.summary && <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">{overview.summary}</p>}
                     </div>
 
-                    {/* SPECS GRID */}
+                    {/* SPECS BENTO GRID */}
                     {overview.specs && overview.specs.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                        {overview.specs.map((spec: any, idx: number) => (
-                          <div key={idx} className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-1.5 shadow-2xs hover:border-slate-300 transition-all">
-                            <span className="text-[11px] font-bold text-slate-400 block uppercase tracking-wider">{spec.label}</span>
-                            <span className="text-sm sm:text-[15px] font-medium text-slate-800 block leading-normal break-words whitespace-pre-line">{spec.value || "—"}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <OverviewBentoGrid specs={overview.specs} />
                     )}
                   </div>
                 </section>
@@ -728,19 +722,31 @@ export default function ProjectMicrositeRenderer({
                   </div>
 
                   <div className="grid gap-6 lg:grid-cols-2 items-center">
-                    {location.googleMapUrl ? (
-                      <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-md h-[300px] sm:h-[340px]">
-                        <iframe src={location.googleMapUrl} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"></iframe>
-                      </div>
-                    ) : location.mapImage ? (
-                      <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-md aspect-[16/10]">
-                        <img src={getOptimizedCloudinaryUrl(location.mapImage, "GALLERY")} alt="Sơ đồ vị trí" loading="lazy" className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="rounded-3xl bg-slate-100 border border-slate-200 p-8 text-center text-xs text-slate-500 h-[240px] flex items-center justify-center">
-                        Vị trí kết nối thuận tiện tại {address || projectName}
-                      </div>
-                    )}
+                    {(() => {
+                      let mapSrc = (location.googleMapUrl || "").trim();
+                      const match = mapSrc.match(/src=["']([^"']+)["']/);
+                      if (match) mapSrc = match[1];
+
+                      if (mapSrc && (mapSrc.startsWith("https://") || mapSrc.startsWith("http://"))) {
+                        return (
+                          <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-md h-[300px] sm:h-[340px]">
+                            <iframe src={mapSrc} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"></iframe>
+                          </div>
+                        );
+                      }
+                      if (location.mapImage) {
+                        return (
+                          <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-md aspect-[16/10]">
+                            <img src={getOptimizedCloudinaryUrl(location.mapImage, "GALLERY")} alt="Sơ đồ vị trí" loading="lazy" className="w-full h-full object-cover" />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="rounded-3xl bg-slate-100 border border-slate-200 p-8 text-center text-xs text-slate-500 h-[240px] flex items-center justify-center">
+                          Vị trí kết nối thuận tiện tại {address || projectName}
+                        </div>
+                      );
+                    })()}
 
                     <div className="space-y-4">
                       <h3 className="font-bold text-sm sm:text-base text-slate-900">Khả năng kết nối khu vực</h3>

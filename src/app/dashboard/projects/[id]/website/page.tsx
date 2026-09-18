@@ -1031,8 +1031,13 @@ export default function ProjectWebsiteCmsPage() {
                       className="input font-mono"
                       disabled={!canEdit}
                       value={contentJson.location?.googleMapUrl || ""}
-                      onChange={(e) => setContentJson({ ...contentJson, location: { ...contentJson.location, googleMapUrl: e.target.value } })}
-                      placeholder="https://www.google.com/maps/embed?pb=..."
+                      onChange={(e) => {
+                        let val = e.target.value.trim();
+                        const match = val.match(/src=["']([^"']+)["']/);
+                        if (match) val = match[1];
+                        setContentJson({ ...contentJson, location: { ...contentJson.location, googleMapUrl: val } });
+                      }}
+                      placeholder="Dán link embed (https://www.google.com/maps/embed?pb=...) hoặc cả thẻ <iframe>"
                     />
                   </div>
 
