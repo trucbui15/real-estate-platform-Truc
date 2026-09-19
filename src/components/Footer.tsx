@@ -299,8 +299,8 @@ export default function Footer() {
                 {message && (
                   <div
                     className={`rounded-lg p-2 text-[11px] font-medium ${message.type === "success"
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                        : "bg-rose-50 text-rose-800 border border-rose-200"
                       }`}
                   >
                     {message.text}
@@ -336,8 +336,8 @@ export default function Footer() {
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: sanitizePhoneInput(e.target.value) })}
                     className={`w-full rounded-lg border bg-slate-50/50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition ${form.phone && validatePhone(form.phone)
-                      ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
-                      : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20"
+                        : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       }`}
                   />
                   {form.phone && validatePhone(form.phone) && (
