@@ -290,6 +290,15 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/chinh-sach-giao-nhan"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Chính sách vận chuyển &amp; giao nhận</span>
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/tiep-nhan-khieu-nai"
                   className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
                 >
