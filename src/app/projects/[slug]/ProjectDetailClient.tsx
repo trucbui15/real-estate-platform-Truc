@@ -119,7 +119,61 @@ export default function ProjectDetailClient({
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
 
   const [inventoryList, setInventoryList] = useState<any[]>(initialInventory);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [galleryPreview, setGalleryPreview] = useState<{
+    images: string[];
+    currentIndex: number;
+    unitCode?: string;
+  } | null>(null);
+
+  function openGallery(images: string[], startIndex: number = 0, unitCode?: string) {
+    if (!images || images.length === 0) return;
+    setGalleryPreview({
+      images,
+      currentIndex: Math.max(0, Math.min(startIndex, images.length - 1)),
+      unitCode,
+    });
+  }
+
+  function closeGallery() {
+    setGalleryPreview(null);
+  }
+
+  function nextGalleryImage() {
+    if (!galleryPreview || galleryPreview.images.length <= 1) return;
+    setGalleryPreview((prev) => {
+      if (!prev) return null;
+      return { ...prev, currentIndex: (prev.currentIndex + 1) % prev.images.length };
+    });
+  }
+
+  function prevGalleryImage() {
+    if (!galleryPreview || galleryPreview.images.length <= 1) return;
+    setGalleryPreview((prev) => {
+      if (!prev) return null;
+      return { ...prev, currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length };
+    });
+  }
+
+  useEffect(() => {
+    if (!galleryPreview) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setGalleryPreview(null);
+      } else if (e.key === "ArrowRight") {
+        setGalleryPreview((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          return { ...prev, currentIndex: (prev.currentIndex + 1) % prev.images.length };
+        });
+      } else if (e.key === "ArrowLeft") {
+        setGalleryPreview((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          return { ...prev, currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length };
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [Boolean(galleryPreview)]);
 
   // Add Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1098,13 +1152,13 @@ export default function ProjectDetailClient({
                         {/* 8. SƠ ĐỒ & BẢNG GIÁ */}
                         <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            {hasImage && primaryImg && (
+                            {hasImage && (
                               <button
                                 type="button"
-                                onClick={() => setPreviewImage(primaryImg)}
+                                onClick={() => openGallery(unitImages, 0, unit.unitCode)}
                                 className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-2 py-0.5 rounded-md transition cursor-pointer"
                               >
-                                🖼️ Xem sơ đồ
+                                🖼️ Xem sơ đồ {unitImages.length > 1 && `(${unitImages.length})`}
                               </button>
                             )}
                             {priceSheetUrl && (
@@ -1210,7 +1264,7 @@ export default function ProjectDetailClient({
                     {/* 2. IMAGE PREVIEW / PLACEHOLDER */}
                     {hasImage && primaryImg ? (
                       <div
-                        onClick={() => setPreviewImage(primaryImg)}
+                        onClick={() => openGallery(unitImages, 0, unit.unitCode)}
                         className="relative w-full h-[140px] rounded-xl border border-slate-100 overflow-hidden bg-slate-50 cursor-pointer group/img"
                       >
                         <img
@@ -1219,8 +1273,14 @@ export default function ProjectDetailClient({
                           loading="lazy"
                           className="w-full h-full object-contain p-1 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
                         />
+                        {unitImages.length > 1 && (
+                          <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                            <span>📷</span>
+                            <span>{unitImages.length} ảnh</span>
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white font-bold text-[11px] gap-1 backdrop-blur-[1px]">
-                          🖼️ Phóng to sơ đồ
+                          🖼️ Phóng to xem {unitImages.length > 1 ? `${unitImages.length} ảnh` : "sơ đồ"}
                         </div>
                       </div>
                     ) : (
@@ -1260,35 +1320,24 @@ export default function ProjectDetailClient({
                     </div>
 
                     {/* 4. ACTIONS & ADMIN CONTROLS */}
-                    <div className="pt-2 border-t border-slate-100 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold">
-                        {hasImage && primaryImg ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewImage(primaryImg)}
-                            className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 cursor-pointer"
-                          >
-                            🖼️ Xem sơ đồ
-                          </button>
-                        ) : (
-                          <span />
-                        )}
-
+                    {(priceSheetUrl || canEditProduct) && (
+                      <div className="pt-2 border-t border-slate-100 space-y-2">
                         {priceSheetUrl && (
-                          <a
-                            href={priceSheetUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
-                          >
-                            📄 Bảng giá
-                          </a>
+                          <div className="flex items-center justify-center text-[11px] font-bold">
+                            <a
+                              href={priceSheetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1 no-underline hover:no-underline"
+                            >
+                              📄 Bảng giá chi tiết ↗
+                            </a>
+                          </div>
                         )}
-                      </div>
 
-                      {/* ADMIN ROW */}
-                      {canEditProduct && (
-                        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100">
+                        {/* ADMIN ROW */}
+                        {canEditProduct && (
+                          <div className={`flex items-center justify-between gap-1.5 ${priceSheetUrl ? "pt-1 border-t border-slate-100" : ""}`}>
                           <select
                             value={unit.unitStatus}
                             onChange={(e) => quickUpdateStatus(unit, e.target.value)}
@@ -1322,7 +1371,8 @@ export default function ProjectDetailClient({
                         </div>
                       )}
                     </div>
-                  </div>
+                  )}
+                </div>
                 );
               })}
             </div>
@@ -1441,20 +1491,108 @@ export default function ProjectDetailClient({
         </section>
       </div>
 
-      {/* LIGHTBOX PREVIEW MODAL FOR FLOORPLAN */}
-      {previewImage && (
+      {/* LIGHTBOX GALLERY PREVIEW MODAL */}
+      {galleryPreview && galleryPreview.images.length > 0 && (
         <div
-          onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150 cursor-pointer"
+          onClick={closeGallery}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-150 select-none cursor-pointer"
         >
-          <div className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl p-2">
-            <img src={getOptimizedCloudinaryUrl(previewImage, "FLOOR_PLAN")} alt="Mặt bằng căn" className="max-h-[85vh] w-auto object-contain rounded-xl" />
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center text-sm"
-            >
-              ✕
-            </button>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl bg-slate-950/95 border border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] cursor-default"
+          >
+            {/* Header bar */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10 text-white">
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-sm sm:text-base text-slate-100">
+                  {galleryPreview.unitCode ? `Sơ đồ & Hình ảnh căn ${galleryPreview.unitCode}` : "Sơ đồ mặt bằng căn hộ"}
+                </span>
+                {galleryPreview.images.length > 1 && (
+                  <span className="bg-blue-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs">
+                    Ảnh {galleryPreview.currentIndex + 1} / {galleryPreview.images.length}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={closeGallery}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-sm transition cursor-pointer"
+                title="Đóng (Esc)"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Main image view with Next/Prev buttons */}
+            <div className="relative flex-1 min-h-[300px] sm:min-h-[420px] max-h-[68vh] flex items-center justify-center p-3 sm:p-6 bg-slate-900/50">
+              {/* Prev button */}
+              {galleryPreview.images.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevGalleryImage();
+                  }}
+                  className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-blue-600 text-white font-bold text-xl sm:text-2xl flex items-center justify-center shadow-lg transition backdrop-blur-xs cursor-pointer"
+                  title="Ảnh trước (Mũi tên trái)"
+                >
+                  ‹
+                </button>
+              )}
+
+              {/* Active Image */}
+              <img
+                key={galleryPreview.images[galleryPreview.currentIndex]}
+                src={getOptimizedCloudinaryUrl(
+                  galleryPreview.images[galleryPreview.currentIndex],
+                  "FLOOR_PLAN"
+                )}
+                alt={galleryPreview.unitCode ? `Sơ đồ căn ${galleryPreview.unitCode}` : "Sơ đồ căn hộ"}
+                className="max-h-[64vh] w-auto max-w-full object-contain rounded-xl shadow-lg transition-all duration-200"
+              />
+
+              {/* Next button */}
+              {galleryPreview.images.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextGalleryImage();
+                  }}
+                  className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-blue-600 text-white font-bold text-xl sm:text-2xl flex items-center justify-center shadow-lg transition backdrop-blur-xs cursor-pointer"
+                  title="Ảnh tiếp theo (Mũi tên phải)"
+                >
+                  ›
+                </button>
+              )}
+            </div>
+
+            {/* Thumbnails strip */}
+            {galleryPreview.images.length > 1 && (
+              <div className="px-4 py-2.5 bg-slate-900/90 border-t border-white/10 flex items-center justify-center gap-2 overflow-x-auto">
+                {galleryPreview.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGalleryPreview((p) => (p ? { ...p, currentIndex: idx } : null));
+                    }}
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 transition shrink-0 cursor-pointer ${
+                      idx === galleryPreview.currentIndex
+                        ? "border-blue-500 ring-2 ring-blue-400 scale-105"
+                        : "border-white/20 opacity-50 hover:opacity-100 hover:border-white/60"
+                    }`}
+                  >
+                    <img
+                      src={getOptimizedCloudinaryUrl(img, "FLOOR_PLAN_THUMB")}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

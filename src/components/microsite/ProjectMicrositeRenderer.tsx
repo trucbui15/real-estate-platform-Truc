@@ -216,6 +216,10 @@ export default function ProjectMicrositeRenderer({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [galleryPreview, setGalleryPreview] = useState<{
+    images: string[];
+    currentIndex: number;
+  } | null>(null);
 
   const [leadForm, setLeadForm] = useState({
     fullName: "",
@@ -1054,10 +1058,10 @@ export default function ProjectMicrositeRenderer({
                                         {images.length > 0 && (
                                           <button
                                             type="button"
-                                            onClick={() => setPreviewImage(images[0])}
-                                            className="text-blue-600 hover:text-blue-800 text-[11px] underline font-normal"
+                                            onClick={() => setGalleryPreview({ images, currentIndex: 0 })}
+                                            className="text-blue-600 hover:text-blue-800 text-[11px] underline font-semibold cursor-pointer"
                                           >
-                                            🖼️ Xem sơ đồ
+                                            🖼️ Xem sơ đồ {images.length > 1 && `(${images.length})`}
                                           </button>
                                         )}
                                       </td>
@@ -1826,6 +1830,116 @@ export default function ProjectMicrositeRenderer({
               ✕ Đóng
             </button>
             <img src={getOptimizedCloudinaryUrl(previewImage, "NEWS_HERO")} alt="Preview" className="max-h-[85vh] w-auto object-contain rounded-xl shadow-2xl" />
+          </div>
+        </div>
+      )}
+
+      {/* GALLERY PREVIEW MODAL */}
+      {galleryPreview && galleryPreview.images.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none cursor-pointer"
+          onClick={() => setGalleryPreview(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[92vh] flex flex-col bg-slate-950/95 border border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10 text-white">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm sm:text-base text-slate-100">Sơ đồ mặt bằng</span>
+                {galleryPreview.images.length > 1 && (
+                  <span className="bg-amber-500 text-slate-950 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full">
+                    {galleryPreview.currentIndex + 1} / {galleryPreview.images.length}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setGalleryPreview(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-sm transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Main image */}
+            <div className="relative flex-1 min-h-[300px] sm:min-h-[420px] max-h-[68vh] flex items-center justify-center p-3 sm:p-6 bg-slate-900/50">
+              {galleryPreview.images.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGalleryPreview((p) =>
+                      p
+                        ? {
+                            ...p,
+                            currentIndex:
+                              (p.currentIndex - 1 + p.images.length) % p.images.length,
+                          }
+                        : null
+                    )
+                  }
+                  className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-amber-500 hover:text-slate-950 text-white font-bold text-xl sm:text-2xl flex items-center justify-center shadow-lg transition backdrop-blur-xs cursor-pointer"
+                >
+                  ‹
+                </button>
+              )}
+
+              <img
+                key={galleryPreview.images[galleryPreview.currentIndex]}
+                src={getOptimizedCloudinaryUrl(
+                  galleryPreview.images[galleryPreview.currentIndex],
+                  "FLOOR_PLAN"
+                )}
+                alt="Sơ đồ"
+                className="max-h-[64vh] w-auto max-w-full object-contain rounded-xl shadow-lg transition-all duration-200"
+              />
+
+              {galleryPreview.images.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGalleryPreview((p) =>
+                      p
+                        ? {
+                            ...p,
+                            currentIndex: (p.currentIndex + 1) % p.images.length,
+                          }
+                        : null
+                    )
+                  }
+                  className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-amber-500 hover:text-slate-950 text-white font-bold text-xl sm:text-2xl flex items-center justify-center shadow-lg transition backdrop-blur-xs cursor-pointer"
+                >
+                  ›
+                </button>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {galleryPreview.images.length > 1 && (
+              <div className="px-4 py-2.5 bg-slate-900/90 border-t border-white/10 flex items-center justify-center gap-2 overflow-x-auto">
+                {galleryPreview.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() =>
+                      setGalleryPreview((p) => (p ? { ...p, currentIndex: idx } : null))
+                    }
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 transition shrink-0 cursor-pointer ${
+                      idx === galleryPreview.currentIndex
+                        ? "border-amber-400 ring-2 ring-amber-300 scale-105"
+                        : "border-white/20 opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={getOptimizedCloudinaryUrl(img, "FLOOR_PLAN_THUMB")}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
