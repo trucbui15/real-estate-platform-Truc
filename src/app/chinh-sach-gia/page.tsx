@@ -23,9 +23,9 @@ export default function ChinhSachGiaPage() {
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">1</span>
               Bản chất thông tin giá cả trên website
             </h2>
-            <p className="text-slate-600 pl-8">
+            {/* <p className="text-slate-600 pl-8">
               Mọi thông tin về giá bán, giá cho thuê, hoặc giá chuyển nhượng các căn hộ, bất động sản (Phú Tài Residence, Altara, Simona Heights...) hiển thị trên website <strong>minhdungland.com.vn</strong> đều là thông tin trần mang tính chất tham khảo, được cập nhật theo bảng giá gốc từ Chủ đầu tư dự án hoặc do chủ sở hữu tài sản ký gửi cung cấp tại thời điểm đăng tin.
-            </p>
+            </p> */}
           </section>
 
           <section className="space-y-2 pt-2 border-t border-slate-100">

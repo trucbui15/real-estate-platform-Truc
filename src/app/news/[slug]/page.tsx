@@ -158,7 +158,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
         <div className="mt-8 bg-gradient-to-r from-slate-900 to-blue-950 text-white rounded-2xl p-6 sm:p-8 space-y-4 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1">
             <div className="text-amber-400 font-bold text-xs uppercase tracking-wider">Tư vấn BĐS Quy Nhơn</div>
-            <h3 className="text-lg sm:text-xl font-bold">Bạn cần hỗ trợ ký gửi hoặc mua bán BĐS?</h3>
+            {/* <h3 className="text-lg sm:text-xl font-bold">Bạn cần hỗ trợ ký gửi hoặc mua bán BĐS?</h3> */}
             <p className="text-xs text-slate-300">Đội ngũ chuyên viên Minh Dũng Land hỗ trợ tư vấn 24/7 hoàn toàn miễn phí.</p>
           </div>
           <Link

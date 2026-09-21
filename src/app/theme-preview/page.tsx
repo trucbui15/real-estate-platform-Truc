@@ -151,11 +151,10 @@ export default function ThemePreviewPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setCompareMode(!compareMode)}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition shadow-lg flex items-center gap-2 cursor-pointer ${
-                compareMode
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition shadow-lg flex items-center gap-2 cursor-pointer ${compareMode
                   ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
                   : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-              }`}
+                }`}
             >
               <span>{compareMode ? "👁️ Xem Chi Tiết 1 Theme" : "⚡ So Sánh 4 Theme Side-by-Side"}</span>
             </button>
@@ -173,11 +172,10 @@ export default function ThemePreviewPage() {
                   setSelectedThemeId(t.id);
                   setCompareMode(false);
                 }}
-                className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
-                  isSelected
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${isSelected
                     ? "bg-slate-700 border-amber-400 ring-2 ring-amber-400/30 shadow-xl"
                     : "bg-slate-800/60 border-slate-700 hover:border-slate-500 hover:bg-slate-800"
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-white">{t.name.split(":")[0]}</span>
@@ -413,9 +411,9 @@ export default function ThemePreviewPage() {
                     )}
                   </div>
 
-                  <span className="px-3 py-1.5 rounded-xl hover:bg-black/5 cursor-pointer">
+                  {/* <span className="px-3 py-1.5 rounded-xl hover:bg-black/5 cursor-pointer">
                     Ký gửi BĐS
-                  </span>
+                  </span> */}
                 </nav>
 
                 {/* ACTION USER */}

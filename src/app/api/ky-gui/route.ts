@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       email: body.email || session?.user?.email || null,
       demandType: body.demandType,
       source: "CONSIGNMENT",
-      note: body.note || `Ký gửi BĐS: ${body.propertyTypeInterest} ${body.areaInterest ? `(${body.areaInterest})` : ""}`,
+      // note: body.note || `Ký gửi BĐS: ${body.propertyTypeInterest} ${body.areaInterest ? `(${body.areaInterest})` : ""}`,
       projectId: finalProjectId,
       refToken: body.refToken || null,
       pageUrl: body.pageUrl || null,
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ok: true,
-        message: "Gửi thông tin ký gửi thành công! Đội ngũ tư vấn sẽ liên hệ lại kiểm tra căn hộ và xác nhận.",
+        // message: "Gửi thông tin ký gửi thành công! Đội ngũ tư vấn sẽ liên hệ lại kiểm tra căn hộ và xác nhận.",
         customerId: result.customerId,
         inquiryId: result.inquiryId,
       },

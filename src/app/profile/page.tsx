@@ -155,10 +155,10 @@ export default async function ProfilePage() {
           <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 space-y-2 shadow-2xs">
             <div className="text-3xl">📭</div>
             <div className="font-bold text-slate-700 text-sm">
-              Bạn chưa gửi yêu cầu tư vấn hoặc ký gửi nào.
+              Bạn chưa gửi yêu cầu tư vấn nào.
             </div>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Khi bạn gửi yêu cầu nhận thông tin dự án, tư vấn căn hộ hoặc ký gửi BĐS trên website, lịch sử yêu cầu và trạng thái xử lý sẽ hiển thị chi tiết tại đây.
+              Khi bạn gửi yêu cầu nhận thông tin dự án, tư vấn căn hộ BĐS trên website, lịch sử yêu cầu và trạng thái xử lý sẽ hiển thị chi tiết tại đây.
             </p>
           </div>
         ) : (

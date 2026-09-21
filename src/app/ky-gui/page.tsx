@@ -117,14 +117,14 @@ function KyGuiContent() {
   return (
     <div className="container-page py-12">
       <div className="mx-auto max-w-xl">
-        <h1 className="font-display text-2xl font-semibold text-brand-900">Ký gửi bất động sản</h1>
+        {/* <h1 className="font-display text-2xl font-semibold text-brand-900">Ký gửi bất động sản</h1> */}
         <p className="mt-2 text-brand-700">
           Gửi thông tin bất động sản bạn muốn bán hoặc cho thuê - đội ngũ tư vấn Minh Dũng Land sẽ liên hệ trong 24h.
         </p>
 
         {sent ? (
           <div className="card mt-6 p-6 text-center text-emerald-800 bg-emerald-50 border-emerald-200">
-            ✓ Cảm ơn bạn! Yêu cầu ký gửi đã được ghi nhận, chúng tôi sẽ liên hệ kiểm tra căn hộ và hỗ trợ bạn trong thời gian sớm nhất.
+            Cảm ơn bạn! Yêu cầu ký gửi đã được ghi nhận, chúng tôi sẽ liên hệ kiểm tra căn hộ và hỗ trợ bạn trong thời gian sớm nhất.
           </div>
         ) : (
           <form onSubmit={submit} className="card mt-6 space-y-4 p-6">

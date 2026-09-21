@@ -10,7 +10,7 @@ const STATIC_PAGES = [
   { title: "Danh sách Bất động sản", type: "PAGE", url: "/listings" },
   { title: "Danh mục Dự án BĐS", type: "PAGE", url: "/projects" },
   { title: "Tin tức & Thị trường BĐS", type: "PAGE", url: "/news" },
-  { title: "Ký gửi Bất động sản", type: "PAGE", url: "/ky-gui" },
+  // { title: "Ký gửi Bất động sản", type: "PAGE", url: "/ky-gui" },
   { title: "Giới thiệu Minh Dũng Land", type: "PAGE", url: "/gioi-thieu" },
   { title: "Liên hệ & Tư vấn 24/7", type: "PAGE", url: "/lien-he" },
   { title: "Chính sách giá & Phí dịch vụ", type: "PAGE", url: "/chinh-sach-gia" },
@@ -67,12 +67,12 @@ export async function GET(req: Request) {
       const projects = await prisma.project.findMany({
         where: q
           ? {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { slug: { contains: q, mode: "insensitive" } },
-                { developer: { contains: q, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+              { developer: { contains: q, mode: "insensitive" } },
+            ],
+          }
           : undefined,
         take: 8,
         orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
@@ -105,12 +105,12 @@ export async function GET(req: Request) {
       const listings = await prisma.listing.findMany({
         where: q
           ? {
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { slug: { contains: q, mode: "insensitive" } },
-                { productCode: { contains: q, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+              { productCode: { contains: q, mode: "insensitive" } },
+            ],
+          }
           : undefined,
         take: 8,
         orderBy: { createdAt: "desc" },
@@ -146,8 +146,8 @@ export async function GET(req: Request) {
               ? `${l.rentPrice} tr/tháng`
               : "Giá thỏa thuận"
             : l.salePrice
-            ? `${l.salePrice} tỷ`
-            : "Giá liên hệ";
+              ? `${l.salePrice} tỷ`
+              : "Giá liên hệ";
 
         results.push({
           id: l.id,
@@ -173,12 +173,12 @@ export async function GET(req: Request) {
       const news = await prisma.news.findMany({
         where: q
           ? {
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { slug: { contains: q, mode: "insensitive" } },
-                { category: { contains: q, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+              { category: { contains: q, mode: "insensitive" } },
+            ],
+          }
           : undefined,
         take: 8,
         orderBy: { createdAt: "desc" },

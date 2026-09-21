@@ -6,7 +6,7 @@ export default function LienHePage() {
       <div className="mx-auto max-w-2xl card p-8 space-y-6">
         <h1 className="font-display text-3xl font-bold text-brand-900">Liên hệ Minh Dũng Land</h1>
         <p className="text-brand-700">
-          Quý khách hàng có nhu cầu tư vấn mua bán, cho thuê hoặc ký gửi bất động sản vui lòng liên hệ thông tin dưới đây:
+          Quý khách hàng có nhu cầu tư vấn mua bán, cho thuê bất động sản vui lòng liên hệ thông tin dưới đây:
         </p>
 
         <div className="space-y-3 rounded-lg bg-brand-50 p-5 border border-brand-200 text-sm text-brand-900">
