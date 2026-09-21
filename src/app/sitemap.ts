@@ -95,6 +95,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.4,
     },
     {
+      url: `${SITE_URL}/chinh-sach-mua-hang`,
+      lastModified: STATIC_PAGES_LASTMOD,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/quyen-va-nghia-vu`,
+      lastModified: STATIC_PAGES_LASTMOD,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
       url: `${SITE_URL}/tiep-nhan-khieu-nai`,
       lastModified: STATIC_PAGES_LASTMOD,
       changeFrequency: "monthly",

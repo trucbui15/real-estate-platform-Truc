@@ -68,7 +68,7 @@ function parseImagesList(imagesRaw: any): string[] {
   try {
     const parsed = JSON.parse(imagesRaw);
     if (Array.isArray(parsed)) return parsed;
-  } catch (e) {}
+  } catch (e) { }
   return [];
 }
 
@@ -99,7 +99,7 @@ export default function ProjectDetailClient({
             setCtvToken(data.publicReferralToken);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [session]);
 
@@ -677,7 +677,7 @@ export default function ProjectDetailClient({
                   className="flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 text-[13px] font-bold shadow-xs transition cursor-pointer"
                 >
                   <span>🔗</span>
-                  <span>Sao chép Link Bảng hàng ({ (session?.user as any)?.referralCode })</span>
+                  <span>Sao chép Link Bảng hàng ({(session?.user as any)?.referralCode})</span>
                 </button>
               )}
             </div>
@@ -690,41 +690,37 @@ export default function ProjectDetailClient({
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto py-2 scrollbar-none">
           <button
             onClick={() => scrollToSection("inventory-section", "inventory")}
-            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
-              activeTab === "inventory"
+            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${activeTab === "inventory"
                 ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             Bảng hàng ({inventoryList.length})
           </button>
           <button
             onClick={() => scrollToSection("overview-section", "overview")}
-            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
-              activeTab === "overview"
+            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${activeTab === "overview"
                 ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             Tổng quan
           </button>
           <button
             onClick={() => scrollToSection("sales-section", "sales")}
-            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
-              activeTab === "sales"
+            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${activeTab === "sales"
                 ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             Căn đang bán ({totalSale})
           </button>
           <button
             onClick={() => scrollToSection("rent-section", "rent")}
-            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
-              activeTab === "rent"
+            className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${activeTab === "rent"
                 ? "bg-[#0284C7] text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             Cho thuê ({totalRent})
           </button>
@@ -797,11 +793,10 @@ export default function ProjectDetailClient({
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 onClick={() => setBlockTab("THE SEA")}
-                className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${
-                  blockTab === "THE SEA"
+                className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${blockTab === "THE SEA"
                     ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs"
                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <span>🌊 Full nội thất - The Sea</span>
                 <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${blockTab === "THE SEA" ? "bg-white/20 text-white" : "bg-blue-50 text-blue-700"}`}>
@@ -811,11 +806,10 @@ export default function ProjectDetailClient({
 
               <button
                 onClick={() => setBlockTab("THE HARBOUR")}
-                className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${
-                  blockTab === "THE HARBOUR"
+                className={`px-4 py-2 text-[13px] font-black rounded-xl transition-all flex items-center gap-2 border ${blockTab === "THE HARBOUR"
                     ? "bg-[#0284C7] text-white border-[#0284C7] shadow-xs"
                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <span>⚓ Full nội thất - The Harbour</span>
                 <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${blockTab === "THE HARBOUR" ? "bg-white/20 text-white" : "bg-blue-50 text-blue-700"}`}>
@@ -841,11 +835,10 @@ export default function ProjectDetailClient({
                   <button
                     key={btn.key}
                     onClick={() => setBedroomFilter(btn.key)}
-                    className={`px-2.5 py-1 rounded-lg text-[12px] font-bold transition border ${
-                      bedroomFilter === btn.key
+                    className={`px-2.5 py-1 rounded-lg text-[12px] font-bold transition border ${bedroomFilter === btn.key
                         ? "bg-[#0284C7] text-white border-[#0284C7]"
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     {btn.label}
                   </button>
@@ -912,22 +905,20 @@ export default function ProjectDetailClient({
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
-                    viewMode === "grid"
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${viewMode === "grid"
                       ? "bg-white text-[#0284C7] shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   🎴 Dạng thẻ
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${
-                    viewMode === "table"
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition ${viewMode === "table"
                       ? "bg-white text-[#0284C7] shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   📋 Dạng bảng hàng (1 hàng 1 căn)
                 </button>
@@ -1048,9 +1039,8 @@ export default function ProjectDetailClient({
                     return (
                       <tr
                         key={unit.id}
-                        className={`align-middle hover:bg-slate-50/80 transition ${isSold ? "bg-slate-50/40" : ""} ${
-                          selectedUnitIds.includes(unit.id) ? "bg-blue-50/40" : ""
-                        }`}
+                        className={`align-middle hover:bg-slate-50/80 transition ${isSold ? "bg-slate-50/40" : ""} ${selectedUnitIds.includes(unit.id) ? "bg-blue-50/40" : ""
+                          }`}
                       >
                         {/* 0. CHECKBOX (ADMIN/STAFF) */}
                         {canEditProduct && (
@@ -1189,13 +1179,12 @@ export default function ProjectDetailClient({
                 return (
                   <div
                     key={unit.id}
-                    className={`group relative flex flex-col justify-between rounded-2xl border ${
-                      selectedUnitIds.includes(unit.id)
+                    className={`group relative flex flex-col justify-between rounded-2xl border ${selectedUnitIds.includes(unit.id)
                         ? "border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20"
                         : isSold
-                        ? "border-slate-200 bg-slate-50/40"
-                        : "border-slate-200 bg-white"
-                    } hover:border-blue-300 p-4 shadow-xs hover:shadow-md transition-all duration-200 space-y-3 cursor-default`}
+                          ? "border-slate-200 bg-slate-50/40"
+                          : "border-slate-200 bg-white"
+                      } hover:border-blue-300 p-4 shadow-xs hover:shadow-md transition-all duration-200 space-y-3 cursor-default`}
                   >
                     {/* 1. HEADER: CHECKBOX + MÃ CĂN + TRẠNG THÁI */}
                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
@@ -1436,18 +1425,18 @@ export default function ProjectDetailClient({
           </div>
 
           <div className="flex flex-wrap gap-3 pt-1">
-            <Link
+            {/* <Link
               href={`/ky-gui?project=${project.slug}&type=SALE`}
               className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] transition shadow-xs"
             >
               Ký gửi bán →
-            </Link>
-            <Link
+            </Link> */}
+            {/* <Link
               href={`/ky-gui?project=${project.slug}&type=RENT`}
               className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[13px] transition border border-white/20"
             >
               Ký gửi cho thuê →
-            </Link>
+            </Link> */}
           </div>
         </section>
       </div>

@@ -12,6 +12,7 @@ export default function LienHePage() {
         <div className="space-y-3 rounded-lg bg-brand-50 p-5 border border-brand-200 text-sm text-brand-900">
           <div className="font-bold text-base text-brand-900">{CONTACT_CONFIG.companyName}</div>
           <div><strong>Mã số thuế:</strong> {CONTACT_CONFIG.taxId}</div>
+          <div><strong>Nơi cấp:</strong> {CONTACT_CONFIG.taxIssuedBy}</div>
           <div><strong>Địa chỉ:</strong> {CONTACT_CONFIG.address}</div>
           <div>
             <strong>Kênh Zalo doanh nghiệp:</strong>{" "}

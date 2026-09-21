@@ -126,6 +126,10 @@ export default function Footer() {
                 <span className="font-semibold text-slate-900 shrink-0">📋 Mã số thuế:</span>
                 <span>{CONTACT_CONFIG.taxId}</span>
               </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">🏛️ Nơi cấp:</span>
+                <span>{CONTACT_CONFIG.taxIssuedBy}</span>
+              </li>
               <li className="flex items-center gap-2">
                 <span className="font-semibold text-slate-900 shrink-0">💬 Zalo OA:</span>
                 <a
@@ -264,6 +268,24 @@ export default function Footer() {
                 >
                   <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
                   <span>Điều kiện hạn chế dịch vụ</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/chinh-sach-mua-hang"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Quy trình mua hàng trực tuyến</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/quyen-va-nghia-vu"
+                  className="group flex items-center gap-1.5 hover:text-blue-600 font-medium transition"
+                >
+                  <span className="text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all text-[11px]">➔</span>
+                  <span>Quyền và nghĩa vụ các bên</span>
                 </Link>
               </li>
               <li>

@@ -532,9 +532,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().setParagraph().run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer ${
-                editor.isActive("paragraph") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer ${editor.isActive("paragraph") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Đoạn văn thường (P)"
             >
               P
@@ -542,9 +541,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer font-extrabold ${
-                editor.isActive("heading", { level: 2 }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer font-extrabold ${editor.isActive("heading", { level: 2 }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Tiêu đề chính H2"
             >
               H2
@@ -552,9 +550,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer font-extrabold ${
-                editor.isActive("heading", { level: 3 }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer font-extrabold ${editor.isActive("heading", { level: 3 }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Tiêu đề phụ H3"
             >
               H3
@@ -568,9 +565,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md font-extrabold transition cursor-pointer ${
-                editor.isActive("bold") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md font-extrabold transition cursor-pointer ${editor.isActive("bold") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
+                }`}
               title="In đậm (Ctrl+B)"
             >
               B
@@ -578,9 +574,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md italic font-extrabold transition cursor-pointer ${
-                editor.isActive("italic") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md italic font-extrabold transition cursor-pointer ${editor.isActive("italic") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
+                }`}
               title="In nghiêng (Ctrl+I)"
             >
               I
@@ -588,9 +583,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md underline font-extrabold transition cursor-pointer ${
-                editor.isActive("underline") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md underline font-extrabold transition cursor-pointer ${editor.isActive("underline") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
+                }`}
               title="Gạch chân (Ctrl+U)"
             >
               U
@@ -598,9 +592,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md line-through font-extrabold transition cursor-pointer ${
-                editor.isActive("strike") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md line-through font-extrabold transition cursor-pointer ${editor.isActive("strike") ? "bg-sky-600 text-white" : "text-slate-800 hover:bg-slate-100"
+                }`}
               title="Gạch ngang chữ (Strike)"
             >
               S
@@ -614,9 +607,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().setTextAlign("left").run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${
-                editor.isActive({ textAlign: "left" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${editor.isActive({ textAlign: "left" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Căn lề trái"
             >
               ⬅️
@@ -624,9 +616,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().setTextAlign("center").run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${
-                editor.isActive({ textAlign: "center" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${editor.isActive({ textAlign: "center" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Căn giữa"
             >
               ↔️
@@ -634,9 +625,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().setTextAlign("right").run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${
-                editor.isActive({ textAlign: "right" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${editor.isActive({ textAlign: "right" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Căn lề phải"
             >
               ➡️
@@ -644,9 +634,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${
-                editor.isActive({ textAlign: "justify" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded-md transition cursor-pointer ${editor.isActive({ textAlign: "justify" }) ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Căn đều hai bên"
             >
               📑
@@ -660,9 +649,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer ${
-                editor.isActive("bulletList") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer ${editor.isActive("bulletList") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Danh sách chấm"
             >
               • List
@@ -670,9 +658,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer ${
-                editor.isActive("orderedList") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer ${editor.isActive("orderedList") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Danh sách số"
             >
               1. List
@@ -680,9 +667,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={`px-2 py-1 rounded-md transition cursor-pointer ${
-                editor.isActive("blockquote") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer ${editor.isActive("blockquote") ? "bg-sky-600 text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               title="Đoạn trích dẫn"
             >
               ❝ Quote
@@ -718,9 +704,8 @@ export default function NewsTiptapEditor({
             <button
               type="button"
               onClick={openLinkModal}
-              className={`px-2 py-1 rounded-md transition cursor-pointer flex items-center gap-1 ${
-                editor.isActive("link") ? "bg-sky-600 text-white" : "text-sky-700 hover:bg-sky-50"
-              }`}
+              className={`px-2 py-1 rounded-md transition cursor-pointer flex items-center gap-1 ${editor.isActive("link") ? "bg-sky-600 text-white" : "text-sky-700 hover:bg-sky-50"
+                }`}
               title="Chèn liên kết ngoài / nâng cao"
             >
               🔗 Link
@@ -755,9 +740,8 @@ export default function NewsTiptapEditor({
               onClick={() =>
                 editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
               }
-              className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1 ${
-                editor.isActive("table") ? "bg-sky-600 text-white" : "hover:bg-slate-100 text-slate-800"
-              }`}
+              className={`px-2.5 py-1 rounded-md transition cursor-pointer flex items-center gap-1 ${editor.isActive("table") ? "bg-sky-600 text-white" : "hover:bg-slate-100 text-slate-800"
+                }`}
               title="Chèn bảng dữ liệu (3x3)"
             >
               📊 Bảng
@@ -954,21 +938,20 @@ export default function NewsTiptapEditor({
                     key={t}
                     type="button"
                     onClick={() => setInternalTypeFilter(t)}
-                    className={`px-2.5 py-1 rounded-lg transition cursor-pointer text-[11px] ${
-                      internalTypeFilter === t
+                    className={`px-2.5 py-1 rounded-lg transition cursor-pointer text-[11px] ${internalTypeFilter === t
                         ? "bg-sky-600 text-white font-extrabold"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+                      }`}
                   >
                     {t === "ALL"
                       ? "Tất cả"
                       : t === "PROJECT"
-                      ? "Dự án"
-                      : t === "LISTING"
-                      ? "Bất động sản"
-                      : t === "NEWS"
-                      ? "Tin tức"
-                      : "Trang hệ thống"}
+                        ? "Dự án"
+                        : t === "LISTING"
+                          ? "Bất động sản"
+                          : t === "NEWS"
+                            ? "Tin tức"
+                            : "Trang hệ thống"}
                   </button>
                 ))}
               </div>
@@ -990,15 +973,14 @@ export default function NewsTiptapEditor({
                     <div className="min-w-0 space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
-                            item.type === "PROJECT"
+                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${item.type === "PROJECT"
                               ? "bg-sky-100 text-sky-800"
                               : item.type === "LISTING"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : item.type === "NEWS"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-slate-200 text-slate-700"
-                          }`}
+                                ? "bg-emerald-100 text-emerald-800"
+                                : item.type === "NEWS"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-slate-200 text-slate-700"
+                            }`}
                         >
                           {item.type}
                         </span>
@@ -1139,18 +1121,16 @@ export default function NewsTiptapEditor({
               <button
                 type="button"
                 onClick={() => setImageTab("UPLOAD")}
-                className={`px-3 py-1.5 rounded-xl transition ${
-                  imageTab === "UPLOAD" ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
+                className={`px-3 py-1.5 rounded-xl transition ${imageTab === "UPLOAD" ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                  }`}
               >
                 📤 Tải ảnh từ máy
               </button>
               <button
                 type="button"
                 onClick={() => setImageTab("URL")}
-                className={`px-3 py-1.5 rounded-xl transition ${
-                  imageTab === "URL" ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
+                className={`px-3 py-1.5 rounded-xl transition ${imageTab === "URL" ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                  }`}
               >
                 🌐 Nhập URL ảnh
               </button>
@@ -1233,9 +1213,8 @@ export default function NewsTiptapEditor({
                       key={a}
                       type="button"
                       onClick={() => setImageAlign(a)}
-                      className={`flex-1 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer capitalize ${
-                        imageAlign === a ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                      }`}
+                      className={`flex-1 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer capitalize ${imageAlign === a ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                        }`}
                     >
                       {a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
                     </button>
@@ -1286,7 +1265,7 @@ export default function NewsTiptapEditor({
                 {[
                   { text: "Xem bảng hàng chi tiết", url: "/listings" },
                   { text: "Xem dự án nổi bật", url: "/projects" },
-                  { text: "Ký gửi bất động sản", url: "/ky-gui" },
+                  // { text: "Ký gửi bất động sản", url: "/ky-gui" },
                   { text: "Nhận tư vấn miễn phí 24/7", url: "/lien-he" },
                 ].map((p) => (
                   <button
@@ -1331,27 +1310,24 @@ export default function NewsTiptapEditor({
                   <button
                     type="button"
                     onClick={() => setCtaVariant("sky")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      ctaVariant === "sky" ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${ctaVariant === "sky" ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200"
+                      }`}
                   >
                     Sky Blue
                   </button>
                   <button
                     type="button"
                     onClick={() => setCtaVariant("dark")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      ctaVariant === "dark" ? "bg-slate-900 text-white border-slate-900" : "bg-slate-100 text-slate-800 border-slate-300"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${ctaVariant === "dark" ? "bg-slate-900 text-white border-slate-900" : "bg-slate-100 text-slate-800 border-slate-300"
+                      }`}
                   >
                     Dark Luxury
                   </button>
                   <button
                     type="button"
                     onClick={() => setCtaVariant("emerald")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      ctaVariant === "emerald" ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${ctaVariant === "emerald" ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      }`}
                   >
                     Emerald
                   </button>
@@ -1401,27 +1377,24 @@ export default function NewsTiptapEditor({
                   <button
                     type="button"
                     onClick={() => setInfoBoxVariant("info")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      infoBoxVariant === "info" ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${infoBoxVariant === "info" ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200"
+                      }`}
                   >
                     💡 Thông tin
                   </button>
                   <button
                     type="button"
                     onClick={() => setInfoBoxVariant("warning")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      infoBoxVariant === "warning" ? "bg-amber-600 text-white border-amber-600" : "bg-amber-50 text-amber-800 border-amber-200"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${infoBoxVariant === "warning" ? "bg-amber-600 text-white border-amber-600" : "bg-amber-50 text-amber-800 border-amber-200"
+                      }`}
                   >
                     ⚠️ Lưu ý
                   </button>
                   <button
                     type="button"
                     onClick={() => setInfoBoxVariant("alert")}
-                    className={`py-2 rounded-xl border text-xs font-bold transition ${
-                      infoBoxVariant === "alert" ? "bg-rose-600 text-white border-rose-600" : "bg-rose-50 text-rose-800 border-rose-200"
-                    }`}
+                    className={`py-2 rounded-xl border text-xs font-bold transition ${infoBoxVariant === "alert" ? "bg-rose-600 text-white border-rose-600" : "bg-rose-50 text-rose-800 border-rose-200"
+                      }`}
                   >
                     🚨 Cảnh báo
                   </button>

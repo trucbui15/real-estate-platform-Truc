@@ -163,8 +163,8 @@ function KyGuiContent() {
             <div>
               <label className="label">Nhu cầu *</label>
               <select className="input" value={form.demandType} onChange={(e) => setForm({ ...form, demandType: e.target.value })}>
-                <option value="KY_GUI_BAN">Ký gửi bán</option>
-                <option value="KY_GUI_CHO_THUE">Ký gửi cho thuê</option>
+                {/* <option value="KY_GUI_BAN">Ký gửi bán</option>
+                <option value="KY_GUI_CHO_THUE">Ký gửi cho thuê</option> */}
               </select>
             </div>
 
