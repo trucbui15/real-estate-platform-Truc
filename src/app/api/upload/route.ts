@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { uploadBufferToCloudinary, destroyCloudinaryAsset } from "@/lib/cloudinaryServer";
 
 // Upload ảnh tin đăng — hỗ trợ Cloudinary (Cloud) & Local storage (/public/uploads)
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
+  const preset = (form.get("preset") as string | null) || "DEFAULT";
   if (!file) return NextResponse.json({ error: "Thiếu file" }, { status: 400 });
 
   const extName = (file.name.split(".").pop() || "").toLowerCase();
@@ -50,32 +52,46 @@ export async function POST(req: Request) {
   if (!isAllowed) {
     return NextResponse.json({ error: "Chỉ chấp nhận các tệp định dạng hình ảnh (JPG, PNG, WEBP, HEIC...)" }, { status: 400 });
   }
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: "Dung lượng ảnh tối đa 15MB" }, { status: 400 });
+
+  // Server-side Hard Limits:
+  // - Sơ đồ căn hộ (FLOOR_PLAN): Tối đa 700 KB
+  // - Các ảnh khác: Tối đa 2.5 MB (thay vì 15MB không giới hạn)
+  const maxAllowedBytes = preset === "FLOOR_PLAN" ? 700 * 1024 : 2.5 * 1024 * 1024;
+  if (file.size > maxAllowedBytes) {
+    const limitLabel = preset === "FLOOR_PLAN" ? "700 KB (sơ đồ căn hộ)" : "2.5 MB";
+    return NextResponse.json(
+      { error: `Tệp ảnh vượt quá giới hạn an toàn của máy chủ (${limitLabel}). Vui lòng kiểm tra quá trình nén ảnh trước khi tải lên.` },
+      { status: 400 }
+    );
   }
 
-  // 1. Ưu tiên Cloudinary nếu có cấu hình biến môi trường (Lưu vĩnh viễn trên Cloud)
+  // 1. Tải lên Cloudinary bằng Server SDK chính thức
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-  
-  if (cloudName && uploadPreset) {
+  if (cloudName) {
     try {
-      const cloudinaryData = new FormData();
-      cloudinaryData.append("file", file);
-      cloudinaryData.append("upload_preset", uploadPreset);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: cloudinaryData,
+      const result = await uploadBufferToCloudinary(buffer, {
+        preset: preset === "FLOOR_PLAN" ? "FLOOR_PLAN" : "DEFAULT",
       });
 
-      const data = await res.json();
-      if (data.secure_url) {
-        return NextResponse.json({ url: data.secure_url }, { status: 201 });
+      return NextResponse.json(
+        {
+          url: result.secure_url,
+          public_id: result.public_id,
+        },
+        { status: 201 }
+      );
+    } catch (err: any) {
+      console.error("Cloudinary SDK upload error:", err);
+      // Nếu là lỗi validation từ Cloudinary thì trả lỗi 400 rõ ràng
+      if (err.message || err.http_code) {
+        return NextResponse.json(
+          { error: err.message || "Lỗi xử lý tải lên từ dịch vụ Cloudinary." },
+          { status: 400 }
+        );
       }
-      console.error("Cloudinary upload failed:", data);
-    } catch (err) {
-      console.error("Cloudinary upload error:", err);
     }
   }
 
@@ -108,6 +124,27 @@ export async function POST(req: Request) {
       { error: `Không thể ghi file lên lưu trữ server (${err.message || "Lỗi lưu file"})` },
       { status: 500 }
     );
+  }
+}
+
+// DELETE /api/upload — Hủy asset trên Cloudinary (Rollback orphan asset khi DB lưu thất bại)
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || !isBackofficeRole((session.user as any)?.role)) {
+    return NextResponse.json({ error: "Không có quyền thao tác" }, { status: 403 });
+  }
+
+  try {
+    const body = await req.json();
+    const publicId = body.public_id;
+    if (!publicId) {
+      return NextResponse.json({ error: "Thiếu public_id" }, { status: 400 });
+    }
+
+    const ok = await destroyCloudinaryAsset(publicId);
+    return NextResponse.json({ success: ok });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Lỗi rollback asset" }, { status: 500 });
   }
 }
 

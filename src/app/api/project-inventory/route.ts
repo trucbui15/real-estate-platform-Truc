@@ -64,6 +64,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Mã căn ${body.unitCode} đã tồn tại trong bảng hàng dự án này` }, { status: 400 });
   }
 
+  // Server-side Check: Khóa cứng tối đa 3 ảnh sơ đồ / căn
+  let parsedImages: any[] = [];
+  if (body.images) {
+    if (Array.isArray(body.images)) {
+      parsedImages = body.images;
+    } else if (typeof body.images === "string") {
+      try {
+        const p = JSON.parse(body.images);
+        if (Array.isArray(p)) parsedImages = p;
+        else if (body.images.trim()) parsedImages = [body.images.trim()];
+      } catch {
+        if (body.images.trim()) parsedImages = [body.images.trim()];
+      }
+    }
+  }
+
+  if (parsedImages.length > 3) {
+    return NextResponse.json({ error: "Mỗi căn hộ chỉ được phép lưu tối đa 3 ảnh sơ đồ" }, { status: 400 });
+  }
+
+  const normalizedImages = parsedImages.map((img: any) =>
+    typeof img === "object" && img !== null && img.url
+      ? { url: String(img.url).trim(), public_id: img.public_id || undefined }
+      : { url: String(img).trim() }
+  );
+
   const newItem = await prisma.projectInventory.create({
     data: {
       projectId: body.projectId,
@@ -79,7 +105,7 @@ export async function POST(req: Request) {
       furnitureStatus: body.furnitureStatus || "FULL_NOI_THAT",
       unitStatus: body.unitStatus || "DANG_BAN",
       description: body.description || null,
-      images: body.images ? (typeof body.images === "string" ? body.images : JSON.stringify(body.images)) : null,
+      images: normalizedImages.length > 0 ? JSON.stringify(normalizedImages) : null,
     },
   });
 

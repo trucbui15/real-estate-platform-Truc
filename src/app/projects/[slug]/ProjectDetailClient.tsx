@@ -3,7 +3,14 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ListingCard from "@/components/ListingCard";
-import { compressImagesInBatch, revokePreviewUrl, ImagePreset } from "@/lib/imageCompression";
+import {
+  compressImagesInBatch,
+  revokePreviewUrl,
+  ImagePreset,
+  HARD_LIMIT_BYTES,
+  MAX_INPUT_FILE_SIZE,
+  formatBytes,
+} from "@/lib/imageCompression";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { normalizeUnitCode } from "@/lib/utils";
 
@@ -62,14 +69,53 @@ function extractPriceSheetUrl(description?: string | null) {
   return { cleanDesc: description, priceSheetUrl: null };
 }
 
+export interface FloorPlanImageItem {
+  url: string;
+  public_id?: string;
+}
+
 function parseImagesList(imagesRaw: any): string[] {
   if (!imagesRaw) return [];
-  if (Array.isArray(imagesRaw)) return imagesRaw;
-  try {
-    const parsed = JSON.parse(imagesRaw);
-    if (Array.isArray(parsed)) return parsed;
-  } catch (e) { }
-  return [];
+  let list: any[] = [];
+  if (Array.isArray(imagesRaw)) list = imagesRaw;
+  else {
+    try {
+      const parsed = JSON.parse(imagesRaw);
+      if (Array.isArray(parsed)) list = parsed;
+      else if (typeof imagesRaw === "string" && imagesRaw.trim()) list = [imagesRaw.trim()];
+    } catch (e) {
+      if (typeof imagesRaw === "string" && imagesRaw.trim()) list = [imagesRaw.trim()];
+    }
+  }
+  return list
+    .map((item) => (typeof item === "object" && item !== null ? (item.url || item.secure_url || "") : String(item)))
+    .filter(Boolean);
+}
+
+function parseFloorPlanImages(imagesRaw: any): FloorPlanImageItem[] {
+  if (!imagesRaw) return [];
+  let list: any[] = [];
+  if (Array.isArray(imagesRaw)) list = imagesRaw;
+  else {
+    try {
+      const parsed = JSON.parse(imagesRaw);
+      if (Array.isArray(parsed)) list = parsed;
+      else if (typeof imagesRaw === "string" && imagesRaw.trim()) list = [imagesRaw.trim()];
+    } catch {
+      if (typeof imagesRaw === "string" && imagesRaw.trim()) list = [imagesRaw.trim()];
+    }
+  }
+  return list
+    .map((item) => {
+      if (typeof item === "object" && item !== null && (item.url || item.secure_url)) {
+        return { url: item.url || item.secure_url, public_id: item.public_id };
+      }
+      if (typeof item === "string" && item.trim()) {
+        return { url: item.trim() };
+      }
+      return null;
+    })
+    .filter(Boolean) as FloorPlanImageItem[];
 }
 
 interface ProjectDetailClientProps {
@@ -192,7 +238,7 @@ export default function ProjectDetailClient({
     furnitureStatus: "FULL_NOI_THAT",
     unitStatus: "DANG_BAN",
     priceSheetUrl: "",
-    images: [] as string[],
+    images: [] as FloorPlanImageItem[],
   });
 
   // Edit Product Modal State
@@ -212,8 +258,12 @@ export default function ProjectDetailClient({
     furnitureStatus: "FULL_NOI_THAT",
     unitStatus: "DANG_BAN",
     priceSheetUrl: "",
-    images: [] as string[],
+    images: [] as FloorPlanImageItem[],
+    originalUpdatedAt: "",
   });
+
+  // Quản lý các asset Cloudinary vừa tải lên trong phiên (Rollback nếu hủy hoặc DB fail)
+  const [pendingPublicIds, setPendingPublicIds] = useState<string[]>([]);
 
   // Delete & Bulk Delete State for Inventory
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
@@ -412,8 +462,8 @@ export default function ProjectDetailClient({
     return "Thỏa thuận";
   }
 
-  // Upload handler hỗ trợ Direct Cloudinary & Fallback /api/upload với Tối ưu hóa ảnh
-  async function handleFileUpload(files: FileList | null, isEdit: boolean, preset: ImagePreset = "DEFAULT") {
+  // Upload handler hỗ trợ Direct Cloudinary & Fallback /api/upload với Tối ưu hóa ảnh & Cửa chặn an toàn
+  async function handleFileUpload(files: FileList | null, isEdit: boolean, preset: ImagePreset = "FLOOR_PLAN") {
     if (!files || files.length === 0) return;
 
     if (isEdit) {
@@ -424,12 +474,32 @@ export default function ProjectDetailClient({
       setAddError("");
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "rp8nsv0a";
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "minhdungland";
-    const uploadedUrls: string[] = [];
+    const fileArray = Array.from(files);
+    const currentImagesCount = isEdit ? editForm.images.length : addForm.images.length;
+
+    // 1. CỬA CHẶN 1: Giới hạn tối đa 3 ảnh sơ đồ / căn
+    if (currentImagesCount + fileArray.length > 3) {
+      const remainingSlots = Math.max(0, 3 - currentImagesCount);
+      const msg = `Mỗi căn hộ chỉ được lưu tối đa 3 ảnh sơ đồ. Hiện đã có ${currentImagesCount} ảnh, bạn chỉ có thể chọn thêm tối đa ${remainingSlots} ảnh.`;
+      if (isEdit) { setEditError(msg); setEditUploading(false); }
+      else { setAddError(msg); setAddUploading(false); }
+      return;
+    }
+
+    // 2. CỬA CHẶN 2: Giới hạn tệp gốc đầu vào ≤ 15MB
+    for (const f of fileArray) {
+      if (f.size > MAX_INPUT_FILE_SIZE) {
+        const msg = `Tệp "${f.name}" (${formatBytes(f.size)}) vượt quá dung lượng tối đa 15MB cho phép. Vui lòng chọn tệp nhỏ hơn.`;
+        if (isEdit) { setEditError(msg); setEditUploading(false); }
+        else { setAddError(msg); setAddUploading(false); }
+        return;
+      }
+    }
+
+    const uploadedItems: FloorPlanImageItem[] = [];
+    const hardLimit = HARD_LIMIT_BYTES[preset] || 700 * 1024; // 700 KB cho FLOOR_PLAN
 
     try {
-      const fileArray = Array.from(files);
       // Auto-detect floor plan files or use passed preset
       const compressedResults = await compressImagesInBatch(
         fileArray,
@@ -438,35 +508,38 @@ export default function ProjectDetailClient({
       );
 
       for (const item of compressedResults) {
-        const file = item.file;
-        let fileUrl = "";
-
-        // 1. Thử upload trực tiếp Cloudinary từ Client
-        try {
-          const cloudFd = new FormData();
-          cloudFd.append("file", file);
-          cloudFd.append("upload_preset", uploadPreset);
-
-          const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-            method: "POST",
-            body: cloudFd,
-          });
-
-          if (cloudRes.ok) {
-            const cloudData = await cloudRes.json();
-            if (cloudData.secure_url) {
-              fileUrl = cloudData.secure_url;
-            }
-          }
-        } catch (e) {
-          console.warn("Direct Cloudinary upload failed, falling back to /api/upload", e);
+        // CỬA CHẶN 3: Tuyệt đối KHÔNG upload nếu nén thất bại hoặc bị đánh dấu lỗi
+        if (item.isError) {
+          const msg = item.errorMessage || `Quá trình nén tệp "${item.file.name}" thất bại. Tệp không được tải lên để bảo vệ tài khoản Cloudinary.`;
+          if (isEdit) setEditError(msg);
+          else setAddError(msg);
+          return; // Hủy toàn bộ tiến trình tải lên của mẻ này
         }
 
-        // 2. Fallback sang /api/upload
-        if (!fileUrl) {
+        // CỬA CHẶN 4: Hard Limit kiểm tra dung lượng thực tế sau khi nén ngay trước khi gọi API
+        if (item.file.size > hardLimit) {
+          const msg = `Tệp "${item.file.name}" sau khi nén vẫn đạt ${formatBytes(item.file.size)} (vượt quá mức trần an toàn ${formatBytes(hardLimit)}). Đã hủy tải lên để tiết kiệm credit.`;
+          if (isEdit) setEditError(msg);
+          else setAddError(msg);
+          return; // Hủy toàn bộ tiến trình tải lên của mẻ này
+        }
+
+        const file = item.file;
+        let fileUrl = "";
+        let uploadedPublicId: string | undefined = undefined;
+
+        // CHỈ UPLOAD QUA BACKEND SERVER /api/upload (Xác thực tài khoản, kiểm tra 700KB, Signed Upload)
+        // Không dùng unsigned fallback từ client. Fail closed nếu gặp lỗi sau khi retry.
+        const UPLOAD_RETRIES = 2;
+        let uploadAttempt = 0;
+        let lastErrorMsg = "";
+
+        while (uploadAttempt <= UPLOAD_RETRIES && !fileUrl) {
+          uploadAttempt++;
           try {
             const formData = new FormData();
             formData.append("file", file);
+            formData.append("preset", preset);
 
             const res = await fetch("/api/upload", {
               method: "POST",
@@ -475,36 +548,67 @@ export default function ProjectDetailClient({
 
             if (res.ok) {
               const data = await res.json();
-              if (data.url) fileUrl = data.url;
+              if (data.url) {
+                fileUrl = data.url;
+                if (data.public_id) {
+                  uploadedPublicId = data.public_id;
+                  setPendingPublicIds((prev) => [...prev, data.public_id]);
+                }
+              }
             } else {
               const err = await res.json();
-              const msg = err.error || `Lỗi upload tệp "${file.name}" (Mã lỗi: ${res.status})`;
-              if (isEdit) setEditError(msg);
-              else setAddError(msg);
+              lastErrorMsg = err.error || `Lỗi tải tệp "${file.name}" (Mã lỗi: ${res.status})`;
+              if (err.error?.includes("giới hạn an toàn")) {
+                if (isEdit) setEditError(err.error);
+                else setAddError(err.error);
+                return;
+              }
             }
           } catch (e: any) {
-            const msg = `Không thể kết nối máy chủ để tải tệp "${file.name}": ${e.message}`;
-            if (isEdit) setEditError(msg);
-            else setAddError(msg);
+            lastErrorMsg = `Không thể kết nối máy chủ để tải tệp "${file.name}": ${e.message}`;
+          }
+
+          if (!fileUrl && uploadAttempt <= UPLOAD_RETRIES) {
+            await new Promise((resolve) => setTimeout(resolve, 300 * uploadAttempt));
           }
         }
 
+        if (!fileUrl) {
+          const failMsg = lastErrorMsg || `Không thể tải ảnh "${file.name}" lên máy chủ lúc này. Vui lòng thử lại sau.`;
+          if (isEdit) setEditError(failMsg);
+          else setAddError(failMsg);
+          return; // Fail closed, tuyệt đối không bypass
+        }
+
         if (fileUrl) {
-          uploadedUrls.push(fileUrl);
+          uploadedItems.push({ url: fileUrl, public_id: uploadedPublicId });
         }
         revokePreviewUrl(item.previewUrl);
       }
 
-      if (uploadedUrls.length > 0) {
+      if (uploadedItems.length > 0) {
         if (isEdit) {
-          setEditForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+          setEditForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedItems] }));
         } else {
-          setAddForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+          setAddForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedItems] }));
         }
       }
     } finally {
       if (isEdit) setEditUploading(false);
       else setAddUploading(false);
+    }
+  }
+
+  function rollbackPendingUploads() {
+    if (pendingPublicIds.length > 0) {
+      for (const pid of pendingPublicIds) {
+        fetch("/api/upload", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_id: pid }),
+        }).catch(console.warn);
+      }
+      setPendingPublicIds([]);
     }
   }
 
@@ -549,9 +653,13 @@ export default function ProjectDetailClient({
     if (!res.ok) {
       const data = await res.json();
       setAddError(data.error || "Không thể thêm sản phẩm.");
+      // Rollback orphan asset trên Cloudinary nếu lưu database thất bại
+      rollbackPendingUploads();
       return;
     }
 
+    // Cam kết lưu thành công vào DB -> Giữ ảnh, xóa danh sách pending
+    setPendingPublicIds([]);
     const newUnit = await res.json();
     setInventoryList([newUnit, ...inventoryList]);
     setShowAddModal(false);
@@ -574,8 +682,9 @@ export default function ProjectDetailClient({
   function startEditUnit(unit: any) {
     setEditingUnit(unit);
     setEditError("");
+    setPendingPublicIds([]);
     const { priceSheetUrl } = extractPriceSheetUrl(unit.description);
-    const unitImages = parseImagesList(unit.images);
+    const unitImages = parseFloorPlanImages(unit.images);
 
     setEditForm({
       unitCode: unit.unitCode || "",
@@ -590,6 +699,7 @@ export default function ProjectDetailClient({
       unitStatus: unit.unitStatus || "DANG_BAN",
       priceSheetUrl: priceSheetUrl || "",
       images: unitImages,
+      originalUpdatedAt: unit.updatedAt ? new Date(unit.updatedAt).toISOString() : "",
     });
   }
 
@@ -620,6 +730,7 @@ export default function ProjectDetailClient({
         unitStatus: editForm.unitStatus,
         description: descWithPriceSheet,
         images: editForm.images,
+        originalUpdatedAt: editForm.originalUpdatedAt,
       }),
     });
 
@@ -627,9 +738,13 @@ export default function ProjectDetailClient({
     if (!res.ok) {
       const data = await res.json();
       setEditError(data.error || "Có lỗi xảy ra khi cập nhật.");
+      // Rollback orphan asset trên Cloudinary nếu lưu database thất bại (hoặc conflict)
+      rollbackPendingUploads();
       return;
     }
 
+    // Cam kết lưu thành công vào DB -> Giữ ảnh, xóa danh sách pending
+    setPendingPublicIds([]);
     const updatedUnit = await res.json();
     setInventoryList((list) =>
       list.map((u) => (u.id === editingUnit.id ? { ...u, ...updatedUnit } : u))
@@ -1603,7 +1718,15 @@ export default function ProjectDetailClient({
           <div className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="text-[18px] font-bold text-slate-900">+ Thêm sản phẩm vào Bảng hàng</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 text-lg font-bold">✕</button>
+              <button
+                onClick={() => {
+                  rollbackPendingUploads();
+                  setShowAddModal(false);
+                }}
+                className="text-slate-400 hover:text-slate-900 text-lg font-bold"
+              >
+                ✕
+              </button>
             </div>
 
             {addError && <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-[13px] text-rose-800 font-medium">{addError}</div>}
@@ -1613,28 +1736,41 @@ export default function ProjectDetailClient({
               <div className="space-y-2 pt-1 border-b border-slate-100 pb-3">
                 <label className="label font-bold text-slate-900">Ảnh mặt bằng căn hộ</label>
                 <div className="flex flex-wrap gap-2.5 items-center">
-                  {addForm.images.map((url, idx) => (
-                    <div key={url} className="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group">
-                      <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-contain" />
-                      {idx === 0 && (
-                        <span className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                          Ảnh chính
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAddForm((prev) => ({
-                            ...prev,
-                            images: prev.images.filter((_, i) => i !== idx),
-                          }))
-                        }
-                        className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                  {addForm.images.map((img, idx) => {
+                    const imgUrl = typeof img === "object" && img !== null ? img.url : img;
+                    const publicId = typeof img === "object" && img !== null ? img.public_id : undefined;
+                    return (
+                      <div key={imgUrl || idx} className="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group">
+                        <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-contain" />
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                            Ảnh chính
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (publicId) {
+                              fetch("/api/upload", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ public_id: publicId }),
+                              }).catch(console.warn);
+                              setPendingPublicIds((prev) => prev.filter((pid) => pid !== publicId));
+                            }
+                            setAddForm((prev) => ({
+                              ...prev,
+                              images: prev.images.filter((_, i) => i !== idx),
+                            }));
+                          }}
+                          className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow"
+                          title="Xóa ảnh này"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
 
                   <label className="w-20 h-20 rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 bg-blue-50/50 hover:bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition text-center p-1">
                     <span className="text-xl text-blue-600">+</span>
@@ -1646,7 +1782,7 @@ export default function ProjectDetailClient({
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files, false)}
+                      onChange={(e) => handleFileUpload(e.target.files, false, "FLOOR_PLAN")}
                       disabled={addUploading}
                     />
                   </label>
@@ -1799,7 +1935,10 @@ export default function ProjectDetailClient({
               <div className="flex gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    rollbackPendingUploads();
+                    setShowAddModal(false);
+                  }}
                   className="btn-outline flex-1 text-[14px]"
                 >
                   Hủy
@@ -1825,7 +1964,15 @@ export default function ProjectDetailClient({
               <h3 className="text-[18px] font-bold text-slate-900">
                 Cập nhật thông tin căn {editingUnit.unitCode}
               </h3>
-              <button onClick={() => setEditingUnit(null)} className="text-slate-400 hover:text-slate-900 text-lg font-bold">✕</button>
+              <button
+                onClick={() => {
+                  rollbackPendingUploads();
+                  setEditingUnit(null);
+                }}
+                className="text-slate-400 hover:text-slate-900 text-lg font-bold"
+              >
+                ✕
+              </button>
             </div>
 
             {editError && <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-[13px] text-rose-800 font-medium">{editError}</div>}
@@ -1835,42 +1982,54 @@ export default function ProjectDetailClient({
               <div className="space-y-2 pt-1 border-b border-slate-100 pb-3">
                 <label className="label font-bold text-slate-900">Ảnh mặt bằng căn hộ</label>
                 <div className="flex flex-wrap gap-2.5 items-center">
-                  {editForm.images.map((url, idx) => (
-                    <div key={url} className="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group">
-                      <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-contain" />
-                      {idx === 0 ? (
-                        <span className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
-                          Ảnh chính
-                        </span>
-                      ) : (
+                  {editForm.images.map((img, idx) => {
+                    const imgUrl = typeof img === "object" && img !== null ? img.url : img;
+                    const publicId = typeof img === "object" && img !== null ? img.public_id : undefined;
+                    return (
+                      <div key={imgUrl || idx} className="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group">
+                        <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-contain" />
+                        {idx === 0 ? (
+                          <span className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                            Ảnh chính
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImgs = [...editForm.images];
+                              const [item] = newImgs.splice(idx, 1);
+                              newImgs.unshift(item);
+                              setEditForm((prev) => ({ ...prev, images: newImgs }));
+                            }}
+                            className="absolute bottom-1 left-1 bg-slate-800/80 hover:bg-blue-600 text-white text-[8px] font-bold px-1 py-0.5 rounded transition"
+                          >
+                            Đặt ảnh chính
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
-                            const newImgs = [...editForm.images];
-                            const [item] = newImgs.splice(idx, 1);
-                            newImgs.unshift(item);
-                            setEditForm((prev) => ({ ...prev, images: newImgs }));
+                            if (publicId && pendingPublicIds.includes(publicId)) {
+                              fetch("/api/upload", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ public_id: publicId }),
+                              }).catch(console.warn);
+                              setPendingPublicIds((prev) => prev.filter((pid) => pid !== publicId));
+                            }
+                            setEditForm((prev) => ({
+                              ...prev,
+                              images: prev.images.filter((_, i) => i !== idx),
+                            }));
                           }}
-                          className="absolute bottom-1 left-1 bg-slate-800/80 hover:bg-blue-600 text-white text-[8px] font-bold px-1 py-0.5 rounded transition"
+                          className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow cursor-pointer hover:bg-rose-700"
+                          title="Xóa ảnh"
                         >
-                          Đặt ảnh chính
+                          ✕
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditForm((prev) => ({
-                            ...prev,
-                            images: prev.images.filter((_, i) => i !== idx),
-                          }))
-                        }
-                        className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow cursor-pointer hover:bg-rose-700"
-                        title="Xóa ảnh"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
 
                   <label className="w-20 h-20 rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 bg-blue-50/50 hover:bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition text-center p-1">
                     <span className="text-xl text-blue-600">+</span>
@@ -1882,7 +2041,7 @@ export default function ProjectDetailClient({
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files, true)}
+                      onChange={(e) => handleFileUpload(e.target.files, true, "FLOOR_PLAN")}
                       disabled={editUploading}
                     />
                   </label>
@@ -2042,7 +2201,10 @@ export default function ProjectDetailClient({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditingUnit(null)}
+                    onClick={() => {
+                      rollbackPendingUploads();
+                      setEditingUnit(null);
+                    }}
                     className="btn-outline text-[13px] px-4 py-2"
                   >
                     Hủy

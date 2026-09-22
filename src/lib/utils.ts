@@ -138,9 +138,13 @@ export function slugify(str: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export function parseImages(images?: string | string[] | null): string[] {
+export function parseImages(images?: any): string[] {
   if (!images) return [];
-  if (Array.isArray(images)) return images.map((s) => String(s).trim()).filter(Boolean);
+  if (Array.isArray(images)) {
+    return images
+      .map((s) => (typeof s === "object" && s !== null ? (s.url || s.secure_url || "") : String(s)).trim())
+      .filter(Boolean);
+  }
   if (typeof images !== "string") return [];
 
   const trimmed = images.trim();
@@ -150,7 +154,9 @@ export function parseImages(images?: string | string[] | null): string[] {
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        return parsed.map((item) => String(item).trim()).filter(Boolean);
+        return parsed
+          .map((item) => (typeof item === "object" && item !== null ? (item.url || item.secure_url || "") : String(item)).trim())
+          .filter(Boolean);
       }
     } catch (e) {
       // Fallback

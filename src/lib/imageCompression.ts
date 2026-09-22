@@ -35,9 +35,9 @@ export const IMAGE_PRESETS: Record<ImagePreset, CompressionPresetConfig> = {
     softTargetMB: 0.20, // ~200KB
   },
   FLOOR_PLAN: {
-    initialQuality: 0.90,
-    maxWidthOrHeight: 2400,
-    softTargetMB: 0.90, // ~900KB SOFT TARGET (Readability > File size!)
+    initialQuality: 0.88,
+    maxWidthOrHeight: 1600, // Chuẩn tối đa 1600px theo đề xuất (Readability + Tiết kiệm dung lượng)
+    softTargetMB: 0.50, // ~500KB
   },
 };
 
@@ -53,8 +53,20 @@ export interface OptimizationResult {
   formattedOriginalSize: string;
   formattedOptimizedSize: string;
   isSkipped: boolean;
+  isError?: boolean;
+  errorMessage?: string;
   previewUrl: string;
 }
+
+export const HARD_LIMIT_BYTES: Record<ImagePreset, number> = {
+  DEFAULT: 800 * 1024,   // 800 KB
+  GALLERY: 800 * 1024,   // 800 KB
+  HERO: 900 * 1024,      // 900 KB
+  THUMBNAIL: 400 * 1024, // 400 KB
+  FLOOR_PLAN: 700 * 1024 // 700 KB (Hard limit cho sơ đồ căn hộ trước khi upload)
+};
+
+export const MAX_INPUT_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
 
 export function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return "0 B";
@@ -139,7 +151,29 @@ export async function compressImage(
   preset: ImagePreset = "DEFAULT"
 ): Promise<OptimizationResult> {
   const config = IMAGE_PRESETS[preset] || IMAGE_PRESETS.DEFAULT;
+  const hardLimit = HARD_LIMIT_BYTES[preset] || 800 * 1024;
   const originalSize = file.size;
+
+  // 1. Kiểm tra đầu vào: Tệp vượt quá 15MB -> Chặn ngay lập tức
+  if (originalSize > MAX_INPUT_FILE_SIZE) {
+    return {
+      file,
+      originalSize,
+      optimizedSize: originalSize,
+      reductionPercent: 0,
+      originalWidth: 0,
+      originalHeight: 0,
+      optimizedWidth: 0,
+      optimizedHeight: 0,
+      formattedOriginalSize: formatBytes(originalSize),
+      formattedOptimizedSize: formatBytes(originalSize),
+      isSkipped: false,
+      isError: true,
+      errorMessage: `Tệp ảnh vượt quá giới hạn đầu vào cho phép (${formatBytes(MAX_INPUT_FILE_SIZE)}). Vui lòng chọn tệp nhỏ hơn.`,
+      previewUrl: "",
+    };
+  }
+
   const dims = await getImageDimensions(file);
   const originalWidth = dims.width;
   const originalHeight = dims.height;
@@ -164,6 +198,7 @@ export async function compressImage(
       formattedOriginalSize: formatBytes(originalSize),
       formattedOptimizedSize: formatBytes(originalSize),
       isSkipped: true,
+      isError: false,
       previewUrl,
     };
   }
@@ -174,7 +209,8 @@ export async function compressImage(
   // For FLOOR_PLAN, prioritize sharpness and legibility over file size.
   let fileType = "image/webp";
   if (file.type === "image/gif" || file.type === "image/svg+xml") {
-    // Keep GIF/SVG as is
+    // Keep GIF/SVG as is if within hard limit
+    const isError = originalSize > hardLimit;
     const previewUrl = URL.createObjectURL(file);
     return {
       file,
@@ -188,6 +224,8 @@ export async function compressImage(
       formattedOriginalSize: formatBytes(originalSize),
       formattedOptimizedSize: formatBytes(originalSize),
       isSkipped: true,
+      isError,
+      errorMessage: isError ? `Tệp định dạng ${file.type} (${formatBytes(originalSize)}) vượt mức trần an toàn (${formatBytes(hardLimit)}).` : undefined,
       previewUrl,
     };
   }
@@ -219,16 +257,19 @@ export async function compressImage(
       lastModified: Date.now(),
     });
 
-    // If compressed file turns out larger than original (rare), fall back to original
+    // If compressed file turns out larger than original (rare), fall back to original ONLY if original <= hardLimit
     let finalFile = optimizedFile;
     let finalSize = optimizedFile.size;
     let isSkipped = false;
 
-    if (finalSize >= originalSize && isDimensionOptimal) {
+    if (finalSize >= originalSize && isDimensionOptimal && originalSize <= hardLimit) {
       finalFile = file;
       finalSize = originalSize;
       isSkipped = true;
     }
+
+    // CỬA CHẶN CUỐI: Kiểm tra sau nén có vượt ngưỡng trần an toàn (Hard Limit) hay không
+    const isOverHardLimit = finalSize > hardLimit;
 
     const optDims = await getImageDimensions(finalFile);
     const reductionPercent = originalSize > 0
@@ -249,10 +290,16 @@ export async function compressImage(
       formattedOriginalSize: formatBytes(originalSize),
       formattedOptimizedSize: formatBytes(finalSize),
       isSkipped,
+      isError: isOverHardLimit,
+      errorMessage: isOverHardLimit
+        ? `Ảnh "${file.name}" sau khi nén vẫn đạt ${formatBytes(finalSize)}, vượt quá mức trần an toàn (${formatBytes(hardLimit)}). Hãy chọn ảnh có độ phân giải phù hợp hơn.`
+        : undefined,
       previewUrl,
     };
-  } catch (error) {
-    console.warn("Lỗi nén ảnh, giữ nguyên file gốc:", error);
+  } catch (error: any) {
+    console.error("Lỗi nén ảnh:", error);
+    // QUY TẮC AN TOÀN BẮT BUỘC: Nếu nén lỗi và tệp gốc > hardLimit -> TUYỆT ĐỐI KHÔNG FALLBACK TẢI FILE GỐC!
+    const isError = originalSize > hardLimit;
     const previewUrl = URL.createObjectURL(file);
     return {
       file,
@@ -265,7 +312,11 @@ export async function compressImage(
       optimizedHeight: originalHeight,
       formattedOriginalSize: formatBytes(originalSize),
       formattedOptimizedSize: formatBytes(originalSize),
-      isSkipped: true,
+      isSkipped: !isError,
+      isError,
+      errorMessage: isError
+        ? `Quá trình nén tệp "${file.name}" gặp sự cố. Hệ thống đã chặn tải lên tệp gốc (${formatBytes(originalSize)}) để bảo vệ tài khoản Cloudinary.`
+        : undefined,
       previewUrl,
     };
   }
@@ -291,8 +342,10 @@ export async function compressImagesInBatch(
         const res = await compressImage(file, preset);
         results[index] = res;
         if (onProgress) onProgress(index, files.length, res);
-      } catch (err) {
+      } catch (err: any) {
         const previewUrl = URL.createObjectURL(file);
+        const hardLimit = HARD_LIMIT_BYTES[preset] || 800 * 1024;
+        const isError = file.size > hardLimit;
         const fallbackRes: OptimizationResult = {
           file,
           originalSize: file.size,
@@ -304,7 +357,11 @@ export async function compressImagesInBatch(
           optimizedHeight: 0,
           formattedOriginalSize: formatBytes(file.size),
           formattedOptimizedSize: formatBytes(file.size),
-          isSkipped: true,
+          isSkipped: !isError,
+          isError,
+          errorMessage: isError
+            ? `Lỗi nén tệp "${file.name}". Không thể upload tệp gốc ${formatBytes(file.size)} chưa qua xử lý.`
+            : undefined,
           previewUrl,
         };
         results[index] = fallbackRes;

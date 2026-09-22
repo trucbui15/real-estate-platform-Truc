@@ -16,6 +16,7 @@ export type CloudinaryDeliveryPreset =
   | "NEWS_HERO"
   | "HERO"
   | "FLOOR_PLAN"
+  | "FLOOR_PLAN_PREVIEW"
   | "FLOOR_PLAN_THUMB";
 
 export interface CloudinaryPresetConfig {
@@ -24,7 +25,7 @@ export interface CloudinaryPresetConfig {
   crop: string;
 }
 
-export const ALLOWED_BREAKPOINTS = [300, 600, 800, 1200, 1600, 1920, 2400] as const;
+export const ALLOWED_BREAKPOINTS = [300, 400, 600, 800, 1200, 1600, 1920, 2400] as const;
 export type AllowedBreakpoint = typeof ALLOWED_BREAKPOINTS[number];
 
 export const CLOUDINARY_PRESETS: Record<CloudinaryDeliveryPreset, CloudinaryPresetConfig> = {
@@ -59,13 +60,18 @@ export const CLOUDINARY_PRESETS: Record<CloudinaryDeliveryPreset, CloudinaryPres
     crop: "limit",
   },
   FLOOR_PLAN: {
-    width: 2400,
-    quality: "auto:best", // Prioritize crisp lines & text readability
+    width: 1400, // Chuẩn Full 1200–1600px cho sơ đồ chi tiết
+    quality: "auto",
+    crop: "limit",
+  },
+  FLOOR_PLAN_PREVIEW: {
+    width: 800, // Chuẩn Preview trung gian 800px
+    quality: "auto",
     crop: "limit",
   },
   FLOOR_PLAN_THUMB: {
-    width: 600,
-    quality: "auto:good",
+    width: 400, // Chuẩn Thumbnail 300–400px (tạo url: w_400,q_auto,f_auto)
+    quality: "auto",
     crop: "limit",
   },
 };
