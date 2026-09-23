@@ -5,14 +5,19 @@ const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_C
 const apiKey = process.env.CLOUDINARY_API_KEY;
 const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-cloudinary.config({
+const configOptions: Record<string, any> = {
   cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret,
   secure: true,
+};
+
+if (apiKey && apiSecret) {
+  configOptions.api_key = apiKey;
+  configOptions.api_secret = apiSecret;
   // @ts-ignore Cloudinary SDK signature_algorithm option
-  signature_algorithm: "sha256",
-});
+  configOptions.signature_algorithm = "sha256";
+}
+
+cloudinary.config(configOptions);
 
 export { cloudinary };
 
@@ -36,7 +41,7 @@ export interface CloudinaryUploadResult {
 
 /**
  * Uploads a file buffer directly to Cloudinary using the official Node SDK.
- * Supports signed uploads (when API Key & Secret are configured) and preset uploads.
+ * Supports signed uploads (when API Key & Secret are configured) and unsigned preset uploads.
  */
 export async function uploadBufferToCloudinary(
   buffer: Buffer,
@@ -48,57 +53,80 @@ export async function uploadBufferToCloudinary(
 ): Promise<CloudinaryUploadResult> {
   const isFloorPlan = options.preset === "FLOOR_PLAN";
   const folder = options.folder || (isFloorPlan ? "minhdungland/floor_plans" : "minhdungland/general");
-  const floorPlanPreset =
-    process.env.CLOUDINARY_FLOOR_PLAN_PRESET ||
-    process.env.NEXT_PUBLIC_CLOUDINARY_FLOOR_PLAN_PRESET ||
-    "minhdungland_floor_plan";
   const defaultPreset =
     process.env.CLOUDINARY_UPLOAD_PRESET ||
     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
     "minhdungland";
+  const floorPlanPreset =
+    process.env.CLOUDINARY_FLOOR_PLAN_PRESET ||
+    process.env.NEXT_PUBLIC_CLOUDINARY_FLOOR_PLAN_PRESET ||
+    defaultPreset;
   const uploadPreset = options.uploadPreset || (isFloorPlan ? floorPlanPreset : defaultPreset);
 
   return new Promise((resolve, reject) => {
     // If API Key & Secret exist -> use Authenticated Signed Upload
-    // Otherwise fallback to server-controlled upload_preset
-    const uploadOptions: Record<string, any> = {
-      folder,
-      resource_type: "image",
-    };
-
+    // Otherwise fallback to unsigned upload preset
     if (apiKey && apiSecret) {
-      // Signed upload: SDK calculates signature automatically
-      uploadOptions.use_filename = true;
-      uploadOptions.unique_filename = true;
+      const uploadOptions: Record<string, any> = {
+        folder,
+        resource_type: "image",
+        use_filename: true,
+        unique_filename: true,
+      };
+
       // Incoming transformation for floor plan: limit to max 1600px width, auto quality
       if (isFloorPlan) {
         uploadOptions.transformation = [
           { width: 1600, crop: "limit", quality: "auto" }
         ];
       }
-    } else {
-      uploadOptions.upload_preset = uploadPreset;
-    }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      uploadOptions,
-      (error, result?: UploadApiResponse) => {
-        if (error || !result) {
-          return reject(error || new Error("Cloudinary upload returned empty result"));
+      const uploadStream = cloudinary.uploader.upload_stream(
+        uploadOptions,
+        (error, result?: UploadApiResponse) => {
+          if (error || !result) {
+            return reject(error || new Error("Cloudinary upload returned empty result"));
+          }
+          resolve({
+            url: result.secure_url,
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+            bytes: result.bytes,
+            format: result.format,
+            width: result.width,
+            height: result.height,
+          });
         }
-        resolve({
-          url: result.secure_url,
-          secure_url: result.secure_url,
-          public_id: result.public_id,
-          bytes: result.bytes,
-          format: result.format,
-          width: result.width,
-          height: result.height,
-        });
-      }
-    );
+      );
 
-    uploadStream.end(buffer);
+      uploadStream.end(buffer);
+    } else {
+      const uploadOptions: Record<string, any> = {
+        folder,
+        resource_type: "image",
+      };
+
+      const uploadStream = cloudinary.uploader.unsigned_upload_stream(
+        uploadPreset,
+        uploadOptions,
+        (error, result?: UploadApiResponse) => {
+          if (error || !result) {
+            return reject(error || new Error("Cloudinary upload returned empty result"));
+          }
+          resolve({
+            url: result.secure_url,
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+            bytes: result.bytes,
+            format: result.format,
+            width: result.width,
+            height: result.height,
+          });
+        }
+      );
+
+      uploadStream.end(buffer);
+    }
   });
 }
 
@@ -107,6 +135,10 @@ export async function uploadBufferToCloudinary(
  */
 export async function destroyCloudinaryAsset(publicId: string): Promise<boolean> {
   if (!publicId) return false;
+  if (!apiKey || !apiSecret) {
+    console.warn(`[Cloudinary Rollback] Skipping rollback for asset ${publicId}: CLOUDINARY_API_KEY/SECRET not configured.`);
+    return false;
+  }
   try {
     const result = await cloudinary.uploader.destroy(publicId, {
       invalidate: true,
