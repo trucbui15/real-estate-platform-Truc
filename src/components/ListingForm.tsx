@@ -320,7 +320,7 @@ export default function ListingForm({
             {form.salePrice && formatVNDText(form.salePrice) && (
               <div className="absolute right-2 flex items-center pointer-events-none">
                 <span className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-2xs">
-                  🏷️ {formatVNDText(form.salePrice)}
+                  {formatVNDText(form.salePrice)}
                 </span>
               </div>
             )}
@@ -339,7 +339,7 @@ export default function ListingForm({
             {form.rentPrice && formatVNDText(form.rentPrice) && (
               <div className="absolute right-2 flex items-center pointer-events-none">
                 <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-2xs">
-                  🏷️ {formatVNDText(form.rentPrice)}
+                  {formatVNDText(form.rentPrice)}
                 </span>
               </div>
             )}

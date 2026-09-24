@@ -12,7 +12,19 @@ import {
   formatBytes,
 } from "@/lib/imageCompression";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImage";
-import { normalizeUnitCode } from "@/lib/utils";
+import { normalizeUnitCode, formatVNDText } from "@/lib/utils";
+
+function parseSalePriceInput(val?: string | number | null): number | null {
+  if (val === null || val === undefined || val === "") return null;
+  const num = typeof val === "number" ? val : parseFloat(val);
+  if (isNaN(num) || num <= 0) return null;
+  return Math.round(num);
+}
+
+function getDisplayPriceText(val?: string | number | null): string {
+  if (val === null || val === undefined || val === "") return "";
+  return formatVNDText(val);
+}
 
 const unitStatusLabel: Record<string, { label: string; style: string; badgeStyle: string }> = {
   DANG_BAN: {
@@ -637,7 +649,7 @@ export default function ProjectDetailClient({
         unitCode: addForm.unitCode.trim(),
         block: addForm.block ? addForm.block.trim().toUpperCase() : null,
         floor: addForm.floor || null,
-        salePrice: addForm.salePrice ? parseFloat(addForm.salePrice) * 1_000_000_000 : null,
+        salePrice: parseSalePriceInput(addForm.salePrice),
         bedrooms: parseInt(addForm.bedrooms) || 3,
         bathrooms: parseInt(addForm.bathrooms) || 3,
         area: parseFloat(addForm.area),
@@ -690,7 +702,7 @@ export default function ProjectDetailClient({
       unitCode: unit.unitCode || "",
       block: unit.block || "",
       floor: unit.floor || "",
-      salePrice: unit.salePrice ? (unit.salePrice / 1_000_000_000).toString() : "",
+      salePrice: unit.salePrice ? unit.salePrice.toString() : "",
       bedrooms: (unit.bedrooms || 3).toString(),
       bathrooms: (unit.bathrooms || 3).toString(),
       area: (unit.area || "").toString(),
@@ -721,7 +733,7 @@ export default function ProjectDetailClient({
         unitCode: editForm.unitCode.trim(),
         block: editForm.block ? editForm.block.trim().toUpperCase() : null,
         floor: editForm.floor || null,
-        salePrice: editForm.salePrice ? parseFloat(editForm.salePrice) * 1_000_000_000 : null,
+        salePrice: parseSalePriceInput(editForm.salePrice),
         bedrooms: parseInt(editForm.bedrooms) || 3,
         bathrooms: parseInt(editForm.bathrooms) || 3,
         area: parseFloat(editForm.area),
@@ -1838,15 +1850,23 @@ export default function ProjectDetailClient({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Giá bán (Tỷ VNĐ)</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    className="input"
-                    placeholder="VD: 4.32"
-                    value={addForm.salePrice}
-                    onChange={(e) => setAddForm({ ...addForm, salePrice: e.target.value })}
-                  />
+                  <label className="label font-bold text-slate-700">Giá bán (VNĐ)</label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      className="input font-semibold text-blue-900 border-blue-200 bg-blue-50/20 pr-32"
+                      placeholder="VD: 2000000000"
+                      value={addForm.salePrice}
+                      onChange={(e) => setAddForm({ ...addForm, salePrice: e.target.value })}
+                    />
+                    {getDisplayPriceText(addForm.salePrice) && (
+                      <div className="absolute right-2 flex items-center pointer-events-none">
+                        <span className="rounded-lg bg-blue-600 px-2.5 py-0.5 text-[11px] font-extrabold text-white shadow-2xs whitespace-nowrap">
+                          {getDisplayPriceText(addForm.salePrice)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -2094,14 +2114,23 @@ export default function ProjectDetailClient({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Giá bán (Tỷ VNĐ)</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    className="input"
-                    value={editForm.salePrice}
-                    onChange={(e) => setEditForm({ ...editForm, salePrice: e.target.value })}
-                  />
+                  <label className="label font-bold text-slate-700">Giá bán (VNĐ)</label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      className="input font-semibold text-blue-900 border-blue-200 bg-blue-50/20 pr-32"
+                      placeholder="VD: 2000000000"
+                      value={editForm.salePrice}
+                      onChange={(e) => setEditForm({ ...editForm, salePrice: e.target.value })}
+                    />
+                    {getDisplayPriceText(editForm.salePrice) && (
+                      <div className="absolute right-2 flex items-center pointer-events-none">
+                        <span className="rounded-lg bg-blue-600 px-2.5 py-0.5 text-[11px] font-extrabold text-white shadow-2xs whitespace-nowrap">
+                          {getDisplayPriceText(editForm.salePrice)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

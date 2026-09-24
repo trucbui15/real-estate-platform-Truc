@@ -301,6 +301,7 @@ export default function DashboardProjectsPage() {
   // Project modal state
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
+  const [inventoryFilter, setInventoryFilter] = useState<"ALL" | "HAS_INVENTORY" | "NO_INVENTORY">("ALL");
 
   function openAddProject() {
     resetForm();
@@ -326,6 +327,9 @@ export default function DashboardProjectsPage() {
   }
 
   const filteredProjects = items.filter((p) => {
+    const invCount = p._count?.inventories ?? 0;
+    if (inventoryFilter === "HAS_INVENTORY" && invCount === 0) return false;
+    if (inventoryFilter === "NO_INVENTORY" && invCount > 0) return false;
     if (!projectSearch.trim()) return true;
     const q = projectSearch.toLowerCase().trim();
     return (
@@ -400,8 +404,8 @@ export default function DashboardProjectsPage() {
       {/* TAB 1: DỰ ÁN */}
       {activeTab === "projects" && (
         <div className="space-y-4">
-          {/* SEARCH CONTROL BAR */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E2E8F0] shadow-sm">
+          {/* SEARCH & INVENTORY FILTER BAR */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E2E8F0] shadow-sm">
             <div className="relative flex-1 w-full max-w-md">
               <input
                 type="text"
@@ -415,9 +419,48 @@ export default function DashboardProjectsPage() {
               </svg>
             </div>
 
-            <span className="text-[13px] font-semibold text-[#64748B] bg-[#F8FAFC] px-3 py-2 rounded-xl border border-[#E2E8F0]">
-              Hiển thị: {filteredProjects.length} / {items.length} dự án
-            </span>
+            {/* BỘ LỌC THEO BẢNG HÀNG */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-xl bg-[#F1F5F9] p-1 text-[12px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setInventoryFilter("ALL")}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                    inventoryFilter === "ALL"
+                      ? "bg-white text-[#0F172A] shadow-xs font-bold"
+                      : "text-[#64748B] hover:text-[#0F172A]"
+                  }`}
+                >
+                  Tất cả ({items.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInventoryFilter("HAS_INVENTORY")}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                    inventoryFilter === "HAS_INVENTORY"
+                      ? "bg-white text-[#4338CA] shadow-xs font-bold"
+                      : "text-[#64748B] hover:text-[#0F172A]"
+                  }`}
+                >
+                  Đã có bảng hàng ({items.filter((p) => (p._count?.inventories ?? 0) > 0).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInventoryFilter("NO_INVENTORY")}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                    inventoryFilter === "NO_INVENTORY"
+                      ? "bg-white text-[#B45309] shadow-xs font-bold"
+                      : "text-[#64748B] hover:text-[#0F172A]"
+                  }`}
+                >
+                  Chưa có bảng hàng ({items.filter((p) => (p._count?.inventories ?? 0) === 0).length})
+                </button>
+              </div>
+
+              <span className="text-[12px] font-semibold text-[#64748B] bg-[#F8FAFC] px-2.5 py-1.5 rounded-xl border border-[#E2E8F0] shrink-0">
+                Hiển thị: {filteredProjects.length}
+              </span>
+            </div>
           </div>
 
           {/* FULL-WIDTH PROJECTS LIST CARDS */}
@@ -449,6 +492,22 @@ export default function DashboardProjectsPage() {
                       >
                         {p.isActive ? "● Hoạt động" : "🔒 Tạm ngưng"}
                       </span>
+                      <span
+                        className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold ${
+                          (p._count?.inventories ?? 0) > 0
+                            ? "bg-[#EEF2FF] border border-[#C7D2FE] text-[#4338CA]"
+                            : "bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309]"
+                        }`}
+                        title={
+                          (p._count?.inventories ?? 0) > 0
+                            ? `Dự án có ${p._count.inventories} căn bảng hàng (đang hiển thị public ở /projects)`
+                            : "Chưa có bảng hàng (đang ẩn ở public /projects)"
+                        }
+                      >
+                        {(p._count?.inventories ?? 0) > 0
+                          ? `📊 ${p._count.inventories} căn Bảng hàng`
+                          : "⚠️ Chưa có bảng hàng (Ẩn ở /projects)"}
+                      </span>
                     </div>
 
                     {p.developer && (
@@ -468,6 +527,14 @@ export default function DashboardProjectsPage() {
 
                   {canEdit && (
                     <div className="flex flex-wrap items-center gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                      <Link
+                        href={`/projects/${p.slug}#inventory-section`}
+                        target="_blank"
+                        className="text-[13px] font-bold px-3 py-1.5 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5] border border-[#4F46E5]/30 hover:bg-[#4F46E5] hover:text-white transition flex items-center gap-1.5 shadow-2xs"
+                        title="Mở Bảng hàng dự án này trong tab mới để Thêm căn / Sửa / Quản lý"
+                      >
+                        <span>📋</span> Quản lý Bảng hàng
+                      </Link>
                       <Link
                         href={`/dashboard/projects/${p.id}/website`}
                         className="text-[13px] font-bold px-3 py-1.5 rounded-xl bg-[#0284C7]/10 text-[#0284C7] border border-[#0284C7]/30 hover:bg-[#0284C7] hover:text-white transition flex items-center gap-1.5 shadow-2xs"

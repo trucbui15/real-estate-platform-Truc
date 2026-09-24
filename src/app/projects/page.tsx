@@ -70,5 +70,12 @@ export default async function ProjectsPage() {
     };
   });
 
-  return <ProjectsClient projects={projects} />;
+  // Chỉ hiển thị các dự án đã có bảng hàng (có ít nhất 1 inventory hợp lệ để public)
+  const visibleProjects = projects.filter((project) => {
+    return project.inventoryCount > 0;
+  });
+
+  const hiddenProjectsCount = projects.length - visibleProjects.length;
+
+  return <ProjectsClient projects={visibleProjects} hiddenProjectsCount={hiddenProjectsCount} />;
 }

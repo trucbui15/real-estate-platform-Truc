@@ -20,6 +20,7 @@ interface ProjectItem {
 
 interface ProjectsClientProps {
   projects: ProjectItem[];
+  hiddenProjectsCount?: number;
 }
 
 function getCoverPhoto(project: ProjectItem): string | null {
@@ -31,7 +32,10 @@ function getCoverPhoto(project: ProjectItem): string | null {
 
 import { canManageProjectContent } from "@/lib/permissions";
 
-export default function ProjectsClient({ projects: initialProjects }: ProjectsClientProps) {
+export default function ProjectsClient({
+  projects: initialProjects,
+  hiddenProjectsCount = 0,
+}: ProjectsClientProps) {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
   const canEdit = canManageProjectContent(role);
@@ -50,16 +54,22 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Lọc chỉ các dự án có ít nhất 1 inventory hợp lệ để public
+  const visibleProjects = useMemo(() => {
+    return projectsList.filter((project) => project.inventoryCount > 0);
+  }, [projectsList]);
+
+  // Tìm kiếm chỉ lọc trên danh sách visibleProjects được phép hiển thị
   const filteredProjects = useMemo(() => {
-    if (!searchQuery.trim()) return projectsList;
+    if (!searchQuery.trim()) return visibleProjects;
     const q = searchQuery.trim().toLowerCase();
-    return projectsList.filter(
+    return visibleProjects.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         (p.address && p.address.toLowerCase().includes(q)) ||
         (p.developer && p.developer.toLowerCase().includes(q))
     );
-  }, [projectsList, searchQuery]);
+  }, [visibleProjects, searchQuery]);
 
   function openEditModal(e: React.MouseEvent, p: ProjectItem) {
     e.preventDefault();
@@ -239,20 +249,84 @@ export default function ProjectsClient({ projects: initialProjects }: ProjectsCl
         </div>
       </div>
 
-      {/* 2. PROJECT CARDS GRID */}
-      {filteredProjects.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500 space-y-3 shadow-2xs">
-          <div className="text-4xl">🔍</div>
-          <div className="font-bold text-slate-800 text-base">
-            Không tìm thấy dự án phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;
+      {/* ADMIN NOTIFICATION BANNER (CHỈ HIỂN THỊ KHI ADMIN ĐĂNG NHẬP VÀ CÓ DỰ ÁN ĐANG ẨN) */}
+      {canEdit && hiddenProjectsCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs shadow-2xs">
+          <div className="flex items-center gap-2.5 text-amber-900 font-medium">
+            <span className="text-base shrink-0">💡</span>
+            <span>
+              <strong>Dành cho Quản trị viên:</strong> Đang có <strong>{hiddenProjectsCount}</strong> dự án chưa mở bảng hàng (tạm ẩn trên giao diện khách hàng). Khi dự án được thêm căn mở bán, dự án sẽ tự động xuất hiện tại đây.
+            </span>
           </div>
-          <button
-            onClick={() => setSearchQuery("")}
-            className="btn-outline text-xs py-2 px-5 rounded-xl font-bold cursor-pointer"
+          <Link
+            href="/dashboard/projects"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition shadow-xs cursor-pointer"
           >
-            Xem tất cả dự án
-          </button>
+            <span>📋 Mở Bảng hàng tại Dashboard →</span>
+          </Link>
         </div>
+      )}
+
+      {/* 2. RESULTS COUNTER & SUMMARY */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-slate-700 font-semibold">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>
+            Đang hiển thị <strong className="text-slate-950 font-bold">{filteredProjects.length}</strong> dự án có bảng hàng
+          </span>
+          {searchQuery && (
+            <span className="text-slate-500 font-normal">
+              (trên tổng số {visibleProjects.length} dự án)
+            </span>
+          )}
+        </div>
+
+        {searchQuery && (
+          <div className="text-slate-500 text-xs flex items-center gap-1.5">
+            <span>Từ khóa:</span>
+            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+              &ldquo;{searchQuery}&rdquo;
+            </span>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer ml-1"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 3. PROJECT CARDS GRID OR EMPTY STATE */}
+      {filteredProjects.length === 0 ? (
+        visibleProjects.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500 space-y-3 shadow-2xs">
+            <div className="text-4xl">🏢</div>
+            <div className="font-bold text-slate-800 text-base">
+              Hiện chưa có dự án nào mở bảng hàng
+            </div>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Hệ thống đang cập nhật bảng hàng các dự án bất động sản. Quý khách vui lòng quay lại sau hoặc liên hệ hotline để nhận thông tin sớm nhất.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500 space-y-3 shadow-2xs">
+            <div className="text-4xl">🔍</div>
+            <div className="font-bold text-slate-800 text-base">
+              Không tìm thấy dự án phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;
+            </div>
+            <p className="text-xs text-slate-400">
+              Không có dự án mở bán nào khớp với từ khóa tìm kiếm. Vui lòng thử từ khóa khác.
+            </p>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="btn-outline text-xs py-2 px-5 rounded-xl font-bold cursor-pointer inline-flex items-center gap-1.5 mx-auto"
+            >
+              <span>🔄</span>
+              <span>Xem tất cả dự án ({visibleProjects.length})</span>
+            </button>
+          </div>
+        )
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((p) => {
