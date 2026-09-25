@@ -399,6 +399,7 @@ export default function ProjectMicrositeRenderer({
 
     try {
       const pageUrl = typeof window !== "undefined" ? window.location.href : `/du-an/${projectSlug}`;
+      const refToken = typeof window !== "undefined" ? sessionStorage.getItem("md_public_ref_token") : null;
       const res = await fetch("/api/contact-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -411,6 +412,7 @@ export default function ProjectMicrositeRenderer({
           projectId: projectId,
           source: "PROJECT",
           pageUrl: pageUrl,
+          refToken: refToken,
         }),
       });
 

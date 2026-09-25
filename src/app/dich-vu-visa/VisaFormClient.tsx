@@ -31,6 +31,7 @@ export default function VisaFormClient() {
     setErrorMsg("");
 
     try {
+      const refToken = typeof window !== "undefined" ? sessionStorage.getItem("md_public_ref_token") : null;
       const res = await fetch("/api/contact-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,6 +41,7 @@ export default function VisaFormClient() {
           demandType: "TU_VAN",
           note: `[DỊCH VỤ VISA] Loại dịch vụ: ${visaType} | Quốc gia / Nhu cầu: ${targetCountry} | Ghi chú: ${note}`,
           pageUrl: typeof window !== "undefined" ? window.location.href : null,
+          refToken,
         }),
       });
 

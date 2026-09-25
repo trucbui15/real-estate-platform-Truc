@@ -40,15 +40,17 @@ export async function processPublicLead(input: ProcessLeadInput) {
 
   // 1. Kiểm tra referral token của CTV (nếu có)
   let collaboratorId: string | null = null;
+  let collaboratorInfo: { id: string; fullName: string; publicReferralToken: string } | null = null;
 
   if (input.refToken?.trim()) {
     const col = await prisma.collaborator.findUnique({
       where: { publicReferralToken: input.refToken.trim() },
-      select: { id: true, status: true },
+      select: { id: true, fullName: true, publicReferralToken: true, status: true },
     });
 
     if (col && col.status === "ACTIVE") {
       collaboratorId = col.id;
+      collaboratorInfo = { id: col.id, fullName: col.fullName, publicReferralToken: col.publicReferralToken };
     }
   }
 
@@ -169,15 +171,21 @@ export async function processPublicLead(input: ProcessLeadInput) {
   });
 
   // Tự động đẩy dữ liệu sang Google Trang Tính (Google Sheets)
-  pushLeadToGoogleSheet({
-    fullName: cleanName,
-    phone: cleanPhone,
-    email: input.email,
-    demandType: String(demand),
-    source: String(src),
-    note: input.note,
-    pageUrl: input.pageUrl,
-  });
+  try {
+    await pushLeadToGoogleSheet({
+      fullName: cleanName,
+      phone: cleanPhone,
+      email: input.email,
+      demandType: String(demand),
+      source: String(src),
+      note: input.note,
+      pageUrl: input.pageUrl,
+      collaboratorName: collaboratorInfo?.fullName,
+      collaboratorToken: collaboratorInfo?.publicReferralToken,
+    });
+  } catch (sheetErr) {
+    console.error("[LeadService] Lỗi đồng bộ Google Sheets:", sheetErr);
+  }
 
   return {
     customerId,

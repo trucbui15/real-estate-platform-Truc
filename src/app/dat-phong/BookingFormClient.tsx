@@ -32,6 +32,7 @@ export default function BookingFormClient() {
     setErrorMsg("");
 
     try {
+      const refToken = typeof window !== "undefined" ? sessionStorage.getItem("md_public_ref_token") : null;
       const res = await fetch("/api/contact-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,6 +42,7 @@ export default function BookingFormClient() {
           demandType: "THUE",
           note: `[ĐẶT PHÒNG/BOOK PHÒNG] Loại phòng: ${roomType} | Check-in: ${checkInDate || 'Tự do'} | Check-out: ${checkOutDate || 'Tự do'} | Ghi chú: ${note}`,
           pageUrl: typeof window !== "undefined" ? window.location.href : null,
+          refToken,
         }),
       });
 
