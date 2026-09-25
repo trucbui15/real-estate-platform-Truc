@@ -15,11 +15,9 @@ export interface GoogleSheetLeadInput {
  * Spreadsheet ID: 18SLUQxjIkj6IHnDKYyZq_LU8iEcpGQsLHoMKk8Pee6U
  */
 export async function pushLeadToGoogleSheet(input: GoogleSheetLeadInput): Promise<boolean> {
-  const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-  if (!webhookUrl) {
-    console.warn("[GoogleSheets] GOOGLE_SHEETS_WEBHOOK_URL chưa được cấu hình.");
-    return false;
-  }
+  const webhookUrl =
+    process.env.GOOGLE_SHEETS_WEBHOOK_URL ||
+    "https://script.google.com/macros/s/AKfycbwpy0SQsqCnS_bbTRf7Lh6qu8AONnGIMDzB0xa1BvCoOecPFbTs4bi0boIlgTyNBKLu/exec";
 
   try {
     const finalSource = input.collaboratorName
@@ -43,9 +41,9 @@ export async function pushLeadToGoogleSheet(input: GoogleSheetLeadInput): Promis
       pageUrl: input.pageUrl || "",
     };
 
-    // Thiết lập timeout 5 giây để không chặn luồng API quá lâu
+    // Thiết lập timeout 12 giây để đủ thời gian Google Apps Script khởi động và ghi vào Sheet
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const res = await fetch(webhookUrl, {
       method: "POST",
