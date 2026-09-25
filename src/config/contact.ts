@@ -8,4 +8,5 @@ export const CONTACT_CONFIG = {
   address: "125 Trần Cao Vân, Phường Quy Nhơn, Tỉnh Gia Lai",
   website: "www.minhdungland.com.vn",
   websiteUrl: "https://www.minhdungland.com.vn",
+  phone: "0964372102",
 };

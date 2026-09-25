@@ -42,6 +42,12 @@ export default function GioiThieuPage() {
               {CONTACT_CONFIG.website}
             </a>
           </div>
+          <div>
+            Số điện thoại:{" "}
+            <a href={`tel:${CONTACT_CONFIG.phone}`} className="text-brand-600 hover:underline font-medium">
+              {CONTACT_CONFIG.phone}
+            </a>
+          </div>
         </div>
 
         <div className="pt-4 flex gap-4">

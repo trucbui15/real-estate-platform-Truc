@@ -31,6 +31,12 @@ export default function LienHePage() {
               {CONTACT_CONFIG.website}
             </a>
           </div>
+          <div>
+            <strong>Số điện thoại:</strong>{" "}
+            <a href={`tel:${CONTACT_CONFIG.phone}`} className="text-brand-600 hover:underline font-medium">
+              {CONTACT_CONFIG.phone}
+            </a>
+          </div>
         </div>
 
         <div className="border-t border-sand-200 pt-6">

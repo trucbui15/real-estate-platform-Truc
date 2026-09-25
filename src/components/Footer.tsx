@@ -153,6 +153,15 @@ export default function Footer() {
                   {CONTACT_CONFIG.website}
                 </a>
               </li>
+              <li className="flex items-center gap-2">
+                <span className="font-semibold text-slate-900 shrink-0">📞 Số điện thoại:</span>
+                <a
+                  href={`tel:${CONTACT_CONFIG.phone}`}
+                  className="text-slate-700 hover:text-blue-600 hover:underline transition font-medium"
+                >
+                  {CONTACT_CONFIG.phone}
+                </a>
+              </li>
             </ul>
           </div>
 

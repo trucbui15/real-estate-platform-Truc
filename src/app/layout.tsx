@@ -84,6 +84,7 @@ const organizationJsonLd = {
         addressRegion: "Bình Định",
         addressCountry: "VN",
       },
+      telephone: CONTACT_CONFIG.phone,
     },
     {
       "@type": "WebSite",
